@@ -1,0 +1,7 @@
+#summary Information about Zinwell
+#labels zinwell
+
+= Introduction =
+*Zinwell* is a [Taiwan]ese electronic company.
+
+It is one of the main suppliers of hardware for [New Zealand]'s digital television network [Freeview].
