@@ -1,1 +1,0 @@
-#define IDD_MAINDIALOG	100
