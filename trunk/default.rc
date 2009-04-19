@@ -1,0 +1,14 @@
+#include <windows.h>
+#include "defaultres.h"
+
+/* --- The following code comes from dlgbasedrc.tpl. */
+/*<---------------------------------------------------------------------->*/
+
+IDD_MAINDIALOG DIALOG 7, 20, 195, 86
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "default"
+FONT 8, "Helv"
+BEGIN
+    DEFPUSHBUTTON   "OK", IDOK, 149, 6, 40, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 149, 23, 40, 14
+END
