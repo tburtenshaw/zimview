@@ -2,6 +2,6 @@
 #labels zinwell
 
 = Introduction =
-*Zinwell* is a [Taiwan]ese electronic company.
+*Zinwell* is a [Taiwan Taiwanese] electronic company.
 
-It is one of the main suppliers of hardware for [New Zealand]'s digital television network [Freeview].
+It is one of the main suppliers of hardware for [NewZealand New Zealand]'s digital television network [Freeview].
