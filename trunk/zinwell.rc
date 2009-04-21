@@ -26,7 +26,7 @@ IDMAINMENU MENU
 BEGIN
     POPUP "&File"
         BEGIN
-        MENUITEM "&New", IDM_NEW, MF_GRAYED
+        MENUITEM "&New", IDM_NEW
         MENUITEM "&Open...\tCtrl+O", IDM_OPEN
 		MENUITEM "&Save", IDM_SAVE, MF_GRAYED
 		MENUITEM "Save &As...", IDM_SAVEAS
@@ -59,6 +59,11 @@ BEGIN
 		MENUITEM SEPARATOR
 		MENUITEM "Create &VERI block...", IDM_BLOCKCREATEVERIBLOCK
 		MENUITEM "Create BO&XI block...", IDM_BLOCKCREATEBOXIBLOCK
+		END
+	POPUP "&Tools"
+		BEGIN
+		MENUITEM "Batch change customer number...", IDM_TOOLSBATCHCUSTOMERNUMBER, MF_GRAYED
+		MENUITEM "Create SquashFS file...",IDM_TOOLSCREATESFS, MF_GRAYED
 		END
 	POPUP "&Help"
         BEGIN
@@ -254,6 +259,9 @@ BEGIN
 	IDM_MOVEUP, "Moves the block up in the order of blocks"
 	IDM_MOVEDOWN, "Moves the block down in the order of blocks"
 	IDM_SELECTALL, "Selects all the blocks in the file"
+
+	IDM_TOOLSBATCHCUSTOMERNUMBER, "Adjusts the customer number of multiple .zim files automatically"
+	IDM_TOOLSCREATESFS, "Creates a SquashFS (.sfs) file from files on your computer"
 END
 
 1 VERSIONINFO
