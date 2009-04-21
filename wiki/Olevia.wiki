@@ -1,0 +1,14 @@
+#summary Information about Olevia.
+
+= Introduction =
+
+Olevia seems to be a brand of the company [SCHOT] or (South China House of Technology Consultants).
+
+The set-top boxes Olevia make include:
+  *[ZMT-620FTA] and [ZMT-621FTA]
+
+==Downloads==
+Firmware [ZimFile Zim files] can be downloaded from their website:
+  * http://www.olevia.com.hk/downloadpage.php?workplaceID=43 (new website)
+  * http://www.schot.com/eng/product_news_detail.asp?id=14 (old 620 firmware)
+  * http://www.schot.com/eng/product_news_detail.asp?id=62 (old 621 firmware)
