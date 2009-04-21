@@ -109,7 +109,7 @@ struct internalZimStructure //used internally
 {
  char displayFilename[MAX_PATH];
  char *displayFilenameNoPath;
- FILE * pZimFile;
+ FILE *pZimFile;
  DWORD dwChecksum;
  WORD wCustomerNumber;
  WORD wNumBlocks;
@@ -164,8 +164,9 @@ struct internalBlockStructure //used internally
 #define EXPORTBLOCK_ERR_MEMORYPROBLEM 8
 
 int OpenZimFile(HWND hwnd, ZIM_STRUCTURE *ZimToOpen, char * filename);
-int LoadZimFile(ZIM_STRUCTURE * LoadedZim);
+int LoadZimFile(ZIM_STRUCTURE *LoadedZim);
 int CloseZimFile(ZIM_STRUCTURE *LoadedZim);
+int ActivateZimFile(ZIM_STRUCTURE *LoadedZim);
 
 int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exportFile, int includeHeader);
 int WriteZimFile(ZIM_STRUCTURE *LoadedZim, FILE *outputZim);
@@ -237,7 +238,7 @@ int numberDisplayedBlocks=0;		//used for calculating what to draw
 int numberFullyDisplayedBlocks=0;	//used for calculating scrolling (a half block displayed should not be counted, and it should include the highest number that fits)
 RECT paintSelectRects[255];
 
-int isZimLoaded;
+int isZimLoaded;	//we are going to replace this with pZim.displayFilename[0] (this should be a letter or null)
 struct internalZimStructure pZim;
 
 typedef signed char int8_t;
@@ -387,7 +388,6 @@ LRESULT MsgMenuSelect(HWND hwnd, UINT uMessage, WPARAM wparam, LPARAM lparam)
     if (0 != nStringID)
         LoadString(hInst, nStringID, szBuffer, sizeof(szBuffer));
     // Finally... send the string to the status bar
-	//IT CRASHES HERE!!!! NOT SURE WHY!!!
     UpdateStatusBar(szBuffer, 0, 0);
     return 0;
 }
@@ -411,7 +411,7 @@ void InitializeStatusBar(HWND hwndParent,int nrOfParts)
 }
 
 
-static BOOL CreateSBar(HWND hwndParent,char *initialText,int nrOfParts)
+static BOOL CreateStatusBar(HWND hwndParent,char *initialText,int nrOfParts)
 {
     hWndStatusbar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_BORDER|SBARS_SIZEGRIP, initialText, hwndParent, IDM_STATUSBAR);
     if(hWndStatusbar)
@@ -479,19 +479,6 @@ static BOOL InitApplication(void)
 
 	return 1;
 }
-
-HWND CreateZimViewWndClassWnd(void)
-{
-	return CreateWindow("ZimViewWndClass","ZimView",
-		WS_MINIMIZEBOX|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_MAXIMIZEBOX|WS_CAPTION|WS_BORDER|WS_SYSMENU|WS_THICKFRAME
-		|WS_VSCROLL,
-		CW_USEDEFAULT,0,CW_USEDEFAULT,0,
-		NULL,
-		NULL,
-		hInst,
-		NULL);
-}
-
 
 BOOL _stdcall AboutDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -678,8 +665,12 @@ int *arraySelectedLB;
 					break;
 				case IDOK:
 					hList=GetDlgItem(hwnd,IDC_VERIBLOCKSTOADD);
-					newBlock=NewBlock(&pZim);
 					numberSelectedLB=SendMessage(hList, LVM_GETITEMCOUNT, 0,0); //we'll use this var for the number of block in veri
+					if (numberSelectedLB<1)	{
+						MessageBox(hwnd, "One or more blocks need to be selected to create a verification block.", "Create VERI block", MB_OK|MB_ICONEXCLAMATION);
+						return 1;
+					}
+					newBlock=NewBlock(&pZim);
 					newBlock->dwDataLength= sizeof(VERIBLOCK_STRUCTURE) * numberSelectedLB;
 					sprintf(newBlock->name, "VERI");
 					newBlock->typeOfBlock=BTYPE_VERI;
@@ -1351,40 +1342,34 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_PROPERTIES), hwndMain, PropertiesDlg);
 			break;
 		case IDM_BLOCKEXPORT:
-			if (isZimLoaded) {
+			if (pZim.displayFilename[0]) {
 				DialogBox(hInst, MAKEINTRESOURCE(IDD_BLOCKEXPORT), hwndMain, BlockExportDlg);
 			}
 			break;
 		case IDM_BLOCKIMPORT:
-			if (isZimLoaded) {
-				DialogBox(hInst, MAKEINTRESOURCE(IDD_BLOCKIMPORT), hwndMain, BlockImportDlg);
-			}
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_BLOCKIMPORT), hwndMain, BlockImportDlg);
 			break;
 		case IDM_CUSTOMERNUMBER:
-			if (isZimLoaded) {
+			if (pZim.displayFilename[0]) {
 				DialogBox(hInst, MAKEINTRESOURCE(IDD_CHANGECUSTOMERNUMBER), hwndMain, ChangeCustomerNumberDlg);
 				InvalidateRect(hwndMain, NULL, TRUE);
 			}
 			break;
 		case IDM_BLOCKFIXCHECKSUMS:
-			if (isZimLoaded) {
+			if (pZim.displayFilename[0]) {
 				CalculateOffsetForWriting(&pZim);
 				InvalidateRect(hwndMain, NULL, TRUE);
 			}
 			break;
 		case IDM_BLOCKCREATEBOXIBLOCK:
-			if (isZimLoaded) {
-				DialogBox(hInst, MAKEINTRESOURCE(IDD_BOXIBLOCK), hwndMain, BlockCreateBoxiDlg);
-			}
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_BOXIBLOCK), hwndMain, BlockCreateBoxiDlg);
 			break;
 		case IDM_BLOCKCREATEVERIBLOCK:
-			if (isZimLoaded) {
-				DialogBox(hInst, MAKEINTRESOURCE(IDD_VERIBLOCK), hwndMain, BlockCreateVeriDlg);
-			}
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_VERIBLOCK), hwndMain, BlockCreateVeriDlg);
 			break;
 		case IDM_OPEN:
 		if (GetFilename(filename,sizeof(filename))) {
-			if (isZimLoaded) {
+			if (pZim.displayFilename[0]) {
 				if (MessageBox(hwnd, "You already have a file open. Are you sure you want to open a new one?", "ZimView", MB_OKCANCEL|MB_ICONQUESTION|MB_DEFBUTTON2)==IDCANCEL)
 					break;
 				else {CloseZimFile(&pZim);	SetWindowText(hwnd, "ZimView");}
@@ -1396,11 +1381,11 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			SaveAsZim(&pZim);
 			break;
 		case IDM_REVERT:
-			if (isZimLoaded) {
+			if (pZim.displayFilename[0]) {
 				sprintf(&filename[0], "%s", pZim.displayFilename);
 				CloseZimFile(&pZim);
 				OpenZimFile(hwnd, &pZim, filename);
-				InvalidateRect(hwnd, NULL, TRUE );
+				InvalidateRect(hwnd, NULL, TRUE);
 				UpdateWindow(hwnd);
 			}
 			break;
@@ -1408,6 +1393,18 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			CloseZimFile(&pZim);
 			SetWindowText(hwnd, "ZimView");
 			InvalidateRect (hwnd, NULL, TRUE );
+			break;
+		case IDM_NEW:
+			if (pZim.displayFilename[0]==0)	{
+				ActivateZimFile(&pZim);
+				InvalidateRect(hwnd, NULL, TRUE );
+			} else	{
+				if(MessageBox(hwnd, "Starting a new file will lose all changes on your open file. Do you want to start a new file?", "New", MB_YESNO|MB_ICONQUESTION)==IDYES)	{
+					CloseZimFile(&pZim);
+					ActivateZimFile(&pZim);
+					InvalidateRect(hwnd, NULL, TRUE );
+				}
+			}
 			break;
 		case IDM_SELECTALL:
 			SelectAllBlocks(hwnd, &pZim);
@@ -1429,7 +1426,8 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 		case IDM_EDITDELETE:
 			i= SelectedCount(&pZim);
 			if (i==0) return;
-			if (MessageBox(hwnd, "Deleting this block(s) cannot be undone. Are you sure you want to delete it?", "Confirm block delete", MB_YESNO|MB_ICONQUESTION)==IDYES) {
+			sprintf(&filename[0], "Deleting %s block%s cannot be undone. Are you sure you want to delete %s?", i>1?"these":"this", i>1?"s":"", i>1?"them":"it");
+			if (MessageBox(hwnd, filename, "Confirm block delete", MB_YESNO|MB_ICONQUESTION)==IDYES) {
 				i=DeleteSelectedBlocks(&pZim); //returns the first block deleted -- so redraw this and all beneath
 				if (caretedBlock>pZim.wNumBlocks-1) caretedBlock=pZim.wNumBlocks-1;
 				if (i>=0) RedrawBetweenBlocks(hwnd, &pZim, i, pZim.wNumBlocks-1); //redraw from first delete block down
@@ -1725,7 +1723,7 @@ HWND CreateAToolBar(HWND hwndParent)
 	int myToolbarIndex[2];
 
 	// Ensure that the common control DLL is loaded.
-	InitCommonControls();
+	//InitCommonControls(); (we load the Ex version at initiation)
 
 	// Create a toolbar that the user can customize and that has a
 	// tooltip associated with it.
@@ -1800,15 +1798,15 @@ HWND CreateAToolBar(HWND hwndParent)
 	tbb[7].fsState = 0;
 	tbb[7].fsStyle = BTNS_SEP;
 
-	tbb[8].iBitmap = myToolbarIndex[0];
-	tbb[8].idCommand = IDM_BLOCKEXPORT;
-	tbb[8].fsState = TBSTATE_ENABLED;
-	tbb[8].fsStyle = TBSTYLE_BUTTON;
-
-	tbb[9].iBitmap = myToolbarIndex[1];
-	tbb[9].idCommand = IDM_BLOCKIMPORT;
+	tbb[9].iBitmap = myToolbarIndex[0];
+	tbb[9].idCommand = IDM_BLOCKEXPORT;
 	tbb[9].fsState = TBSTATE_ENABLED;
 	tbb[9].fsStyle = TBSTYLE_BUTTON;
+
+	tbb[8].iBitmap = myToolbarIndex[1];
+	tbb[8].idCommand = IDM_BLOCKIMPORT;
+	tbb[8].fsState = TBSTATE_ENABLED;
+	tbb[8].fsStyle = TBSTYLE_BUTTON;
 
 	tbb[10].iBitmap = STD_PROPERTIES+standardToolbarIndex;
 	tbb[10].idCommand = IDM_PROPERTIES;
@@ -1832,9 +1830,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (!InitApplication())
 		return 0;
 	hAccelTable = LoadAccelerators(hInst,MAKEINTRESOURCE(IDACCEL));
-	if ((hwndMain = CreateZimViewWndClassWnd()) == (HWND)0)
+
+	hwndMain = CreateWindow("ZimViewWndClass","ZimView",
+		WS_MINIMIZEBOX|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_MAXIMIZEBOX|WS_CAPTION|WS_BORDER|WS_SYSMENU|WS_THICKFRAME|WS_VSCROLL,
+		CW_USEDEFAULT,0,CW_USEDEFAULT,0, NULL, NULL, hInst, NULL);
+
+	CreateWindow("ZimViewWndClass","ZimView1", WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_BORDER,
+		CW_USEDEFAULT,0,CW_USEDEFAULT,0, hwndMain, NULL, hInst, NULL);
+
+	if (hwndMain == (HWND)0)
 		return 0;
-	CreateSBar(hwndMain,"Ready",1);
+
+	CreateStatusBar(hwndMain,"Ready",1);
 	hwndToolBar = CreateAToolBar(hwndMain);
 	ShowWindow(hwndMain,SW_SHOW);
 
@@ -1916,7 +1923,6 @@ int LoadZimFile(ZIM_STRUCTURE * LoadedZim) {
 			memset(LoadedZim->dwBlockStartLocArray, 0, LoadedZim->wNumBlocks * sizeof(DWORD));
 
 			LoadedZim->first=NULL;
-			isZimLoaded=1;
 
 			//Read where the blocks are located, and load them into internal structure, check for obvious errors
 			for (tempWord=0;tempWord<LoadedZim->wNumBlocks; tempWord++) {
@@ -2042,21 +2048,22 @@ int CloseZimFile(ZIM_STRUCTURE *LoadedZim) {
 	VERI_STRUCTURE *tempVeriStruct;
 	USUAL_STRUCTURE *tempUsualStruct;
 
-	if (isZimLoaded==0) return 1;
-	isZimLoaded=0;
+	if (pZim.displayFilename[0]==0) {memset(LoadedZim, 0, sizeof(ZIM_STRUCTURE)); return 1;} //this should ONLY occur if the zim file has no malloc'd children
+
 	topDisplayBlock=0;
 
-	if (LoadedZim->first==NULL) return 1;
 	//We need to go backwards through linked list, freeing all the blockstructs e.g LoadedZim->first
 	//Since we're deleting, we can just enumerate all the structs, then delete
 
-	if (LoadedZim->wNumBlocks==0) {memset(LoadedZim, 0, sizeof(ZIM_STRUCTURE)); return 1;}
+	arrayOfStructPointers=NULL;
+	//if (LoadedZim->wNumBlocks==0) {memset(LoadedZim, 0, sizeof(ZIM_STRUCTURE)); return 1;}
+	if (LoadedZim->wNumBlocks>0)	{
+		arrayOfStructPointers=malloc(LoadedZim->wNumBlocks*sizeof(DWORD));
+		memset(arrayOfStructPointers, 0, LoadedZim->wNumBlocks*sizeof(DWORD));
 
-	arrayOfStructPointers=malloc(LoadedZim->wNumBlocks*sizeof(DWORD));
-	memset(arrayOfStructPointers, 0, LoadedZim->wNumBlocks*sizeof(DWORD));
-
-	ptrBlockStruct=(LoadedZim->first);
-	arrayOfStructPointers[0]=(DWORD)ptrBlockStruct;
+		ptrBlockStruct=(LoadedZim->first);
+		arrayOfStructPointers[0]=(DWORD)ptrBlockStruct;
+	}
 
 	//Load the block pointers in an array, at same time free memory assigned to the furtherblockdetail structs.
 	for (i=1; i<LoadedZim->wNumBlocks; i++) {
@@ -2102,7 +2109,8 @@ int CloseZimFile(ZIM_STRUCTURE *LoadedZim) {
 	if (arrayOfStructPointers)
 		free(arrayOfStructPointers); //free the array that held all of those pointers
 
-	fclose(LoadedZim->pZimFile); //Close the associated file.
+	if (LoadedZim->pZimFile)
+		fclose(LoadedZim->pZimFile); //Close the associated file.
 
     memset(LoadedZim, 0, sizeof(ZIM_STRUCTURE));
 	caretedBlock=0;
@@ -2163,7 +2171,6 @@ int PaintWindow(HWND hwnd) {
 
 	numberFullyDisplayedBlocks=0;
 	for (i=0;(i<pZim.wNumBlocks-topDisplayBlock)&&(i<255);i++) {
-
 		paintSelectRects[i].top=y;
 		paintSelectRects[i].left=clientRect.left;
 		paintSelectRects[i].right=clientRect.right;
@@ -2183,10 +2190,10 @@ int PaintWindow(HWND hwnd) {
 
 	//Displayed regardless
 	y=64;
-	if (!isZimLoaded)
+	if (!pZim.displayFilename[0])
 		ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &clientRect, "Open a .zim file above, or start adding blocks.", 47, NULL);
 
-	if (isZimLoaded) {
+	if (pZim.displayFilename[0]) {
 
 		//Display the header information
 		if (RectVisible(hdc, &headerRect)) {
@@ -2535,6 +2542,21 @@ return 0;
 
 }
 
+int ActivateZimFile(ZIM_STRUCTURE *ZimToActivate)
+{
+
+	sprintf(&ZimToActivate->displayFilename[0], "Untitled");
+	ZimToActivate->displayFilenameNoPath=&ZimToActivate->displayFilename[0];
+	ZimToActivate->pZimFile=NULL;
+
+	ZimToActivate->wNumBlocks=0;
+	ZimToActivate->first=NULL;
+
+	SetWindowText(hwndMain, "ZimView - Untitled");
+
+	return 0;
+
+}
 
 int OpenZimFile(HWND hwnd, ZIM_STRUCTURE *ZimToOpen, char * filename)
 {
@@ -2670,7 +2692,7 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 	} else
 		exportLength=exportLength+sizeof(struct sBlockHeader);
 
-	if (Block->flags==0) {
+	if (!(Block->flags & BSFLAG_INMEMORY)) {
 		//Reserve some memory for the block
 		exportData=malloc(exportLength);
 		if (exportData==NULL) return EXPORTBLOCK_ERR_MEMORYPROBLEM;
@@ -2681,7 +2703,7 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 		free(exportData);
 	}
 
-	if ((Block->flags & BSFLAG_INMEMORY)==1) {
+	if (Block->flags & BSFLAG_INMEMORY) {
 		//Write the header
 		if (includeHeader) {
 			GenerateBlockHeader(&blockHeader, Block->dwDataLength, Block->dwRealChecksum, Block->name);
@@ -2736,8 +2758,10 @@ void *NewBlock(ZIM_STRUCTURE *LoadedZim)
 	newBlock= malloc(sizeof(BLOCK_STRUCTURE));
 	if (newBlock==NULL) return NULL;
 
-	memset(newBlock, 0, sizeof(BLOCK_STRUCTURE));
+	if (LoadedZim->displayFilename[0]==0)
+		ActivateZimFile(LoadedZim);
 
+	memset(newBlock, 0, sizeof(BLOCK_STRUCTURE));
 	if (LoadedZim->wNumBlocks==0) { //if there's no blocks, then the block goes to first
 		LoadedZim->first=newBlock;
 		newBlock->flags=BSFLAG_INMEMORY; //we'll set that its in memory
@@ -2945,7 +2969,8 @@ int SaveAsZim(ZIM_STRUCTURE *LoadedZim)
 		SaveFile=fopen(temporaryfilename, "w+b");
 		WriteZimFile(LoadedZim, SaveFile);
 		fclose(SaveFile);
-		fclose(LoadedZim->pZimFile);
+		if (LoadedZim->pZimFile)
+			fclose(LoadedZim->pZimFile);
 
 		//then move temp file to filename
 		MoveFileEx(&temporaryfilename[0], &filename[0], MOVEFILE_WRITE_THROUGH|MOVEFILE_REPLACE_EXISTING);
@@ -2963,7 +2988,7 @@ int SaveAsZim(ZIM_STRUCTURE *LoadedZim)
 		for (tempWord=0; tempWord<LoadedZim->wNumBlocks; tempWord++) {
 
 			//if it's referenced in the old version, then we really can't keep it.
-			if ((tempBlock->flags & 0x02) && (!(tempBlock->flags & 0x01))) {
+			if ((tempBlock->flags & BSFLAG_DONTWRITE) && (!(tempBlock->flags & BSFLAG_INMEMORY))) {
 				DeleteBlock(LoadedZim, tempWord);
 				tempWord--;
 			}
@@ -3459,7 +3484,7 @@ return;
 
 int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 {
-#define CLIPBOARD_BUFFER_SIZE 64000
+#define CLIPBOARD_BUFFER_SIZE 0xFFFF
 
 	LPTSTR  lptstrCopy;
 	HGLOBAL hglbCopy;
@@ -3768,7 +3793,7 @@ void WINAPI InitMenu(HMENU hmenu)
 			case IDM_EDITCLEAR:
 			case IDM_MOVEUP:
 			case IDM_MOVEDOWN:
-				if (!isZimLoaded) { //if the zim isn't loaded
+				if (!pZim.displayFilename[0]) { //if the zim isn't loaded
 					fuFlags = MF_BYCOMMAND | MF_GRAYED;
 				} else {
 					if (SelectedCount(&pZim)>0)
@@ -3780,7 +3805,8 @@ void WINAPI InitMenu(HMENU hmenu)
 				break;
 			case IDM_SELECTALL:	//we need at least one block to be able to do these
 			case IDM_BLOCKEXPORT:
-				if (isZimLoaded && (pZim.wNumBlocks>0))
+			case IDM_BLOCKCREATEVERIBLOCK:
+				if (pZim.displayFilename[0] && (pZim.wNumBlocks>0))
 					fuFlags = MF_BYCOMMAND | MF_ENABLED;
 				else
 					fuFlags = MF_BYCOMMAND | MF_GRAYED;
@@ -3802,6 +3828,7 @@ void WINAPI InitMenu(HMENU hmenu)
 int PopulatePopupMenu(HMENU hMenu)
 {
 	MENUITEMINFO menuItemInfo;
+	int index;
 
 	memset(&menuItemInfo, 0, sizeof(MENUITEMINFO));
 	menuItemInfo.cbSize=sizeof(MENUITEMINFO);
@@ -3813,15 +3840,17 @@ int PopulatePopupMenu(HMENU hMenu)
 	if (SelectedCount(&pZim)==0)
 		menuItemInfo.fState = MFS_GRAYED;
 
+	index=0;
 	menuItemInfo.dwTypeData="Cu&t";
 	menuItemInfo.cch = 4;
 	menuItemInfo.wID =IDM_EDITCUT;
-	InsertMenuItem(hMenu, 0, TRUE, &menuItemInfo);
+	InsertMenuItem(hMenu, index, TRUE, &menuItemInfo);
+	index++;
 
 	menuItemInfo.dwTypeData="&Copy";
 	menuItemInfo.cch = 5;
 	menuItemInfo.wID =IDM_EDITCOPY;
-	InsertMenuItem(hMenu, 1, TRUE, &menuItemInfo);
+	InsertMenuItem(hMenu, index, TRUE, &menuItemInfo);
 
 
 	menuItemInfo.fState = MFS_GRAYED;
@@ -3833,21 +3862,26 @@ int PopulatePopupMenu(HMENU hMenu)
 	menuItemInfo.wID =IDM_EDITPASTE;
 	InsertMenuItem(hMenu, 2, TRUE, &menuItemInfo);
 
+	menuItemInfo.dwTypeData="&Delete";
+	menuItemInfo.cch = 7;
+	menuItemInfo.wID =IDM_EDITDELETE;
+	InsertMenuItem(hMenu, 3, TRUE, &menuItemInfo);
+
 	menuItemInfo.fMask = MIIM_TYPE;
 	menuItemInfo.fType= MFT_SEPARATOR;
-	InsertMenuItem(hMenu, 3, TRUE, &menuItemInfo);
+	InsertMenuItem(hMenu, 4, TRUE, &menuItemInfo);
 
 	menuItemInfo.fMask = MIIM_STRING|MIIM_ID;
 	menuItemInfo.fType = MFT_STRING;
 	menuItemInfo.dwTypeData="&Export block...";
 	menuItemInfo.wID =IDM_BLOCKEXPORT;
 	menuItemInfo.cch = 16;
-	InsertMenuItem(hMenu, 4, TRUE, &menuItemInfo);
+	InsertMenuItem(hMenu, 5, TRUE, &menuItemInfo);
 
 	menuItemInfo.dwTypeData="P&roperties";
 	menuItemInfo.wID =IDM_PROPERTIES;
 	menuItemInfo.cch = 11;
-	InsertMenuItem(hMenu, 5, TRUE, &menuItemInfo);
+	InsertMenuItem(hMenu, 6, TRUE, &menuItemInfo);
 
 return 1;
 }
