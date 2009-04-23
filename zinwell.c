@@ -238,7 +238,6 @@ int numberDisplayedBlocks=0;		//used for calculating what to draw
 int numberFullyDisplayedBlocks=0;	//used for calculating scrolling (a half block displayed should not be counted, and it should include the highest number that fits)
 RECT paintSelectRects[255];
 
-int isZimLoaded;	//we are going to replace this with pZim.displayFilename[0] (this should be a letter or null)
 struct internalZimStructure pZim;
 
 typedef signed char int8_t;
@@ -1069,13 +1068,13 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	TCITEM tie;
 	HANDLE hTab;
-	int nsel;
+	int nSel;
 	BLOCK_STRUCTURE *selectedBlock;
 	char tempString[255];
 
 	switch(msg) {
 		case WM_INITDIALOG:
-		    nsel = SelectedCount(&pZim);
+		    nSel = SelectedCount(&pZim);
 			SelectedFirst(&pZim, &selectedBlock);
 
 			hTab=GetDlgItem(hwnd, IDC_PROPERTIESTAB);
@@ -1085,15 +1084,15 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		    tie.pszText = "General";
 			TabCtrl_InsertItem(hTab, 0, &tie);
 
-			if (nsel==1)	{
+			if (nSel==1)	{
 				sprintf(&tempString[0], "%s Properties", selectedBlock->name);
 				SetWindowText(hwnd, tempString);
 
 		    	tie.pszText = selectedBlock->name;
 				TabCtrl_InsertItem(hTab, 1, &tie);
 			}
-		    else if (nsel>1)	{
-				sprintf(&tempString[0], "Multiple (%i blocks selected) Properties", nsel);
+		    else if (nSel>1)	{
+				sprintf(&tempString[0], "Multiple (%i blocks selected) Properties", nSel);
 				SetWindowText(hwnd, tempString);
 
 			}
@@ -1160,13 +1159,13 @@ BOOL _stdcall BlockExportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			tempBlockStruct=pZim.first;
 
-			selectedBlockId=-1; //we have no idea what block to export just just
+			selectedBlockId=-1; //we have no idea what block to export just yet
 			for (i=0;i<pZim.wNumBlocks;i++) {
 				SendDlgItemMessage(hwnd, IDC_BLOCKLIST, CB_ADDSTRING, 0, (LPARAM)tempBlockStruct->name);
 				if ((tempBlockStruct->flags & BSFLAG_ISSELECTED) && (selectedBlockId<0)) {
 					selectedBlockId=i;
 					if ((tempBlockStruct->typeOfBlock==BTYPE_BOXI)||(tempBlockStruct->typeOfBlock==BTYPE_VERI))
-				    	CheckDlgButton(hwnd, IDC_BLOCKEXPORTINCLUDEHEADER, BST_CHECKED); //if its a boxi or veri, include header
+				    	CheckDlgButton(hwnd, IDC_BLOCKEXPORTINCLUDEHEADER, BST_CHECKED); //if it's a boxi or veri, include header
 				}
 				tempBlockStruct=tempBlockStruct->next;
 			}
@@ -1436,12 +1435,14 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 		case IDM_MOVEUP:
 			if (caretedBlock>0) {
 				SwapBlocks(&pZim, caretedBlock, caretedBlock-1);
+				RedrawBetweenBlocks(hwnd, &pZim, caretedBlock-1, caretedBlock);
 				caretedBlock--;
 			}
 			break;
 		case IDM_MOVEDOWN:
 			if (caretedBlock<pZim.wNumBlocks-1) {
 				SwapBlocks(&pZim, caretedBlock, caretedBlock+1);
+				RedrawBetweenBlocks(hwnd, &pZim, caretedBlock, caretedBlock+1);
 				caretedBlock++;
 			}
 			break;
@@ -3497,6 +3498,7 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 
 	BLOCK_STRUCTURE *ptrCounterBlock;
 	VERI_STRUCTURE *tempVeriStruct;
+	USUAL_STRUCTURE *tempUsualStruct;
 	WORD counterVeriPart;
 
 	n=SelectedCount(LoadedZim);
@@ -3541,8 +3543,17 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 					case BTYPE_KERN:
 					case BTYPE_LOAD:
 					case BTYPE_NVRM:
-						memcpy(&buffer[cch], ptrCounterBlock->ptrFurtherBlockDetail, sizeof(USUAL_STRUCTURE));
+						tempUsualStruct=ptrCounterBlock->ptrFurtherBlockDetail;
+						memcpy(&buffer[cch], tempUsualStruct, sizeof(USUAL_STRUCTURE));
 						cch+=sizeof(USUAL_STRUCTURE);
+						if (tempUsualStruct->gzipHeader)	{
+							memcpy(&buffer[cch], tempUsualStruct->gzipHeader, sizeof(GZIP_HEADER_BLOCK));
+							cch+=sizeof(GZIP_HEADER_BLOCK);
+						}
+						if (tempUsualStruct->sqshHeader)	{
+							memcpy(&buffer[cch], tempUsualStruct->sqshHeader, sizeof(SQUASHFS_SUPER_BLOCK));
+							cch+=sizeof(SQUASHFS_SUPER_BLOCK);
+						}
 						break;
 				}
 			}
@@ -3620,7 +3631,6 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 }
 
 int EditPaste(HWND hwnd, ZIM_STRUCTURE *LoadedZim) {
-
 	char *ptrCbData;
 	HANDLE hglb;
 	int cch;
@@ -3629,6 +3639,7 @@ int EditPaste(HWND hwnd, ZIM_STRUCTURE *LoadedZim) {
 
 	BLOCK_STRUCTURE *newBlock;
 	VERI_STRUCTURE *tempVeriStruct;
+	USUAL_STRUCTURE *tempUsualStruct;
 	WORD counterVeriPart;
 
 	if (OpenClipboard(hwnd))  {
@@ -3659,6 +3670,17 @@ int EditPaste(HWND hwnd, ZIM_STRUCTURE *LoadedZim) {
 						newBlock->ptrFurtherBlockDetail=malloc(sizeof(USUAL_STRUCTURE));
 						memcpy(newBlock->ptrFurtherBlockDetail, ptrCbData+cch, sizeof(USUAL_STRUCTURE));
 						cch+=sizeof(USUAL_STRUCTURE);
+						tempUsualStruct=newBlock->ptrFurtherBlockDetail;
+						if (tempUsualStruct->gzipHeader)	{
+							tempUsualStruct->gzipHeader=malloc(sizeof(GZIP_HEADER_BLOCK));
+							memcpy(tempUsualStruct->gzipHeader, ptrCbData+cch, sizeof(GZIP_HEADER_BLOCK));
+							cch+=sizeof(GZIP_HEADER_BLOCK);
+						}
+						if (tempUsualStruct->sqshHeader)	{
+							tempUsualStruct->sqshHeader=malloc(sizeof(SQUASHFS_SUPER_BLOCK));
+							memcpy(tempUsualStruct->sqshHeader, ptrCbData+cch, sizeof(SQUASHFS_SUPER_BLOCK));
+							cch+=sizeof(SQUASHFS_SUPER_BLOCK);
+						}
 						break;
 					case BTYPE_BOXI:
 						newBlock->ptrFurtherBlockDetail=malloc(sizeof(BOXI_STRUCTURE));
@@ -3787,6 +3809,14 @@ void WINAPI InitMenu(HMENU hmenu)
 
         switch (id)
         {
+			case IDM_CLOSE:		//there must be an edited file open
+				if (!pZim.displayFilename[0]) //if the zim isn't loaded
+					fuFlags = MF_BYCOMMAND | MF_GRAYED;
+				else
+					fuFlags = MF_BYCOMMAND | MF_ENABLED;
+    	        EnableMenuItem(hmenu, id, fuFlags);
+				break;
+
 			case IDM_EDITCUT:	//at least one block needs to be selected
 			case IDM_EDITCOPY:
 			case IDM_EDITDELETE:
