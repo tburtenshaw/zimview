@@ -1,3 +1,6 @@
+//NB: I've edited this file somewhat. Tristan.
+//Please seek the original if you want it.
+
 /*
  * This code implements the MD5 message-digest algorithm.
  * The algorithm is due to Ron Rivest.  This code was
@@ -28,21 +31,8 @@
    need to worry about whether the system supplies an MD5 library, as
    this file is only about 3k of object code.  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 #include <string.h>	/* for memcpy() and memset() */
-
-/* Add prototype support.  */
-#ifndef PROTO
-#if defined (USE_PROTOTYPES) ? USE_PROTOTYPES : defined (__STDC__)
-#define PROTO(ARGS) ARGS
-#else
-#define PROTO(ARGS) ()
-#endif
-#endif
-
 #include "md5.h"
 
 /* Little-endian byte-swapping routines.  Note that these do not
@@ -53,8 +43,7 @@
 
 static cvs_uint32 getu32 (const unsigned char *addr)
 {
-	return (((((unsigned long)addr[3] << 8) | addr[2]) << 8)
-		| addr[1]) << 8 | addr[0];
+	return (((((unsigned long)addr[3] << 8) | addr[2]) << 8) | addr[1]) << 8 | addr[0];
 }
 
 static void putu32 (cvs_uint32 data, unsigned char *addr)
