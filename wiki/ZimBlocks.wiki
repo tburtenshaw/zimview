@@ -1,0 +1,22 @@
+#summary Describes .zim blocks and their different types.
+
+= Introduction =
+
+Each .zim file contains a number of blocks. These blocks store information that is used by the SetTopBox during an upgrade.
+
+The blocks that have been seen in the wild are:
+ * BOXI blocks
+ * VERI blocks
+ * CODE blocks
+ * KERN blocks
+ * ROOT blocks
+ * NVRM blocks
+
+Two that may also exist (their strings are visible in the firmware's executable file [zmw_base_zinwell]. They are UVER and MCUP.
+
+= Details =
+
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
