@@ -81,3 +81,15 @@ There are no unwind sections in this file.
 
 No version information found in this file.
 }}}
+
+==What does that mean?==
+Well, I don't really know! But here are some cool pictures.
+
+Basically the ELF header in the file says where the executable parts of the file are, and where the data is.
+
+One of those sections contains a string table - a list of all the text strings used in the program. This can be quite interesting to look at, and could give a hint as to what a function that links to it does.
+
+Here is a screenshot of a disassembler viewing the stringtable:
+[http://code.google.com/p/zimview/source/browse/wiki/stringtable.png]
+
+As well as strings, the executable file contains other data. In this case many of the graphics are in the program file itself.
