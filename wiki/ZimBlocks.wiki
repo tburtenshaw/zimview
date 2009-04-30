@@ -19,6 +19,17 @@ Two that may also exist (their strings are visible in the firmware's executable 
 
 Each block has the same type of header.
 
+This is from the source code:
+{{{
+  char  name[4]; // 'ROOT', 'CODE', 'VERI', 'BOXI', 'KERN', 'LOAD','NVRM'
+  DWORD dwDataLength;
+  DWORD reserved[2]; // zero-filled
+  CHAR  blockSignature[4]; // 'B','S', 0x00, 0x00
+  DWORD dwChecksum; // Broken Adler-32
+}}}
+
+The data starts immediately after the header.
+
 = BOXI (Box information) blocks =
 
 The BOXI blocks have information about the [SetTopBox set-top box] including version numbers.
@@ -26,3 +37,15 @@ The BOXI blocks have information about the [SetTopBox set-top box] including ver
 The "Box Info" line on the New Zealand [Freeview] box shows an example of what this contains.
 
 http://zimview.googlecode.com/svn/wiki/freeview_system_info_1.0.8.jpg
+
+This is the structure of a BOXI block:
+{{{
+  WORD  uiOUI;
+  WORD  reserved[3]; // 0x00 filled
+  WORD  wHwVersion; //unsure if this order is correct
+  WORD  wSwVersion;
+  WORD  wHwModel;
+  WORD  wSwModel;
+  char  abStarterMD5Digest[16];
+  DWORD uiStarterImageSize;
+}}}
