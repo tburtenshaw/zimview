@@ -38,6 +38,8 @@ The "Box Info" line on the New Zealand [Freeview] box shows an example of what t
 
 http://zimview.googlecode.com/svn/wiki/freeview_system_info_1.0.8.jpg
 
+Each BOXI block is 36 bytes (plus the block header).
+
 This is the structure of a BOXI block:
 {{{
   WORD  uiOUI;
