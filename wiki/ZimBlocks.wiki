@@ -1,4 +1,5 @@
 #summary Describes .zim blocks and their different types.
+#labels firmware
 
 = Introduction =
 
@@ -14,9 +15,14 @@ The blocks that have been seen in the wild are:
 
 Two that may also exist (their strings are visible in the firmware's executable file [zmw_base_zinwell]. They are UVER and MCUP.
 
-= Details =
+= General structure =
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+Each block has the same type of header.
+
+= BOXI (Box information) blocks =
+
+The BOXI blocks have information about the [SetTopBox set-top box] including version numbers.
+
+The "Box Info" line on the New Zealand [Freeview] box shows an example of what this contains.
+
+http://zimview.googlecode.com/svn/wiki/freeview_system_info_1.0.8.jpg
