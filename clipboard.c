@@ -9,11 +9,12 @@
 #include "zimview.h"
 #include "clipboard.h"
 
+//#define CLIPBOARD_BUFFER_SIZE 0xFFFF
+
+long CalculateClipboardSize(ZIM_STRUCTURE *LoadedZim);
 
 int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 {
-#define CLIPBOARD_BUFFER_SIZE 0xFFFF
-
 	LPTSTR  lptstrCopy;
 	HGLOBAL hglbCopy;
 	HANDLE hSuccess;
@@ -22,7 +23,7 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 	WORD n;
 	int bufferSize;
 	int cch;
-	char buffer[CLIPBOARD_BUFFER_SIZE];
+	char *buffer;
 
 	BLOCK_STRUCTURE *ptrCounterBlock;
 	VERI_STRUCTURE *tempVeriStruct;
@@ -35,35 +36,40 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 	if (!OpenClipboard(hwnd)) return 0;
 	EmptyClipboard();
 
-	//bufferSize=CalculateClipboardSize(LoadedZim);
+	bufferSize=CalculateClipboardSize(LoadedZim);
 
-	//buffer=malloc(CLIPBOARD_BUFFER_SIZE);
+	buffer=malloc(bufferSize);
+
+	if (!buffer)	{
+		MessageBox(hwnd, "Not enough memory to copy all these blocks.", "Copy", MB_OK|MB_ICONEXCLAMATION);
+		return 0;
+	}
 
 	//This writes a stream of data to the buffer, then places a copy in the clipboard
 	//The data stream is the internal blockdata, followed by the additional data
-	memset(&buffer, 0, CLIPBOARD_BUFFER_SIZE);
+	memset(buffer, 0, bufferSize);
 	ptrCounterBlock=LoadedZim->first;
 	cch=0;
 
-	memcpy(&buffer[cch], &n, sizeof(WORD));
+	memcpy(buffer+cch, &n, sizeof(WORD));
 	cch+=sizeof(WORD);
 
 	for (i=0; i<LoadedZim->wNumBlocks; i++) {
 		if (ptrCounterBlock->flags & BSFLAG_ISSELECTED) {
-			memcpy(&buffer[cch], ptrCounterBlock, sizeof(BLOCK_STRUCTURE));
+			memcpy(buffer+cch, ptrCounterBlock, sizeof(BLOCK_STRUCTURE));
 			cch+=sizeof(BLOCK_STRUCTURE);
 
 			if (ptrCounterBlock->ptrFurtherBlockDetail)	{
 				switch (ptrCounterBlock->typeOfBlock)	{
 					case BTYPE_BOXI:
-						memcpy(&buffer[cch], ptrCounterBlock->ptrFurtherBlockDetail, sizeof(BOXI_STRUCTURE));
+						memcpy(buffer+cch, ptrCounterBlock->ptrFurtherBlockDetail, sizeof(BOXI_STRUCTURE));
 						cch+=sizeof(BOXI_STRUCTURE);
 						break;
 					case BTYPE_VERI:
 						tempVeriStruct=ptrCounterBlock->ptrFurtherBlockDetail;
 						counterVeriPart=tempVeriStruct->numberVeriObjects;
 						while (counterVeriPart) {
-							memcpy(&buffer[cch], tempVeriStruct, sizeof(VERI_STRUCTURE));
+							memcpy(buffer+cch, tempVeriStruct, sizeof(VERI_STRUCTURE));
 							cch+=sizeof(VERI_STRUCTURE);
 							counterVeriPart--;
 							if (counterVeriPart) tempVeriStruct=tempVeriStruct->nextStructure;
@@ -75,14 +81,14 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 					case BTYPE_LOAD:
 					case BTYPE_NVRM:
 						tempUsualStruct=ptrCounterBlock->ptrFurtherBlockDetail;
-						memcpy(&buffer[cch], tempUsualStruct, sizeof(USUAL_STRUCTURE));
+						memcpy(buffer+cch, tempUsualStruct, sizeof(USUAL_STRUCTURE));
 						cch+=sizeof(USUAL_STRUCTURE);
 						if (tempUsualStruct->gzipHeader)	{
-							memcpy(&buffer[cch], tempUsualStruct->gzipHeader, sizeof(GZIP_HEADER_BLOCK));
+							memcpy(buffer+cch, tempUsualStruct->gzipHeader, sizeof(GZIP_HEADER_BLOCK));
 							cch+=sizeof(GZIP_HEADER_BLOCK);
 						}
 						if (tempUsualStruct->sqshHeader)	{
-							memcpy(&buffer[cch], tempUsualStruct->sqshHeader, sizeof(SQUASHFS_SUPER_BLOCK));
+							memcpy(buffer+cch, tempUsualStruct->sqshHeader, sizeof(SQUASHFS_SUPER_BLOCK));
 							cch+=sizeof(SQUASHFS_SUPER_BLOCK);
 						}
 						break;
@@ -97,19 +103,20 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 	hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch));
     if (hglbCopy == NULL) {
         CloseClipboard();
-        return 0;
+        free(buffer);
+		return 0;
 	}
 
 	// Lock the handle and copy the binary data to the buffer.
     lptstrCopy = GlobalLock(hglbCopy);
-    memcpy(lptstrCopy, &buffer,  cch);
+    memcpy(lptstrCopy, buffer,  cch);
     GlobalUnlock(hglbCopy);
 	SetClipboardData(uZimBlockFormat, hglbCopy);
 
 
 	/* TEXT */
 	//This writes text to the buffer, then places a copy of it the clipboard
-	memset(&buffer, 0, CLIPBOARD_BUFFER_SIZE);
+	memset(buffer, 0, bufferSize);
 	ptrCounterBlock=LoadedZim->first;
 	cch=0;
 
@@ -130,7 +137,7 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 				RedrawBlock(hwnd, LoadedZim, i);
 			}
 
-			if (cch>1536) i=LoadedZim->wNumBlocks;
+			if (cch>bufferSize) i=LoadedZim->wNumBlocks;
 		}
 
 		ptrCounterBlock=ptrCounterBlock->next;
@@ -140,12 +147,13 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
     hglbCopy = GlobalAlloc(GMEM_MOVEABLE, (cch + 1));
     if (hglbCopy == NULL) {
         CloseClipboard();
+		free(buffer);
         return 0;
 	}
 
     // Lock the handle and copy the text to the buffer.
     lptstrCopy = GlobalLock(hglbCopy);
-    memcpy(lptstrCopy, &buffer,  cch);
+    memcpy(lptstrCopy, buffer,  cch);
     lptstrCopy[cch] = 0;    // null character
     GlobalUnlock(hglbCopy);
 
@@ -154,10 +162,12 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 	if (!hSuccess) {
 		GlobalFree(hglbCopy); //we only need to free if the SetClipboardData didn't work
 		CloseClipboard();
+		free(buffer);
 		return 0;
 	}
 
     CloseClipboard();
+	free(buffer);
 	return 1;
 }
 
@@ -257,3 +267,47 @@ int EditPaste(HWND hwnd, ZIM_STRUCTURE *LoadedZim) {
 	return 1;
 }
 
+long CalculateClipboardSize(ZIM_STRUCTURE *LoadedZim)
+{
+	long maxClipboardSize=0;
+	int i;
+	BLOCK_STRUCTURE *ptrCounterBlock;
+	VERI_STRUCTURE *tempVeriStruct;
+	USUAL_STRUCTURE *tempUsualStruct;
+
+
+	maxClipboardSize+=sizeof(WORD);
+	ptrCounterBlock=LoadedZim->first;
+	//the usual drill. Go through all the blocks, finding the size of them all
+	for (i=0; i<LoadedZim->wNumBlocks; i++) {
+		if (ptrCounterBlock->flags & BSFLAG_ISSELECTED) {
+			maxClipboardSize+=sizeof(BLOCK_STRUCTURE);
+			switch(ptrCounterBlock->typeOfBlock)	{
+				case BTYPE_BOXI:
+					maxClipboardSize+=sizeof(BOXI_STRUCTURE);
+					break;
+				case BTYPE_VERI:
+					tempVeriStruct=ptrCounterBlock->ptrFurtherBlockDetail;
+					maxClipboardSize+=sizeof(VERI_STRUCTURE) * tempVeriStruct->numberVeriObjects;
+					break;
+				case BTYPE_ROOT:
+				case BTYPE_CODE:
+				case BTYPE_KERN:
+				case BTYPE_LOAD:
+				case BTYPE_NVRM:
+					tempUsualStruct=ptrCounterBlock->ptrFurtherBlockDetail;
+					maxClipboardSize+=sizeof(USUAL_STRUCTURE);
+					if (tempUsualStruct->gzipHeader)	{
+						maxClipboardSize+=sizeof(GZIP_HEADER_BLOCK);
+					}
+					if (tempUsualStruct->sqshHeader)	{
+						maxClipboardSize+=sizeof(SQUASHFS_SUPER_BLOCK);
+					}
+					break;
+			}
+		}
+		ptrCounterBlock=ptrCounterBlock->next;
+	}
+
+return 	maxClipboardSize;
+}
