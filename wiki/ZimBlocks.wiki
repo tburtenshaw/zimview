@@ -51,3 +51,9 @@ This is the structure of a BOXI block:
   char  abStarterMD5Digest[16];
   DWORD uiStarterImageSize;
 }}}
+
+= KERN blocks =
+
+KERN blocks contain a gzipped _vmlinux_ executable. Vmlinux is an executable file that contains the linux kernel. In the Olevia and "Sony" versions this is an ELF executable.
+
+http://zimview.googlecode.com/svn/wiki/kern_block_open.png
