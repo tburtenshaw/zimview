@@ -30,7 +30,7 @@ This is from the source code:
 
 The data starts immediately after the header.
 
-= BOXI (box information) blocks =
+== BOXI (box information) blocks ==
 
 The BOXI blocks have information about the [SetTopBox set-top box] including version numbers.
 
@@ -52,10 +52,24 @@ This is the structure of a BOXI block:
   DWORD uiStarterImageSize;
 }}}
 
-= KERN (kernel) blocks =
+== KERN (kernel) blocks ==
 
 KERN blocks contain a gzipped _vmlinux_ executable. [http://en.wikipedia.org/wiki/Vmlinux Vmlinux] is an executable file that contains the linux kernel. In the Olevia and "Sony" versions this is an ELF executable.
 
 http://zimview.googlecode.com/svn/wiki/kern_block_open.png
 
-The file (i.e. vmlinux) is never unzipped. It is copied onto the [flash memory FlashMemory] of the set-top box directly. Specifically it goes to _flash0.kernel_.
+The file (i.e. vmlinux) is never unzipped. It is copied onto the [FlashMemory flash memory] of the set-top box directly. Specifically it goes to _flash0.kernel_.
+
+== NVRM (non-volatile ram) blocks ==
+
+NVRM blocks aren't in the Olevia zim files. This suggests that this part of the firmware is not updated.
+
+This block contains mostly padding with 0xFF, a few random binary characters, then what looks like a start up variable.
+
+{{{STARTUP=boot -z -elf flash0.kernel: 'root=/dev/mtdblock0 rootfstype=squashfs'}}}
+
+You can see this string in action in the boot string (this example from [Freeview] box)
+{{{
+Loader:elf Filesys:raw Dev:flash0.kernel File: Options:root=/dev/mtdblock0 rootfstype=squashfs
+Loading: 0x80197086/69530 Entry address is 0x8017f000
+}}}
