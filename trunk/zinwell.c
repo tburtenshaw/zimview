@@ -5,8 +5,8 @@
 #include <string.h>
 #include "zinwellres.h"
 #include "sqsh.h"
-#include "md5.h"
 #include "zimview.h"
+#include "md5.h"
 #include "clipboard.h"
 
 int isFocused=0;
@@ -26,15 +26,6 @@ int numberFullyDisplayedBlocks=0;	//used for calculating scrolling (a half block
 RECT paintSelectRects[255];
 
 struct internalZimStructure pZim;
-
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-typedef signed int int16_t;
-typedef unsigned int uint16_t;
-typedef signed long int int32_t;
-typedef unsigned long int uint32_t;
-typedef signed long long int int64_t;
-typedef unsigned long long int uint64_t;
 
 #define MOD_ADLER 65521
 
@@ -2332,7 +2323,6 @@ return 0;
 
 int ActivateZimFile(ZIM_STRUCTURE *ZimToActivate)
 {
-
 	sprintf(&ZimToActivate->displayFilename[0], "Untitled");
 	ZimToActivate->displayFilenameNoPath=&ZimToActivate->displayFilename[0];
 	ZimToActivate->pZimFile=NULL;
@@ -2343,7 +2333,6 @@ int ActivateZimFile(ZIM_STRUCTURE *ZimToActivate)
 	SetWindowText(hwndMain, "ZimView - Untitled");
 
 	return 0;
-
 }
 
 int OpenZimFile(HWND hwnd, ZIM_STRUCTURE *ZimToOpen, char * filename)
@@ -3485,11 +3474,8 @@ if (oldTopDisplayBlock!=topDisplayBlock)
     si.nPos  = topDisplayBlock;         // scrollbar thumb position
     si.nPage = numberFullyDisplayedBlocks;        // number of lines in a page (i.e. rows of text in window)
     si.nMin  = 0;
-    si.nMax  = LoadedZim->wNumBlocks;      // total number of lines in file (i.e. total scroll range)
+    si.nMax  = LoadedZim->wNumBlocks-1;      // total number of lines in file (i.e. total scroll range)
 
     SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
-
-
-
 return 0;
 }
