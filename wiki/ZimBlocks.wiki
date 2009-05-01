@@ -30,7 +30,7 @@ This is from the source code:
 
 The data starts immediately after the header.
 
-= BOXI (Box information) blocks =
+= BOXI (box information) blocks =
 
 The BOXI blocks have information about the [SetTopBox set-top box] including version numbers.
 
@@ -52,8 +52,8 @@ This is the structure of a BOXI block:
   DWORD uiStarterImageSize;
 }}}
 
-= KERN blocks =
+= KERN (kernel) blocks =
 
-KERN blocks contain a gzipped _vmlinux_ executable. Vmlinux is an executable file that contains the linux kernel. In the Olevia and "Sony" versions this is an ELF executable.
+KERN blocks contain a gzipped _vmlinux_ executable. [http://en.wikipedia.org/wiki/Vmlinux Vmlinux] is an executable file that contains the linux kernel. In the Olevia and "Sony" versions this is an ELF executable.
 
 http://zimview.googlecode.com/svn/wiki/kern_block_open.png
