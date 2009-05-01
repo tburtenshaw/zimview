@@ -57,3 +57,5 @@ This is the structure of a BOXI block:
 KERN blocks contain a gzipped _vmlinux_ executable. [http://en.wikipedia.org/wiki/Vmlinux Vmlinux] is an executable file that contains the linux kernel. In the Olevia and "Sony" versions this is an ELF executable.
 
 http://zimview.googlecode.com/svn/wiki/kern_block_open.png
+
+The file (i.e. vmlinux) is never unzipped. It is copied onto the [flash memory FlashMemory] of the set-top box directly. Specifically it goes to _flash0.kernel_.
