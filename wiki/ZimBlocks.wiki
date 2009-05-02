@@ -62,7 +62,7 @@ The file (i.e. vmlinux) is never unzipped. It is copied onto the [FlashMemory fl
 
 == NVRM (non-volatile ram) blocks ==
 
-NVRM blocks aren't in the Olevia zim files. This suggests that this part of the firmware is not updated.
+NVRM blocks aren't in the [Olevia] zim files. This suggests that this part of the firmware is not updated very often.
 
 This block contains mostly padding with 0xFF, a few random binary characters, then what looks like a start up variable.
 
