@@ -73,3 +73,17 @@ You can see this string in action in the boot string (this example from [Freevie
 Loader:elf Filesys:raw Dev:flash0.kernel File: Options:root=/dev/mtdblock0 rootfstype=squashfs
 Loading: 0x80197086/69530 Entry address is 0x8017f000
 }}}
+
+== VERI (verification or version info) blocks ==
+VERI blocks contain a number of listings that correspond to the blocks before it. The information about the blocks includes: _(taken from dtvforum.co.nz)_
+{{{
+  char  blockName[4];
+  char  version_d;
+  char  version_c;
+  char  version_b;
+  char  version_a; // version = a.b.d
+  DWORD reserved[2]; // 0xFF filled
+  BYTE  md5Digest[16]; // Calculated on the relevant Block.data
+}}}
+
+So it has the name of the block. Then the version number of that block.
