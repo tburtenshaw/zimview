@@ -9,10 +9,6 @@
 #include "zimview.h"
 #include "clipboard.h"
 
-//#define CLIPBOARD_BUFFER_SIZE 0xFFFF
-
-long CalculateClipboardSize(ZIM_STRUCTURE *LoadedZim);
-
 int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 {
 	LPTSTR  lptstrCopy;
