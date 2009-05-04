@@ -200,6 +200,7 @@ void MouseBlockSelect(int *ptrBlockNumber, HWND hwnd, ZIM_STRUCTURE *LoadedZim, 
 void MouseBlockMoveSelect(int *ptrBlockNumber, HWND hwnd, ZIM_STRUCTURE *LoadedZim, int x, int y);
 
 long OnMouseWheel(HWND hwnd, ZIM_STRUCTURE *LoadedZim, short nDelta);
+void ScrollUpdate(HWND hwnd, ZIM_STRUCTURE *LoadedZim);
 
 int RedrawSelectedBlocks(HWND hwnd, ZIM_STRUCTURE *LoadedZim);
 int RedrawBlock(HWND hwnd, ZIM_STRUCTURE *LoadedZim, int block);

@@ -649,7 +649,7 @@ struct cvs_MD5Context MD5context;
 				case IDC_BLOCKIMPORTVERI:
 				case IDC_BLOCKIMPORTLOAD:
 				case IDC_BLOCKIMPORTNVRM:
-                    CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, LOWORD(wParam));
+                    CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, LOWORD(wParam));
 					return 1;
 				case IDCANCEL:
 					EndDialog(hwnd,1);
@@ -1314,6 +1314,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		if (wParam==VK_UP) caretedBlock--;
 		if (wParam==VK_HOME) caretedBlock=0;
 		if (wParam==VK_END) caretedBlock=pZim.wNumBlocks-1;
+		if (wParam==VK_PRIOR) caretedBlock-=numberFullyDisplayedBlocks; //page up
+		if (wParam==VK_NEXT) caretedBlock+=numberFullyDisplayedBlocks; //page down
 
 		if (wParam==VK_SPACE)	{
 			if (GetKeyState(VK_CONTROL)<0)	{
@@ -1330,11 +1332,17 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		if (caretedBlock<0) caretedBlock=0;
 		if (caretedBlock>=pZim.wNumBlocks) caretedBlock=pZim.wNumBlocks-1;
 
-		if (caretedBlock<topDisplayBlock)
-			OnMouseWheel(hwnd, &pZim, 1);
+		if (caretedBlock<topDisplayBlock)	{
+			topDisplayBlock=caretedBlock;
+			ScrollUpdate(hwnd, &pZim);
+			InvalidateRect(hwnd, NULL, FALSE);
+		}
 
-		if (caretedBlock>=topDisplayBlock+numberFullyDisplayedBlocks)	//we need another variable with FULLY displayed block
-			OnMouseWheel(hwnd, &pZim, -1);
+		if (caretedBlock>=topDisplayBlock+numberFullyDisplayedBlocks)	{	//we need another variable with FULLY displayed block
+			topDisplayBlock=max(0, caretedBlock-numberFullyDisplayedBlocks+1);
+			ScrollUpdate(hwnd, &pZim);
+			InvalidateRect(hwnd, NULL, FALSE);
+		}
 
 
 		//If the selected block has changed
@@ -2400,13 +2408,13 @@ fread(&blockFileLengthData, 4, 1, impBlock);
 
 if (fileLength==DWORD_swap_endian(blockFileLengthData)+sizeof(struct sBlockHeader)) {
 	CheckDlgButton(hwnd, IDC_BLOCKIMPORTINCLUDEHEADER, BST_CHECKED); //the block probably contains a header
-	if (magic==BID_DWORD_LOAD) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTLOAD);}
-	if (magic==BID_DWORD_ROOT) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTROOT);}
-	if (magic==BID_DWORD_CODE) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTCODE);}
-	if (magic==BID_DWORD_KERN) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTKERN);}
-	if (magic==BID_DWORD_NVRM) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTNVRM);}
-	if (magic==BID_DWORD_BOXI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTBOXI);}
-	if (magic==BID_DWORD_VERI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTVERI);}
+	if (magic==BID_DWORD_LOAD) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTLOAD);}
+	if (magic==BID_DWORD_ROOT) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTROOT);}
+	if (magic==BID_DWORD_CODE) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTCODE);}
+	if (magic==BID_DWORD_KERN) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTKERN);}
+	if (magic==BID_DWORD_NVRM) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTNVRM);}
+	if (magic==BID_DWORD_BOXI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTBOXI);}
+	if (magic==BID_DWORD_VERI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTVERI);}
 
 	fclose(impBlock);
 	return 0;
@@ -2417,22 +2425,22 @@ CheckDlgButton(hwnd, IDC_BLOCKIMPORTINCLUDEHEADER, BST_UNCHECKED);
 if (((magic==SQUASHFS_MAGIC_LZMA)||(magic==SQUASHFS_MAGIC))&&(fileLength>=sizeof(SQUASHFS_SUPER_BLOCK))) {
 	fseek(impBlock, 0, SEEK_SET);
 	fread(&sqshHeader, sizeof(SQUASHFS_SUPER_BLOCK), 1, impBlock);
-	if ((sqshHeader.inodes>=3)&&(sqshHeader.inodes<=10)) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTCODE);}
-	if ((sqshHeader.inodes>=250)&&(sqshHeader.inodes<=350)) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTROOT);}
+	if ((sqshHeader.inodes>=3)&&(sqshHeader.inodes<=10)) {CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTCODE);}
+	if ((sqshHeader.inodes>=250)&&(sqshHeader.inodes<=350)) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTROOT);}
 
 	fclose(impBlock);
 	return 0;
 	}
 
 if ((magic & 0xffff)==0x8b1f) { //KERNs i have seen are the only GZIP files i've seen
-	CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTKERN);
+	CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTKERN);
 	fclose(impBlock);
 	return 0;
 }
 
 
 if (fileLength==36) {//BOXI without header is 36 bytes
-	CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTBOXI);
+	CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTBOXI);
 	fclose(impBlock);
 	return 0;
 }
@@ -2440,7 +2448,7 @@ if (fileLength==36) {//BOXI without header is 36 bytes
 if (!(fileLength & 0x1F)) { //if divisible by 32, it _could_ be a VERI block
 
 	if ((magic==BID_DWORD_LOAD)||(magic==BID_DWORD_ROOT)||(magic==BID_DWORD_CODE)||(magic==BID_DWORD_KERN)||(magic==BID_DWORD_NVRM)||(magic==BID_DWORD_BOXI)||(magic==BID_DWORD_VERI)) {
-		CheckRadioButton(hwnd,IDC_BLOCKIMPORTROOT, IDC_BLOCKIMPORTNVRM, IDC_BLOCKIMPORTVERI);
+		CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTVERI);
 		fclose(impBlock);
 		return 0;
 	}
@@ -3450,23 +3458,29 @@ return 1;
 
 long OnMouseWheel(HWND hwnd, ZIM_STRUCTURE *LoadedZim, short nDelta)
 {
-int oldTopDisplayBlock;
+	int oldTopDisplayBlock;
 
-oldTopDisplayBlock = topDisplayBlock;
+	oldTopDisplayBlock = topDisplayBlock;
 
-if (nDelta<0) {
-	topDisplayBlock++;
-	if (topDisplayBlock>=LoadedZim->wNumBlocks-numberFullyDisplayedBlocks) topDisplayBlock=LoadedZim->wNumBlocks-numberFullyDisplayedBlocks;
+	if (nDelta<0) {
+		topDisplayBlock++;
+		if (topDisplayBlock>=LoadedZim->wNumBlocks-numberFullyDisplayedBlocks) topDisplayBlock=LoadedZim->wNumBlocks-numberFullyDisplayedBlocks;
+	}
+	if (nDelta>0) {
+		topDisplayBlock--;
+		if (topDisplayBlock<0) topDisplayBlock=0;
+	}
+
+	if (oldTopDisplayBlock!=topDisplayBlock)
+		InvalidateRect(hwnd, NULL, FALSE);
+
+	ScrollUpdate(hwnd, LoadedZim);
+
+return 0;
 }
-if (nDelta>0) {
-	topDisplayBlock--;
-	if (topDisplayBlock<0) topDisplayBlock=0;
-}
 
-if (oldTopDisplayBlock!=topDisplayBlock)
-	InvalidateRect(hwnd, NULL, FALSE);
-
-
+void ScrollUpdate(HWND hwnd, ZIM_STRUCTURE *LoadedZim)
+{
     SCROLLINFO si = { sizeof(si) };
 
     si.fMask = SIF_POS | SIF_PAGE | SIF_RANGE | SIF_DISABLENOSCROLL;
@@ -3477,5 +3491,6 @@ if (oldTopDisplayBlock!=topDisplayBlock)
     si.nMax  = LoadedZim->wNumBlocks-1;      // total number of lines in file (i.e. total scroll range)
 
     SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
-return 0;
+
+	return;
 }
