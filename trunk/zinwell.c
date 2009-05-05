@@ -8,6 +8,8 @@
 #include "zimview.h"
 #include "md5.h"
 #include "clipboard.h"
+#include "dialogs.h"
+#include "adler.h"
 
 int isFocused=0;
 int showCaret=0;
@@ -27,47 +29,13 @@ RECT paintSelectRects[255];
 
 struct internalZimStructure pZim;
 
-#define MOD_ADLER 65521
-
-/*Because I will be calculating adler-32 for 'parts' of file
-  (e.g. in blocks that checksum wraps around, or chunks of
-  data that are not all in a file) I need to hold the adler value*/
-struct adlerstruct
-{
-	unsigned long int a;
-	unsigned long int b;
-};
-
-typedef struct adlerstruct ADLER_STRUCTURE;
-
-//memset the adlerhold to zero to begin
-unsigned long int ChecksumAdler32(ADLER_STRUCTURE *adlerhold, unsigned char *data, size_t len)
-{
-	unsigned long int a;
-	unsigned long int b;
-
-	a=adlerhold->a;
-	b=adlerhold->b;
-
-    while (len != 0)
-    {
-        a = (a + *data++) % MOD_ADLER;
-        b = (b + a) % MOD_ADLER;
-
-        len--;
-    }
-
-	adlerhold->a=a;
-	adlerhold->b=b;
-
-    return (b << 16) | a;
-}
 
 unsigned long int AdlerOnFile(FILE *fileToRead, ADLER_STRUCTURE *adlerhold, DWORD offset, DWORD len)
 {
 	char *buffer;
 	DWORD finish;		//the last byte to read
 	DWORD lengthtoread; //how much to read each step (should not exceed BLOCKSIZE)
+
 
 	if (len==0) {
 		return (adlerhold->b << 16) | adlerhold->a;
@@ -255,23 +223,6 @@ static BOOL InitApplication(void)
 
 
 	return 1;
-}
-
-BOOL _stdcall AboutDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	switch(msg) {
-		case WM_CLOSE:
-			EndDialog(hwnd,0);
-			return 1;
-		case WM_COMMAND:
-			switch (LOWORD(wParam)) {
-				case IDOK:
-					EndDialog(hwnd,1);
-					return 1;
-			}
-			break;
-	}
-	return 0;
 }
 
 BOOL _stdcall ChangeCustomerNumberDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -537,83 +488,6 @@ int *arraySelectedLB;
 }
 
 
-BOOL _stdcall BlockCreateBoxiDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-BLOCK_STRUCTURE *newBlock;
-BOXI_STRUCTURE *tempBoxiStruct;
-
-ADLER_STRUCTURE adlerholder;
-struct cvs_MD5Context MD5context;
-struct sBlockHeader blockHeader;
-
-char buffer[255];
-
-	switch(msg) {
-		case WM_CLOSE:
-			EndDialog(hwnd,0);
-			return 1;
-		case WM_COMMAND:
-			switch (LOWORD(wParam)) {
-				case IDOK:
-					newBlock=NewBlock(&pZim);
-
-					newBlock->typeOfBlock=BTYPE_BOXI;
-					sprintf(newBlock->name, "BOXI");
-					newBlock->dwDataLength= sizeof(BOXIBLOCK_STRUCTURE);
-
-					newBlock->ptrFurtherBlockDetail=malloc(sizeof(BOXI_STRUCTURE));
-					if (newBlock->ptrFurtherBlockDetail==NULL) {
-						MessageBox(hwnd, "There is insufficient memory to create a new BOXI block.", "Create BOXI block", MB_OK|MB_ICONEXCLAMATION);
-						return 0;
-					}
-					tempBoxiStruct=newBlock->ptrFurtherBlockDetail;
-					memset(&tempBoxiStruct->boxiFileData, 0, sizeof(BOXIBLOCK_STRUCTURE));
-
-					GetDlgItemText(hwnd, IDC_BOXIOUI, &buffer[0], 255);
-					tempBoxiStruct->boxiFileData.uiOUI=strtoul(&buffer[0], NULL, 0);
-					GetDlgItemText(hwnd, IDC_BOXISTARTERIMAGESIZE, &buffer[0], 255);
-					tempBoxiStruct->boxiFileData.uiStarterImageSize=strtoul(&buffer[0], NULL, 0);
-					GetDlgItemText(hwnd, IDC_BOXIHWV, &buffer[0], 255);
-					tempBoxiStruct->boxiFileData.wHwVersion=strtoul(&buffer[0], NULL, 0);
-					GetDlgItemText(hwnd, IDC_BOXISWV, &buffer[0], 255);
-					tempBoxiStruct->boxiFileData.wSwVersion=strtoul(&buffer[0], NULL, 0);
-					GetDlgItemText(hwnd, IDC_BOXIHWM, &buffer[0], 255);
-					tempBoxiStruct->boxiFileData.wHwModel=strtoul(&buffer[0], NULL, 0);
-					GetDlgItemText(hwnd, IDC_BOXISWM, &buffer[0], 255);
-					tempBoxiStruct->boxiFileData.wSwModel=strtoul(&buffer[0], NULL, 0);
-
-					GetDlgItemText(hwnd, IDC_BOXISTARTERMD5, &buffer[0], 255);
-					MD5StringToArray(tempBoxiStruct->boxiFileData.abStarterMD5Digest, &buffer[0]);
-
-					//Now calculate MD5 and adler on this block
-					//MD5 just on the data
-					cvs_MD5Init(&MD5context);
-					cvs_MD5Update (&MD5context, &(tempBoxiStruct->boxiFileData), sizeof(BOXIBLOCK_STRUCTURE));
-					cvs_MD5Final (&newBlock->md5, &MD5context);
-					//Adler32 on the data then block header
-					memset(&adlerholder, 0, sizeof(adlerholder));
-					ChecksumAdler32(&adlerholder, &(tempBoxiStruct->boxiFileData), sizeof(BOXIBLOCK_STRUCTURE)); //the boxi we loaded
-					GenerateBlockHeader(&blockHeader, newBlock->dwDataLength, 0, "BOXI");
-					newBlock->blockSignature[0]=blockHeader.blockSignature[0];
-					newBlock->blockSignature[1]=blockHeader.blockSignature[1];
-					newBlock->blockSignature[2]=blockHeader.blockSignature[2];
-					newBlock->blockSignature[3]=blockHeader.blockSignature[3];
-
-					newBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
-
-					InvalidateRect(hwndMain, NULL, TRUE);
-					EndDialog(hwnd,1);
-					return 1;
-				case IDCANCEL:
-					EndDialog(hwnd,1);
-					return 1;
-			}
-			break;
-	}
-	return 0;
-}
-
-
 BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 OPENFILENAME ofnImport;
@@ -842,74 +716,6 @@ struct cvs_MD5Context MD5context;
 	return 0;
 }
 
-BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	TCITEM tie;
-	HANDLE hTab;
-	int nSel;
-	BLOCK_STRUCTURE *selectedBlock;
-	char tempString[255];
-
-	switch(msg) {
-		case WM_INITDIALOG:
-		    nSel = SelectedCount(&pZim);
-			SelectedFirst(&pZim, &selectedBlock);
-
-			hTab=GetDlgItem(hwnd, IDC_PROPERTIESTAB);
-
-		    tie.mask = TCIF_TEXT | TCIF_IMAGE;
-		    tie.iImage = -1;
-		    tie.pszText = "General";
-			TabCtrl_InsertItem(hTab, 0, &tie);
-
-			if (nSel==1)	{
-				sprintf(&tempString[0], "%s Properties", selectedBlock->name);
-				SetWindowText(hwnd, tempString);
-
-		    	tie.pszText = selectedBlock->name;
-				TabCtrl_InsertItem(hTab, 1, &tie);
-			}
-		    else if (nSel>1)	{
-				sprintf(&tempString[0], "Multiple (%i blocks selected) Properties", nSel);
-				SetWindowText(hwnd, tempString);
-
-			}
-			else {
-				sprintf(&tempString[0], "%s Properties", pZim.displayFilenameNoPath);
-				SetWindowText(hwnd, tempString);
-			}
-
-			break;
-		case WM_NOTIFY:
-            switch (((LPNMHDR)lParam)->code)
-            {
-            case TCN_SELCHANGE:
-            	//MessageBox(hwnd, "t", "t", 00);
-				break;
-        	default:
-            	return DefWindowProc(hwnd, msg, wParam, lParam);
-			}
-			return 0;
-		case WM_CLOSE:
-			EndDialog(hwnd,0);
-			return 1;
-		case WM_COMMAND:
-			switch (LOWORD(wParam)) {
-				case IDCANCEL:
-					EndDialog(hwnd,1);
-					return 1;
-				case IDAPPLY:
-					return 1;
-				case IDOK:
-					EndDialog(hwnd,1);
-					return 1;
-			}
-			break;
-	}
-	return 0;
-}
-
-
 
 
 BOOL _stdcall BlockExportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -1116,7 +922,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			DialogBox(hInst,MAKEINTRESOURCE(IDD_ABOUT),	hwndMain, AboutDlg);
 			break;
 		case IDM_PROPERTIES:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_PROPERTIES), hwndMain, PropertiesDlg);
+			DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_PROPERTIES), hwndMain, PropertiesDlg, (long)&pZim);
 			break;
 		case IDM_BLOCKEXPORT:
 			if (pZim.displayFilename[0]) {
@@ -1139,7 +945,8 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			}
 			break;
 		case IDM_BLOCKCREATEBOXIBLOCK:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_BOXIBLOCK), hwndMain, BlockCreateBoxiDlg);
+			DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BOXIBLOCK), hwndMain, BlockCreateBoxiDlg, (long)&pZim);
+			InvalidateRect(hwndMain, NULL, TRUE);
 			break;
 		case IDM_BLOCKCREATEVERIBLOCK:
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_VERIBLOCK), hwndMain, BlockCreateVeriDlg);
@@ -1268,6 +1075,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		break;
 	case WM_PAINT:
 		PaintWindow(hwnd);
+		ScrollUpdate(hwnd, &pZim);
 		break;
 	case WM_SIZE:
 		SendMessage(hWndStatusbar,msg,wParam,lParam);
