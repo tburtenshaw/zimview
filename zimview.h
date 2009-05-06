@@ -176,7 +176,6 @@ int PaintWindow(HWND hwnd);
 int DrawCaret(HDC hdc, RECT *lpRect, COLORREF colour1, COLORREF colour2);
 void WINAPI InitMenu(HMENU hmenu);
 
-int DetectTypeOfBlock(HWND hwnd, char *filename);
 int DisableSelected(ZIM_STRUCTURE *LoadedZim);
 int DeleteBlock(ZIM_STRUCTURE *LoadedZim, WORD blocknumber);
 int DeleteSelectedBlocks(ZIM_STRUCTURE *LoadedZim);

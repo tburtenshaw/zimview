@@ -632,9 +632,6 @@ HWND CreateAToolBar(HWND hwndParent)
 	int standardToolbarIndex;
 	int myToolbarIndex[2];
 
-	// Ensure that the common control DLL is loaded.
-	//InitCommonControls(); (we load the Ex version at initiation)
-
 	// Create a toolbar that the user can customize and that has a
 	// tooltip associated with it.
 	hwndTB = CreateWindowEx(0, TOOLBARCLASSNAME, (LPSTR) NULL,
@@ -1505,79 +1502,6 @@ else {
 	return 1;
 }
 
-return 0;
-}
-
-int DetectTypeOfBlock(HWND hwnd, char *filename)
-{
-FILE *impBlock;
-DWORD magic;
-
-SQUASHFS_SUPER_BLOCK sqshHeader;
-DWORD fileLength;
-DWORD blockFileLengthData;
-
-impBlock= fopen(filename, "rb");
-if (impBlock==NULL) return 0;
-
-fseek(impBlock, 0, SEEK_END);
-fileLength=ftell(impBlock);
-
-if (fileLength<8) {fclose(impBlock); return 0;}
-rewind(impBlock);
-
-fread(&magic, 4, 1, impBlock);
-fread(&blockFileLengthData, 4, 1, impBlock);
-
-if (fileLength==DWORD_swap_endian(blockFileLengthData)+sizeof(struct sBlockHeader)) {
-	CheckDlgButton(hwnd, IDC_BLOCKIMPORTINCLUDEHEADER, BST_CHECKED); //the block probably contains a header
-	if (magic==BID_DWORD_LOAD) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTLOAD);}
-	if (magic==BID_DWORD_ROOT) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTROOT);}
-	if (magic==BID_DWORD_CODE) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTCODE);}
-	if (magic==BID_DWORD_KERN) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTKERN);}
-	if (magic==BID_DWORD_NVRM) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTNVRM);}
-	if (magic==BID_DWORD_BOXI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTBOXI);}
-	if (magic==BID_DWORD_VERI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTVERI);}
-
-	fclose(impBlock);
-	return 0;
-}
-
-CheckDlgButton(hwnd, IDC_BLOCKIMPORTINCLUDEHEADER, BST_UNCHECKED);
-
-if (((magic==SQUASHFS_MAGIC_LZMA)||(magic==SQUASHFS_MAGIC))&&(fileLength>=sizeof(SQUASHFS_SUPER_BLOCK))) {
-	fseek(impBlock, 0, SEEK_SET);
-	fread(&sqshHeader, sizeof(SQUASHFS_SUPER_BLOCK), 1, impBlock);
-	if ((sqshHeader.inodes>=3)&&(sqshHeader.inodes<=10)) {CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTCODE);}
-	if ((sqshHeader.inodes>=250)&&(sqshHeader.inodes<=350)) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTROOT);}
-
-	fclose(impBlock);
-	return 0;
-	}
-
-if ((magic & 0xffff)==0x8b1f) { //KERNs i have seen are the only GZIP files i've seen
-	CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTKERN);
-	fclose(impBlock);
-	return 0;
-}
-
-
-if (fileLength==36) {//BOXI without header is 36 bytes
-	CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTBOXI);
-	fclose(impBlock);
-	return 0;
-}
-
-if (!(fileLength & 0x1F)) { //if divisible by 32, it _could_ be a VERI block
-
-	if ((magic==BID_DWORD_LOAD)||(magic==BID_DWORD_ROOT)||(magic==BID_DWORD_CODE)||(magic==BID_DWORD_KERN)||(magic==BID_DWORD_NVRM)||(magic==BID_DWORD_BOXI)||(magic==BID_DWORD_VERI)) {
-		CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTVERI);
-		fclose(impBlock);
-		return 0;
-	}
-}
-
-fclose(impBlock);
 return 0;
 }
 
