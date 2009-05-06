@@ -147,9 +147,10 @@ struct internalBlockStructure //used internally
 #define EXPORTBLOCK_ERR_SUCCESS 0
 #define EXPORTBLOCK_ERR_MEMORYPROBLEM 8
 
-
 int MD5HexString(char * outputString, char * MD5array);
 int MD5StringToArray(char * MD5array, char * inputString);
+unsigned long int AdlerOnFile(FILE *fileToRead, ADLER_STRUCTURE *adlerhold, DWORD offset, DWORD len);
+void MD5OnFile(FILE *fileToRead, struct cvs_MD5Context *ctx, DWORD offset, DWORD len);
 
 DWORD DWORD_swap_endian(DWORD dw);
 WORD WORD_swap_endian(WORD w);
@@ -174,9 +175,6 @@ WORD CalculateOffsetForWriting(ZIM_STRUCTURE *LoadedZim);
 int PaintWindow(HWND hwnd);
 int DrawCaret(HDC hdc, RECT *lpRect, COLORREF colour1, COLORREF colour2);
 void WINAPI InitMenu(HMENU hmenu);
-BOOL _stdcall BlockExportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 int DetectTypeOfBlock(HWND hwnd, char *filename);
 int DisableSelected(ZIM_STRUCTURE *LoadedZim);
@@ -207,6 +205,5 @@ int RedrawBlock(HWND hwnd, ZIM_STRUCTURE *LoadedZim, int block);
 int RedrawBetweenBlocks(HWND hwnd, ZIM_STRUCTURE *LoadedZim, int startblock, int endblock);
 int RedrawMoveIndicator(HWND hwnd, int loc);
 
-void BlockExportDetailsUpdate(HWND hwnd, int blockid);
 int PopulatePopupMenu(HMENU hMenu);
 
