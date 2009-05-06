@@ -5,11 +5,11 @@
 #include <string.h>
 #include "zinwellres.h"
 #include "sqsh.h"
-#include "zimview.h"
+#include "adler.h"
 #include "md5.h"
+#include "zimview.h"
 #include "clipboard.h"
 #include "dialogs.h"
-#include "adler.h"
 
 int isFocused=0;
 int showCaret=0;
@@ -29,6 +29,13 @@ RECT paintSelectRects[255];
 
 struct internalZimStructure pZim;
 
+HINSTANCE hInst;		// Instance handle
+HWND hwndMain;		//Main window handle
+
+HWND hwndToolBar;
+LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg,WPARAM wParam,LPARAM lParam);
+
+HWND  hWndStatusbar;
 
 unsigned long int AdlerOnFile(FILE *fileToRead, ADLER_STRUCTURE *adlerhold, DWORD offset, DWORD len)
 {
@@ -85,17 +92,6 @@ void MD5OnFile(FILE *fileToRead, struct cvs_MD5Context *ctx, DWORD offset, DWORD
 
 	return;
 };
-
-
-
-/*<---------------------------------------------------------------------->*/
-HINSTANCE hInst;		// Instance handle
-HWND hwndMain;		//Main window handle
-
-HWND hwndToolBar;
-LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg,WPARAM wParam,LPARAM lParam);
-
-HWND  hWndStatusbar;
 
 void UpdateStatusBar(LPSTR lpszStatusString, WORD partNumber, WORD displayFlags)
 {
@@ -225,695 +221,11 @@ static BOOL InitApplication(void)
 	return 1;
 }
 
-BOOL _stdcall ChangeCustomerNumberDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	char customerNumber[16];
-
-	switch(msg) {
-		case WM_INITDIALOG:
-			sprintf(&customerNumber[0], "%i", pZim.wCustomerNumber);
-			SetDlgItemText(hwnd, IDC_CUSTOMERNUMBER, &customerNumber[0]);
-			break;
-		case WM_CLOSE:
-			EndDialog(hwnd,0);
-			return 1;
-		case WM_COMMAND:
-			switch (LOWORD(wParam)) {
-				case IDCANCEL:
-					EndDialog(hwnd,1);
-					return 1;
-				case IDOK:
-					GetDlgItemText(hwnd, IDC_CUSTOMERNUMBER, &customerNumber[0], 16);
-					pZim.wCustomerNumber=strtol(&customerNumber[0], NULL, 0);
-					EndDialog(hwnd,1);
-					return 1;
-			}
-			break;
-	}
-	return 0;
-}
-
-
-
-BOOL _stdcall BlockCreateVeriDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-BLOCK_STRUCTURE *newBlock;
-BLOCK_STRUCTURE *tempBlockStruct;
-VERI_STRUCTURE *tempVeriStruct;
-
-struct sBlockHeader blockHeader; //temp to hold block to calculate adler
-ADLER_STRUCTURE adlerholder;
-struct cvs_MD5Context MD5context;
-
-int i;
-LVCOLUMN column;
-LVITEM lvItem;
-HWND hList;
-int iItem;
-int iSelect;
-
-char veriBlockname[8];
-char veriVersion[24];
-char veriMD5[40];
-char *pEnd;
-
-int veriVerA, veriVerB, veriVerC, veriVerD;
-
-WORD numberSelectedLB;
-int *arraySelectedLB;
-
-	switch(msg) {
-		case WM_INITDIALOG:
-
-			SetDlgItemText(hwnd, IDC_VERIVERA, "");
-			SetDlgItemText(hwnd, IDC_VERIVERB, "");
-			SetDlgItemText(hwnd, IDC_VERIVERC, "0");
-			SetDlgItemText(hwnd, IDC_VERIVERD, "");
-
-			tempBlockStruct=pZim.first;
-
-			for (i=0;i<pZim.wNumBlocks;i++) {
-				SendDlgItemMessage(hwnd, IDC_BLOCKLIST, LB_ADDSTRING, 0, (LPARAM)tempBlockStruct->name);
-				tempBlockStruct=tempBlockStruct->next;
-			}
-
-
-			//Now do the listview stuff
-			hList=GetDlgItem(hwnd,IDC_VERIBLOCKSTOADD);
-
-			SendMessage(hList,LVM_SETEXTENDEDLISTVIEWSTYLE, 0,LVS_EX_FULLROWSELECT);
-
-			column.mask=LVCF_FMT|LVCF_TEXT|LVCF_WIDTH;
-			column.fmt=LVCFMT_LEFT;
-			column.pszText="Block";
-			column.cchTextMax=5;
-			column.cx=40;
-			ListView_InsertColumn(hList,   0,    &column);
-
-			column.pszText="Version";
-			column.cchTextMax=5;
-			column.cx=90;
-			ListView_InsertColumn(hList,   1,    &column);
-
-			column.pszText="MD5";
-			column.cchTextMax=5;
-			column.cx=204;
-			ListView_InsertColumn(hList,   2,    &column);
-			return 1;
-
-
-		case WM_CLOSE:
-			EndDialog(hwnd,0);
-			return 1;
-		case WM_COMMAND:
-			switch (LOWORD(wParam)) {
-				case IDC_BLOCKADD:
-
-				//First get the information
-				//Version from the dialog box
-				GetDlgItemText(hwnd, IDC_VERIVERA, &veriVersion[0],24);
-				veriVerA=strtol(&veriVersion[0], NULL, 0);
-				GetDlgItemText(hwnd, IDC_VERIVERB, &veriVersion[0],24);
-				veriVerB=strtol(&veriVersion[0], NULL, 0);
-				GetDlgItemText(hwnd, IDC_VERIVERC, &veriVersion[0],24);
-				veriVerC=strtol(&veriVersion[0], NULL, 0);
-				GetDlgItemText(hwnd, IDC_VERIVERD, &veriVersion[0],24);
-				veriVerD=strtol(&veriVersion[0], NULL, 0);
-
-				sprintf(veriVersion, "%i.%i.%i.%i",veriVerA, veriVerB, veriVerC, veriVerD);
-
-
-				//Determine which blocks are selected in the listbox
-				hList=GetDlgItem(hwnd,IDC_BLOCKLIST);
-				numberSelectedLB=SendMessage(hList, LB_GETSELCOUNT, 0, 0);
-
-				if (numberSelectedLB) {
-					arraySelectedLB=malloc(numberSelectedLB * sizeof(int));
-					SendMessage(hList, LB_GETSELITEMS, numberSelectedLB, (LPARAM)arraySelectedLB);
-
-
-					for (i=0;i<numberSelectedLB; i++) {
-				//Write info to the listview
-						hList=GetDlgItem(hwnd,IDC_VERIBLOCKSTOADD);
-
- 						iItem=SendMessage(hList,LVM_GETITEMCOUNT,0,0);
-
-						tempBlockStruct=GetBlockNumber(&pZim, arraySelectedLB[i]);
-
-						memset(&lvItem,0,sizeof(lvItem));
-						lvItem.mask=LVIF_TEXT;
-						lvItem.cchTextMax = 8;
-						lvItem.iItem=iItem;
-						lvItem.iSubItem=0;
-						sprintf(&veriBlockname[0], "%s", tempBlockStruct->name);
-						lvItem.pszText=veriBlockname;
-						SendMessage(hList,LVM_INSERTITEM,0,(LPARAM)&lvItem);
-
-						lvItem.cchTextMax = 24;
-						lvItem.iSubItem=1;
-						lvItem.pszText=veriVersion;
-						SendMessage(hList,LVM_SETITEM,0,(LPARAM)&lvItem);
-
-						lvItem.cchTextMax = 40;
-						lvItem.iSubItem=2;
-						MD5HexString(&veriMD5[0], tempBlockStruct->md5);
-						lvItem.pszText=veriMD5;
-						SendMessage(hList,LVM_SETITEM,0,(LPARAM)&lvItem);
-					}
-
-					free(arraySelectedLB);
-				}
-
-					break;
-
-				case IDC_BLOCKREMOVE:
-					hList=GetDlgItem(hwnd,IDC_VERIBLOCKSTOADD);
-					iSelect=SendMessage(hList,LB_GETCARETINDEX,0,0);
-					SendMessage(hList,LVM_DELETEITEM,iSelect,0); // delete the item selected
-					break;
-				case IDOK:
-					hList=GetDlgItem(hwnd,IDC_VERIBLOCKSTOADD);
-					numberSelectedLB=SendMessage(hList, LVM_GETITEMCOUNT, 0,0); //we'll use this var for the number of block in veri
-					if (numberSelectedLB<1)	{
-						MessageBox(hwnd, "One or more blocks need to be selected to create a verification block.", "Create VERI block", MB_OK|MB_ICONEXCLAMATION);
-						return 1;
-					}
-					newBlock=NewBlock(&pZim);
-					newBlock->dwDataLength= sizeof(VERIBLOCK_STRUCTURE) * numberSelectedLB;
-					sprintf(newBlock->name, "VERI");
-					newBlock->typeOfBlock=BTYPE_VERI;
-					newBlock->ptrFurtherBlockDetail=malloc(sizeof(VERI_STRUCTURE)); //the internal structure
-					tempVeriStruct=newBlock->ptrFurtherBlockDetail;
-					tempVeriStruct->prevStructure=NULL;
-					tempVeriStruct->numberVeriObjects=numberSelectedLB;
-
-					//reset the checksums
-					memset(&adlerholder, 0, sizeof(adlerholder));
-					cvs_MD5Init(&MD5context);
-
-					for (i=0; i<numberSelectedLB; i++) {
-						tempVeriStruct->numberVeriObjects=numberSelectedLB;
-
-						memset(&lvItem,0,sizeof(lvItem)); //first load the blockname
-						lvItem.mask=LVIF_TEXT;
-						lvItem.cchTextMax = 8;
-						lvItem.iItem=i;
-						lvItem.iSubItem=0;
-						lvItem.pszText=veriBlockname;
-						SendMessage(hList,LVM_GETITEM,0,(LPARAM)&lvItem);
-						sprintf(tempVeriStruct->displayblockname, "%s", veriBlockname);
-						tempVeriStruct->veriFileData.blockName[0]=tempVeriStruct->displayblockname[0];
-						tempVeriStruct->veriFileData.blockName[1]=tempVeriStruct->displayblockname[1];
-						tempVeriStruct->veriFileData.blockName[2]=tempVeriStruct->displayblockname[2];
-						tempVeriStruct->veriFileData.blockName[3]=tempVeriStruct->displayblockname[3];
-
-						memset(&lvItem,0,sizeof(lvItem)); //then the version
-						lvItem.mask=LVIF_TEXT;
-						lvItem.cchTextMax = 24;
-						lvItem.iItem=i;
-						lvItem.iSubItem=1;
-						lvItem.pszText=veriVersion;
-						SendMessage(hList,LVM_GETITEM,0,(LPARAM)&lvItem);
-						tempVeriStruct->veriFileData.reserved[0]=0xFFFFFFFF;
-						tempVeriStruct->veriFileData.reserved[1]=0xFFFFFFFF;
-						tempVeriStruct->veriFileData.version_a=strtol(veriVersion, &pEnd, 0); //strtol reads until we get the . (which isn't valid)
-						tempVeriStruct->veriFileData.version_b=strtol(pEnd+1, &pEnd, 0);
-						tempVeriStruct->veriFileData.version_c=strtol(pEnd+1, &pEnd, 0);
-						tempVeriStruct->veriFileData.version_d=strtol(pEnd+1, NULL, 0);
-
-						memset(&lvItem,0,sizeof(lvItem)); //then the md5
-						lvItem.mask=LVIF_TEXT;
-						lvItem.cchTextMax = 40;
-						lvItem.iItem=i;
-						lvItem.iSubItem=2;
-						lvItem.pszText=veriMD5;
-						SendMessage(hList,LVM_GETITEM,0,(LPARAM)&lvItem);
-						MD5StringToArray(tempVeriStruct->veriFileData.md5Digest, veriMD5);
-
-						//Generate the Adler32 and MD5 on this section
-						ChecksumAdler32(&adlerholder, &(tempVeriStruct->veriFileData), sizeof(VERIBLOCK_STRUCTURE));
-						cvs_MD5Update (&MD5context, &(tempVeriStruct->veriFileData), sizeof(VERIBLOCK_STRUCTURE));
-						//Now add another veri if there's another one to add
-						if ((i+1)<numberSelectedLB) {
-							tempVeriStruct->nextStructure=malloc(sizeof(VERI_STRUCTURE));
-							tempVeriStruct->nextStructure->prevStructure=tempVeriStruct;
-							tempVeriStruct=tempVeriStruct->nextStructure;
-						}
-						else
-							tempVeriStruct->nextStructure=NULL;
-					}
-
-					//The MD5 is easy, as we don't need to include the block itself, just the data
-					cvs_MD5Final (&newBlock->md5, &MD5context);
-					//The Adler needs to be calculated with a blockheader
-					GenerateBlockHeader(&blockHeader, newBlock->dwDataLength, 0, "VERI");
-					newBlock->blockSignature[0]=blockHeader.blockSignature[0];
-					newBlock->blockSignature[1]=blockHeader.blockSignature[1];
-					newBlock->blockSignature[2]=blockHeader.blockSignature[2];
-					newBlock->blockSignature[3]=blockHeader.blockSignature[3];
-
-					newBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
-
-
-					InvalidateRect(hwndMain, NULL, TRUE);
-					EndDialog(hwnd,1);
-					return 1;
-				case IDCANCEL:
-					EndDialog(hwnd,1);
-					return 1;
-			}
-			break;
-	}
-	return 0;
-}
-
-
-BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-OPENFILENAME ofnImport;
-FILE *importFile;
-int i;
-char tmpfilter[255];
-char buffer[MAX_PATH];
-
-int blocktype;
-UINT includesHeader;
-
-struct sBlockHeader blockHeader;
-
-BLOCK_STRUCTURE *newBlock;
-BOXI_STRUCTURE *tempBoxiStruct;
-VERI_STRUCTURE *tempVeriStruct;
-
-int counterVeriPart;
-
-ADLER_STRUCTURE adlerholder;
-struct cvs_MD5Context MD5context;
-
-	switch(msg) {
-		case WM_CLOSE:
-			EndDialog(hwnd,0);
-			return 1;
-		case WM_COMMAND:
-			switch (LOWORD(wParam)) {
-				case IDC_BLOCKIMPORTROOT:
-				case IDC_BLOCKIMPORTCODE:
-				case IDC_BLOCKIMPORTKERN:
-				case IDC_BLOCKIMPORTBOXI:
-				case IDC_BLOCKIMPORTVERI:
-				case IDC_BLOCKIMPORTLOAD:
-				case IDC_BLOCKIMPORTNVRM:
-                    CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, LOWORD(wParam));
-					return 1;
-				case IDCANCEL:
-					EndDialog(hwnd,1);
-					return 1;
-				case IDOK:
-					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTROOT)==BST_CHECKED) {blocktype=BTYPE_ROOT;}
-					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTKERN)==BST_CHECKED) {blocktype=BTYPE_KERN;}
-					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTCODE)==BST_CHECKED) {blocktype=BTYPE_CODE;}
-					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTVERI)==BST_CHECKED) {blocktype=BTYPE_VERI;}
-					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTBOXI)==BST_CHECKED) {blocktype=BTYPE_BOXI;}
-					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTNVRM)==BST_CHECKED) {blocktype=BTYPE_NVRM;}
-					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTLOAD)==BST_CHECKED) {blocktype=BTYPE_LOAD;}
-
-					if (blocktype==0)	{
-						MessageBox(hwnd, "Please select the type of block you want to import.","Import file",MB_OK|MB_ICONEXCLAMATION);
-						return 0;
-					}
-
-					GetDlgItemText(hwnd, IDC_BLOCKIMPORTFILENAME, &buffer[0], 255);
-					importFile=fopen(buffer, "rb");
-					if (importFile==NULL) {
-						MessageBox(hwnd, "This file cannot be opened. Please chose another file.","Import file",MB_OK|MB_ICONEXCLAMATION);
-						return 0;
-					}
-					if (importFile) {
-						newBlock=NewBlock(&pZim);
-						if (newBlock==NULL) {
-							MessageBox(hwnd, "There has been a memory error while importing this block.", "Import file", MB_OK|MB_ICONEXCLAMATION);
-							return 0;
-						}
-						includesHeader = IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTINCLUDEHEADER);
-						memset(newBlock, 0, sizeof(BLOCK_STRUCTURE));
-						sprintf(newBlock->name, "TEST");
-						newBlock->typeOfBlock=blocktype;
-						sprintf(newBlock->sourceFilename, "%s", buffer);
-						if (includesHeader==BST_UNCHECKED) newBlock->dwSourceOffset=0; else newBlock->dwSourceOffset=sizeof(struct sBlockHeader);
-
-						sprintf(newBlock->name, "BLOK");
-						if (newBlock->typeOfBlock==BTYPE_ROOT) sprintf(newBlock->name, "ROOT");
-						if (newBlock->typeOfBlock==BTYPE_KERN) sprintf(newBlock->name, "KERN");
-						if (newBlock->typeOfBlock==BTYPE_CODE) sprintf(newBlock->name, "CODE");
-						if (newBlock->typeOfBlock==BTYPE_VERI) sprintf(newBlock->name, "VERI");
-						if (newBlock->typeOfBlock==BTYPE_NVRM) sprintf(newBlock->name, "NVRM");
-						if (newBlock->typeOfBlock==BTYPE_LOAD) sprintf(newBlock->name, "LOAD");
-						if (newBlock->typeOfBlock==BTYPE_BOXI) sprintf(newBlock->name, "BOXI");
-
-						if (includesHeader==BST_CHECKED) {
-							fread(&blockHeader, sizeof(struct sBlockHeader), 1, importFile);
-							fseek(importFile, 0, SEEK_END);
-							newBlock->dwDataLength = ftell(importFile)-sizeof(struct sBlockHeader);
-							rewind(importFile);
-							if (((blockHeader.name[0]<65)||(blockHeader.name[0]>90))
-							|| ((blockHeader.name[1]<65)||(blockHeader.name[1]>90))
-							|| ((blockHeader.name[2]<65)||(blockHeader.name[2]>90))
-							|| ((blockHeader.name[3]<65)||(blockHeader.name[3]>90)))
-								{
-									MessageBox(hwnd, "The block header seems malformed. This block cannot be imported with the selected settings.", "Import", MB_OK|MB_ICONEXCLAMATION);
-									free(newBlock);
-									pZim.wNumBlocks--;
-									fclose(importFile);
-									return 0;
-								}
-						}
-						else {
-							fseek(importFile, 0, SEEK_END);
-							newBlock->dwDataLength = ftell(importFile);
-							GenerateBlockHeader(&blockHeader, newBlock->dwDataLength, 0, newBlock->name);
-							rewind(importFile);
-						}
-
-							newBlock->dwDataLength=DWORD_swap_endian(blockHeader.dwDataLength);
-							newBlock->dwChecksum=DWORD_swap_endian(blockHeader.dwChecksum);
-							newBlock->blockSignature[0]=blockHeader.blockSignature[0];
-							newBlock->blockSignature[1]=blockHeader.blockSignature[1];
-							newBlock->blockSignature[2]=blockHeader.blockSignature[2];
-							newBlock->blockSignature[3]=blockHeader.blockSignature[3];
-
-							newBlock->name[0]=blockHeader.name[0];
-							newBlock->name[1]=blockHeader.name[1];
-							newBlock->name[2]=blockHeader.name[2];
-							newBlock->name[3]=blockHeader.name[3];
-							newBlock->name[4]=0;
-
-
-						//Load BOXI block and calculate checksum
-						if (newBlock->typeOfBlock==BTYPE_BOXI) {
-							if (includesHeader==BST_CHECKED)
-								newBlock->ptrFurtherBlockDetail=ReadBoxiBlock(newBlock, importFile, sizeof(struct sBlockHeader));
-							else
-								newBlock->ptrFurtherBlockDetail=ReadBoxiBlock(newBlock, importFile, 0);
-
-							tempBoxiStruct=newBlock->ptrFurtherBlockDetail;
-							newBlock->dwDataLength=(sizeof(BOXIBLOCK_STRUCTURE));
-
-							//Calculate checksum
-							memset(&adlerholder, 0, sizeof(adlerholder));
-							ChecksumAdler32(&adlerholder, &(tempBoxiStruct->boxiFileData), sizeof(BOXIBLOCK_STRUCTURE)); //the boxi we loaded
-							newBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
-
-							//Calculate MD5 (this is done only on data, not the block header like the adler is
-							cvs_MD5Init(&MD5context);
-							cvs_MD5Update (&MD5context, &(tempBoxiStruct->boxiFileData), sizeof(BOXIBLOCK_STRUCTURE));
-							cvs_MD5Final (&newBlock->md5, &MD5context);
-
-							newBlock->flags=BSFLAG_INMEMORY;
-						}
-						//ROOT, CODE, KERN, NVRM, LOAD (usual) blocks - handle these the same
-						if ((newBlock->typeOfBlock==BTYPE_ROOT)||(newBlock->typeOfBlock==BTYPE_CODE)||(newBlock->typeOfBlock==BTYPE_KERN)||(newBlock->typeOfBlock==BTYPE_NVRM)||(newBlock->typeOfBlock==BTYPE_LOAD)) {
-							memset(&adlerholder, 0, sizeof(adlerholder)); //reset adler checksum to zero
-							cvs_MD5Init(&MD5context); //init md5 context
-
-							if (includesHeader==BST_UNCHECKED) {
-								newBlock->ptrFurtherBlockDetail=ReadUsualBlock(newBlock, importFile, 0);
-								AdlerOnFile(importFile, &adlerholder, 0, newBlock->dwDataLength);
-								MD5OnFile(importFile, &MD5context, 0, newBlock->dwDataLength);
-							}
-							else { //if a header is there
-								newBlock->ptrFurtherBlockDetail=ReadUsualBlock(newBlock, importFile, sizeof(struct sBlockHeader));
-								AdlerOnFile(importFile, &adlerholder,  sizeof(struct sBlockHeader), newBlock->dwDataLength);
-								MD5OnFile(importFile, &MD5context, sizeof(struct sBlockHeader), newBlock->dwDataLength);
-							}
-							newBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
-							cvs_MD5Final (&newBlock->md5, &MD5context);
-
-							newBlock->flags=BSFLAG_INMEMORY;
-						}
-						//Load a VERI block
-						if (newBlock->typeOfBlock==BTYPE_VERI) {
-							if (includesHeader==BST_CHECKED)
-								newBlock->ptrFurtherBlockDetail=ReadVeriBlock(newBlock, importFile, sizeof(struct sBlockHeader));
-							else
-								newBlock->ptrFurtherBlockDetail=ReadVeriBlock(newBlock, importFile, 0);
-							//calculate checksum
-							tempVeriStruct=newBlock->ptrFurtherBlockDetail;
-							memset(&adlerholder, 0, sizeof(adlerholder));
-							cvs_MD5Init(&MD5context);
-
-							//perform adler on all verifiledata blocks
-							counterVeriPart=tempVeriStruct->numberVeriObjects;
-							while (counterVeriPart) {
-								if (tempVeriStruct) {
-									ChecksumAdler32(&adlerholder, &tempVeriStruct->veriFileData, sizeof(VERIBLOCK_STRUCTURE));
-									cvs_MD5Update (&MD5context, &(tempVeriStruct->veriFileData), sizeof(VERIBLOCK_STRUCTURE));
-									}
-								counterVeriPart--;
-								if (counterVeriPart) tempVeriStruct=tempVeriStruct->nextStructure;
-							}
-							newBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
-							cvs_MD5Final (&newBlock->md5, &MD5context);
-							newBlock->flags=BSFLAG_INMEMORY;
-						}
-					fclose(importFile);
-					}
-
-					InvalidateRect(hwndMain, NULL, TRUE);
-					EndDialog(hwnd,1);
-					return 1;
-				case IDC_BLOCKIMPORTAUTODETECT:
-					GetDlgItemText(hwnd, IDC_BLOCKIMPORTFILENAME, &buffer[0], 255);
-					DetectTypeOfBlock(hwnd, &buffer[0]);
-					return 1;
-				case IDBROWSE:
-					memset(&ofnImport, 0, sizeof(ofnImport));
-					ofnImport.lStructSize = sizeof(ofnImport);
-					ofnImport.hInstance = GetModuleHandle(NULL);
-					ofnImport.hwndOwner = GetActiveWindow();
-					ofnImport.lpstrFile = buffer;
-					ofnImport.nMaxFile = sizeof(buffer);
-					ofnImport.lpstrTitle = "Browse";
-					ofnImport.nFilterIndex = 6;
-					ofnImport.lpstrDefExt = "zim";
-					strcpy(buffer,"*.blok;*.sfs;*.sqsh;*.gz;*.data");
-					strcpy(tmpfilter,"All files,*.*,SquashFS file (*.sfs; *.sqsh),*.sfs;*.sqsh,Whole blocks (*.blok),*.blok,Gzip file (*.gz),*.gz,Unknown data (*.data),*.data,All exported blocks,*.blok;*.sfs;*.sqsh;*.gz;*.data");
-					i=0;
-					while(tmpfilter[i]) {
-						if (tmpfilter[i] == ',')
-							tmpfilter[i] = 0;
-						i++;
-					}
-					tmpfilter[i++] = 0; tmpfilter[i++] = 0;
-					ofnImport.Flags = OFN_HIDEREADONLY|OFN_FILEMUSTEXIST|OFN_PATHMUSTEXIST;
-					ofnImport.lpstrFilter = tmpfilter;
-					if (GetOpenFileName(&ofnImport))	{
-						SetDlgItemText(hwnd, IDC_BLOCKIMPORTFILENAME, ofnImport.lpstrFile);
-						DetectTypeOfBlock(hwnd, ofnImport.lpstrFile);
-					}
-			}
-			break;
-	}
-	return 0;
-}
-
-
-
-BOOL _stdcall BlockExportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	int i;
-	int selectedBlockId;
-	char tempString[511]; //needs to accommodate a longish info string about each block
-	BLOCK_STRUCTURE *tempBlockStruct;
-	BLOCK_STRUCTURE selectedBlockStruct;
-	OPENFILENAME ofnExportTo;
-	FILE *filePtrExport;
-
-	UINT includeHeader;
-	USUAL_STRUCTURE *tempUsualStructure;
-
-	switch(msg) {
-		case WM_INITDIALOG:
-
-			SetDlgItemText(hwnd, IDC_BLOCKEXPORTTYPE, "");
-			SetDlgItemText(hwnd, IDC_BLOCKEXPORTSIZE, "");
-			SetDlgItemText(hwnd, IDC_BLOCKEXPORTOFFSET, "");
-			SetDlgItemText(hwnd, IDC_BLOCKEXPORTDETAIL, "");
-
-			CheckDlgButton(hwnd, IDC_BLOCKEXPORTINCLUDEHEADER, BST_UNCHECKED);
-
-			tempBlockStruct=pZim.first;
-
-			selectedBlockId=-1; //we have no idea what block to export just yet
-			for (i=0;i<pZim.wNumBlocks;i++) {
-				SendDlgItemMessage(hwnd, IDC_BLOCKLIST, CB_ADDSTRING, 0, (LPARAM)tempBlockStruct->name);
-				if ((tempBlockStruct->flags & BSFLAG_ISSELECTED) && (selectedBlockId<0)) {
-					selectedBlockId=i;
-					if ((tempBlockStruct->typeOfBlock==BTYPE_BOXI)||(tempBlockStruct->typeOfBlock==BTYPE_VERI))
-				    	CheckDlgButton(hwnd, IDC_BLOCKEXPORTINCLUDEHEADER, BST_CHECKED); //if it's a boxi or veri, include header
-				}
-				tempBlockStruct=tempBlockStruct->next;
-			}
-
-			if (selectedBlockId>=0) {
-				BlockExportDetailsUpdate(hwnd, selectedBlockId);
-				selectedBlockId = SendDlgItemMessage(hwnd, IDC_BLOCKLIST, CB_SETCURSEL, selectedBlockId, 0);
-			}
-
-			return 1;
-		case WM_CLOSE:
-			EndDialog(hwnd,0);
-			return 1;
-		case WM_COMMAND:
-			switch (LOWORD(wParam)) {
-				case IDCANCEL:
-					EndDialog(hwnd,1);
-					return 1;
-				case IDOK: //in this case this is the Export button
-
-					//Get which block we want to export, and fill the selectedBlockStruct with that
-					selectedBlockId = SendDlgItemMessage(hwnd, IDC_BLOCKLIST, CB_GETCURSEL, 0, 0);
-					if (selectedBlockId==CB_ERR) {MessageBox(hwnd, "No block has been selected. Please chose a block to export.", "Export",MB_ICONEXCLAMATION); return 1;}
-
-					tempBlockStruct=pZim.first;
-					for (i=0;i<max(pZim.wNumBlocks, selectedBlockId+1);i++) {
-						if (i==selectedBlockId) {
-							memcpy(&selectedBlockStruct, tempBlockStruct, sizeof(selectedBlockStruct));
-						}
-						tempBlockStruct=tempBlockStruct->next;
-					}
-
-					//Include header or not?
-					includeHeader=IsDlgButtonChecked(hwnd, IDC_BLOCKEXPORTINCLUDEHEADER);
-
-
-					memset(&ofnExportTo,0,sizeof(ofnExportTo));
-					ofnExportTo.lStructSize = sizeof(ofnExportTo);
-					ofnExportTo.hInstance = GetModuleHandle(NULL);
-					ofnExportTo.hwndOwner = GetActiveWindow();
-					ofnExportTo.lpstrFile = tempString;
-					ofnExportTo.nMaxFile = sizeof(tempString);
-					ofnExportTo.lpstrTitle = "Export To";
-					ofnExportTo.nFilterIndex = 2;
-
-					ofnExportTo.Flags = 0;
-					if (includeHeader==BST_CHECKED) {
-						ofnExportTo.lpstrFilter = "All files\0*.*\0Block file (*.blok)\0*.blok\0\0";
-						ofnExportTo.lpstrDefExt = "blok";
-						sprintf(tempString, "*.blok");
-					}
-					else {
-						if ((selectedBlockStruct.typeOfBlock==BTYPE_ROOT)||(selectedBlockStruct.typeOfBlock==BTYPE_KERN)||(selectedBlockStruct.typeOfBlock==BTYPE_CODE)||(selectedBlockStruct.typeOfBlock==BTYPE_LOAD)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)) {
-							tempUsualStructure=selectedBlockStruct.ptrFurtherBlockDetail;
-							if ((tempUsualStructure->magicnumber == SQUASHFS_MAGIC_LZMA)||(tempUsualStructure->magicnumber == SQUASHFS_MAGIC)||(tempUsualStructure->magicnumber == SQUASHFS_MAGIC_LZMA_SWAP)||(tempUsualStructure->magicnumber == SQUASHFS_MAGIC_SWAP)) {
-								ofnExportTo.lpstrFilter = "All files\0*.*\0Data file (*.data)\0*.data\0SquashFS file (*.sfs)\0*.sfs\0\0";
-								ofnExportTo.nFilterIndex = 3;
-								ofnExportTo.lpstrDefExt = "sfs";
-								sprintf(tempString, "*.sfs");
-							}
-							else if ((tempUsualStructure->magicnumber&0xffff) == 0x8b1f){
-								ofnExportTo.lpstrFilter = "All files\0*.*\0Data file (*.data)\0*.data\0Gzip file (*.gz)\0*.gz\0\0";
-								ofnExportTo.nFilterIndex = 3;
-								ofnExportTo.lpstrDefExt = "gz";
-								sprintf(tempString, "*.gz");
-							}
-							else {
-								ofnExportTo.lpstrFilter = "All files\0*.*\0Data file (*.data)\0*.data\0\0";
-								ofnExportTo.lpstrDefExt = "data";
-								sprintf(tempString, "*.data");
-							}
-
-						}
-						else {
-							ofnExportTo.lpstrFilter = "All files\0*.*\0Data file (*.data)\0*.data\0\0";
-							ofnExportTo.lpstrDefExt = "data";
-							sprintf(tempString, "*.data");
-							}
-					}
-
-					if (GetSaveFileName(&ofnExportTo)) {
-
-						filePtrExport = fopen(ofnExportTo.lpstrFile, "r");
-						if (filePtrExport!=NULL) {
-							if (MessageBox(hwnd, "This file alreadys exists. Are you sure you want to replace it?", "Export", MB_YESNO|MB_ICONEXCLAMATION)==IDNO)
-								return 1;
-							fclose(filePtrExport);
-							}
-
-						filePtrExport = fopen(ofnExportTo.lpstrFile, "wb");
-						WriteBlockToFile(&pZim, &selectedBlockStruct, filePtrExport, (includeHeader==BST_CHECKED));
-						fclose(filePtrExport);
-
-						EndDialog(hwnd,1);
-						return 1;
-					}
-
-					return 1;
-				case IDC_BLOCKLIST:
-					if (HIWORD(wParam)==CBN_SELCHANGE) {
-						selectedBlockId = SendDlgItemMessage(hwnd, IDC_BLOCKLIST, CB_GETCURSEL, 0, 0);
-						BlockExportDetailsUpdate(hwnd, selectedBlockId);
-					}
-
-					return 1;
-			}
-			break;
-	}
-	return 0;
-}
-
-void BlockExportDetailsUpdate(HWND hwnd, int blockid)
-{
-	BLOCK_STRUCTURE selectedBlockStruct;
-	BLOCK_STRUCTURE *tempBlockStruct;
-	int i;
-	char tempString[511]; //needs to accommodate a longish info string about each block
-
-	USUAL_STRUCTURE *tempUsualStructure;
-
-
-	tempBlockStruct=pZim.first;
-	for (i=0;i<max(pZim.wNumBlocks, blockid+1);i++) {
-		if (i==blockid) { //we need to copy the selectedblock to more than just a pointer, because we forget pointer
-			memcpy(&selectedBlockStruct, tempBlockStruct, sizeof(selectedBlockStruct));
-		}
-		tempBlockStruct=tempBlockStruct->next;
-	}
-	SetDlgItemText(hwnd, IDC_BLOCKEXPORTTYPE, selectedBlockStruct.name);
-	sprintf(tempString, "%i bytes", selectedBlockStruct.dwDataLength);
-	SetDlgItemText(hwnd, IDC_BLOCKEXPORTSIZE,tempString);
-
-	if (!(selectedBlockStruct.flags & BSFLAG_INMEMORY))	sprintf(tempString, "0x%x (%i)", selectedBlockStruct.dwBlockStartLoc, selectedBlockStruct.dwBlockStartLoc);
-	if (selectedBlockStruct.flags & BSFLAG_INMEMORY)	sprintf(tempString, "Stored in memory");
-	SetDlgItemText(hwnd, IDC_BLOCKEXPORTOFFSET,tempString);
-
-
-	if (selectedBlockStruct.typeOfBlock==BTYPE_VERI)
-		sprintf(tempString, "This verification block is used to check the validity of other blocks in the .zim file. In this case it contains verification data for %i other block%s. It is recommended to export with a header, although the block can be regenerated.",selectedBlockStruct.dwDataLength/32,(selectedBlockStruct.dwDataLength>32) ? "s":"");
-	else if (selectedBlockStruct.typeOfBlock==BTYPE_BOXI)
-		sprintf(tempString, "This block contains information about the set-top box, including the version and model numbers. It is recommended to export including the header to enable simple transfer to other .zim files.");
-	else if ((selectedBlockStruct.typeOfBlock==BTYPE_ROOT)||(selectedBlockStruct.typeOfBlock==BTYPE_KERN)||(selectedBlockStruct.typeOfBlock==BTYPE_CODE)||(selectedBlockStruct.typeOfBlock==BTYPE_LOAD)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)) {
-		tempUsualStructure=selectedBlockStruct.ptrFurtherBlockDetail;
-		if (tempUsualStructure) {
-			sprintf(tempString,
-			"These blocks generally contain a filesystem that is copied to the firmware. In this case it contains %s%s. It is written to %s of the firmware. To open it with other software you should export the block without a header.",
-			((tempUsualStructure->magicnumber == SQUASHFS_MAGIC_LZMA)||(tempUsualStructure->magicnumber == SQUASHFS_MAGIC)||(tempUsualStructure->magicnumber == SQUASHFS_MAGIC_LZMA_SWAP)||(tempUsualStructure->magicnumber == SQUASHFS_MAGIC_SWAP)) ? "a Squashfs filesystem":(((tempUsualStructure->magicnumber&0xffff) == 0x8b1f)? "a gzip file":"an unknown filesystem"),
-			(tempUsualStructure->magicnumber == SQUASHFS_MAGIC_LZMA)?" compressed with the LZMA algorithm":((tempUsualStructure->magicnumber == SQUASHFS_MAGIC)?" compressed with the ZLIB algorithm":(((tempUsualStructure->magicnumber&0xffffff)==0x088b1f)?" compressed with the DEFLATE algorithm":" stored in an unknown algorithm")), //zlib or lzma
-			(selectedBlockStruct.typeOfBlock==BTYPE_ROOT) ? "flash0.rootfs":((selectedBlockStruct.typeOfBlock==BTYPE_CODE)?"flash0.app":((selectedBlockStruct.typeOfBlock==BTYPE_KERN)?"flash0.kernel":"an unknown part")));
-			}
-		} //where this is written to
-	else if (selectedBlockStruct.typeOfBlock==BTYPE_NVRM)
-		sprintf(tempString, "The contents of this block are copied to the non-volatile RAM (flash0.nvram) of the set-top box. Probably best to export without header.");
-	else if (selectedBlockStruct.typeOfBlock==BTYPE_LOAD)
-		sprintf(tempString, "The contents of this block are copied to the Common Firmware Environment (flash0.cfe) of the set-top box.");
-	else sprintf(tempString, "");
-
-	SetDlgItemText(hwnd, IDC_BLOCKEXPORTDETAIL, tempString);
-
-return;
-}
 
 void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 {
+	INT_PTR nResult;
+
 	char filename[MAX_PATH];
 	int i;
 
@@ -926,16 +238,19 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			break;
 		case IDM_BLOCKEXPORT:
 			if (pZim.displayFilename[0]) {
-				DialogBox(hInst, MAKEINTRESOURCE(IDD_BLOCKEXPORT), hwndMain, BlockExportDlg);
+				DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BLOCKEXPORT), hwndMain, BlockExportDlg, (long)&pZim);
 			}
 			break;
 		case IDM_BLOCKIMPORT:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_BLOCKIMPORT), hwndMain, BlockImportDlg);
+			nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BLOCKIMPORT), hwndMain, BlockImportDlg, (long)&pZim);
+			if (nResult)
+				InvalidateRect(hwndMain, NULL, TRUE);
 			break;
 		case IDM_CUSTOMERNUMBER:
 			if (pZim.displayFilename[0]) {
-				DialogBox(hInst, MAKEINTRESOURCE(IDD_CHANGECUSTOMERNUMBER), hwndMain, ChangeCustomerNumberDlg);
-				InvalidateRect(hwndMain, NULL, TRUE);
+				nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_CHANGECUSTOMERNUMBER), hwndMain, ChangeCustomerNumberDlg, (long)&pZim);
+				if (nResult)
+					InvalidateRect(hwndMain, NULL, TRUE);
 			}
 			break;
 		case IDM_BLOCKFIXCHECKSUMS:
@@ -945,11 +260,14 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			}
 			break;
 		case IDM_BLOCKCREATEBOXIBLOCK:
-			DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BOXIBLOCK), hwndMain, BlockCreateBoxiDlg, (long)&pZim);
-			InvalidateRect(hwndMain, NULL, TRUE);
+			nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BOXIBLOCK), hwndMain, BlockCreateBoxiDlg, (long)&pZim);
+			if (nResult)
+				InvalidateRect(hwndMain, NULL, TRUE);
 			break;
 		case IDM_BLOCKCREATEVERIBLOCK:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_VERIBLOCK), hwndMain, BlockCreateVeriDlg);
+			nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_VERIBLOCK), hwndMain, BlockCreateVeriDlg, (long)&pZim);
+			if (nResult)
+				InvalidateRect(hwndMain, NULL, TRUE);
 			break;
 		case IDM_OPEN:
 		if (GetFilename(filename,sizeof(filename))) {
@@ -1031,9 +349,6 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 				caretedBlock++;
 			}
 			break;
-
-
-
 
 		case IDM_EXIT:
 		PostMessage(hwnd,WM_CLOSE,0,0);

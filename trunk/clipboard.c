@@ -6,6 +6,7 @@
 #include "zinwellres.h"
 #include "sqsh.h"
 #include "md5.h"
+#include "adler.h"
 #include "zimview.h"
 #include "clipboard.h"
 
