@@ -13,7 +13,7 @@ typedef struct tag_dlghdr {
 } DLGHDR_PROPERTIES;
 
 
-BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam); //for the tabs - this basically does nothing.
+BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam); //This proc basically does nothing.
 BOOL _stdcall AboutDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 BOOL _stdcall BlockCreateBoxiDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -28,3 +28,4 @@ void BlockExportDetailsUpdate(HWND hwnd, ZIM_STRUCTURE *ZimToUse, int blockid);
 void PropertiesDlg_ChangeSelection(HWND hwnd);
 void FillBoxiStructFromBoxiDlg(HWND hwnd, BLOCK_STRUCTURE *boxiBlock);
 void FillBoxiDlgFromBoxiStruct(HWND hwnd, BLOCK_STRUCTURE *boxiBlock);
+int DetectTypeOfBlock(HWND hwnd, char *filename);
