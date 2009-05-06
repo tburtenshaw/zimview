@@ -42,7 +42,7 @@ Each BOXI block is 36 bytes (plus the block header).
 
 This is the structure of a BOXI block:
 {{{
-  WORD  uiOUI;
+  WORD  uiOUI; //Organizationally Unique Identifier
   WORD  reserved[3]; // 0x00 filled
   WORD  wHwVersion; //unsure if this order is correct
   WORD  wSwVersion;
