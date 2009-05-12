@@ -69,7 +69,7 @@ struct veriStructure {
 };
 
 struct boxiBlockStructure {
-  WORD  uiOUI;
+  WORD  uiOUI;	//Organizationally Unique Identifier
   WORD  reserved[3]; // 0x00 filled
   WORD  wHwVersion;
   WORD  wSwVersion;
@@ -129,7 +129,7 @@ struct internalBlockStructure //used internally
   char sourceFilename[MAX_PATH]; //link to external file
   DWORD dwSourceOffset; //where the data starts in this external block
 
-  char flags; //bit 0b00000001 true:memory, false:zimfile, bit 0b00000010 true:don't write, false:to be written
+  char flags; //see BSFLAG_
 
   BLOCK_STRUCTURE * next; //pointer to next block in linked list.
 };
@@ -147,7 +147,7 @@ struct internalBlockStructure //used internally
 #define EXPORTBLOCK_ERR_SUCCESS 0
 #define EXPORTBLOCK_ERR_MEMORYPROBLEM 8
 
-int MD5HexString(char * outputString, char * MD5array);
+void MD5HexString(char * outputString, char * MD5array);
 int MD5StringToArray(char * MD5array, char * inputString);
 unsigned long int AdlerOnFile(FILE *fileToRead, ADLER_STRUCTURE *adlerhold, DWORD offset, DWORD len);
 void MD5OnFile(FILE *fileToRead, struct cvs_MD5Context *ctx, DWORD offset, DWORD len);
@@ -197,6 +197,7 @@ void MouseBlockSelect(int *ptrBlockNumber, HWND hwnd, ZIM_STRUCTURE *LoadedZim, 
 void MouseBlockMoveSelect(int *ptrBlockNumber, HWND hwnd, ZIM_STRUCTURE *LoadedZim, int x, int y);
 
 long OnMouseWheel(HWND hwnd, ZIM_STRUCTURE *LoadedZim, short nDelta);
+long HandleVScroll(HWND hwnd, ZIM_STRUCTURE *LoadedZim, WPARAM wParam);
 void ScrollUpdate(HWND hwnd, ZIM_STRUCTURE *LoadedZim);
 
 int RedrawSelectedBlocks(HWND hwnd, ZIM_STRUCTURE *LoadedZim);
