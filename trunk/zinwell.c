@@ -16,9 +16,6 @@ int showCaret=0;
 int mouseBeenPushed=0;
 int draggingBlock=0;
 int moveIndicatorLocation=-1;
-#define MOVEINDICATOR_WIDTH 6
-#define EDGE_MARGIN 4
-#define ICON_SIZE 48
 
 int caretedBlock=0; //the block that has caret
 int startRangeSelectedBlock=0; //where to start a range selection from (i.e. when shift is held)
@@ -217,7 +214,6 @@ static BOOL InitApplication(void)
 	InitCtrlEx.dwICC  = ICC_LISTVIEW_CLASSES|ICC_STANDARD_CLASSES|ICC_TAB_CLASSES;
 	InitCommonControlsEx(&InitCtrlEx);
 
-
 	return 1;
 }
 
@@ -231,7 +227,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 
 	switch(id) {
 		case IDM_ABOUT:
-			DialogBox(hInst,MAKEINTRESOURCE(IDD_ABOUT),	hwndMain, AboutDlg);
+			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUT), hwndMain, AboutDlg);
 			break;
 		case IDM_PROPERTIES:
 			DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_PROPERTIES), hwndMain, PropertiesDlg, (long)&pZim);
@@ -244,30 +240,30 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 		case IDM_BLOCKIMPORT:
 			nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BLOCKIMPORT), hwndMain, BlockImportDlg, (long)&pZim);
 			if (nResult)
-				InvalidateRect(hwndMain, NULL, TRUE);
+				InvalidateRect(hwndMain, NULL, FALSE);
 			break;
 		case IDM_CUSTOMERNUMBER:
 			if (pZim.displayFilename[0]) {
 				nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_CHANGECUSTOMERNUMBER), hwndMain, ChangeCustomerNumberDlg, (long)&pZim);
 				if (nResult)
-					InvalidateRect(hwndMain, NULL, TRUE);
+					InvalidateRect(hwndMain, NULL, FALSE);
 			}
 			break;
 		case IDM_BLOCKFIXCHECKSUMS:
 			if (pZim.displayFilename[0]) {
 				CalculateOffsetForWriting(&pZim);
-				InvalidateRect(hwndMain, NULL, TRUE);
+				InvalidateRect(hwndMain, NULL, FALSE);
 			}
 			break;
 		case IDM_BLOCKCREATEBOXIBLOCK:
 			nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BOXIBLOCK), hwndMain, BlockCreateBoxiDlg, (long)&pZim);
 			if (nResult)
-				InvalidateRect(hwndMain, NULL, TRUE);
+				InvalidateRect(hwndMain, NULL, FALSE);
 			break;
 		case IDM_BLOCKCREATEVERIBLOCK:
 			nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_VERIBLOCK), hwndMain, BlockCreateVeriDlg, (long)&pZim);
 			if (nResult)
-				InvalidateRect(hwndMain, NULL, TRUE);
+				InvalidateRect(hwndMain, NULL, FALSE);
 			break;
 		case IDM_OPEN:
 		if (GetFilename(filename,sizeof(filename))) {
@@ -287,24 +283,24 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 				sprintf(&filename[0], "%s", pZim.displayFilename);
 				CloseZimFile(&pZim);
 				OpenZimFile(hwnd, &pZim, filename);
-				InvalidateRect(hwnd, NULL, TRUE);
+				InvalidateRect(hwnd, NULL, FALSE);
 				UpdateWindow(hwnd);
 			}
 			break;
 		case IDM_CLOSE:
 			CloseZimFile(&pZim);
 			SetWindowText(hwnd, "ZimView");
-			InvalidateRect (hwnd, NULL, TRUE );
+			InvalidateRect (hwnd, NULL, FALSE);
 			break;
 		case IDM_NEW:
 			if (pZim.displayFilename[0]==0)	{
 				ActivateZimFile(&pZim);
-				InvalidateRect(hwnd, NULL, TRUE );
+				InvalidateRect(hwnd, NULL, FALSE);
 			} else	{
 				if(MessageBox(hwnd, "Starting a new file will lose all changes on your open file. Do you want to start a new file?", "New", MB_YESNO|MB_ICONQUESTION)==IDYES)	{
 					CloseZimFile(&pZim);
 					ActivateZimFile(&pZim);
-					InvalidateRect(hwnd, NULL, TRUE );
+					InvalidateRect(hwnd, NULL, FALSE);
 				}
 			}
 			break;
@@ -315,11 +311,11 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			EditCopySelected(hwnd, &pZim, FALSE);
 			break;
 		case IDM_EDITCUT:
-			EditCopySelected(hwnd, &pZim, TRUE);
+			EditCopySelected(hwnd, &pZim, FALSE);
 			break;
 		case IDM_EDITPASTE:
 			EditPaste(hwnd, &pZim);
-			InvalidateRect(hwnd, NULL, TRUE);
+			InvalidateRect(hwnd, NULL, FALSE);
 			break;
 		case IDM_EDITCLEAR:
 			DisableSelected(&pZim);
@@ -390,9 +386,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		break;
 	case WM_PAINT:
 		PaintWindow(hwnd);
-		ScrollUpdate(hwnd, &pZim);
 		break;
 	case WM_SIZE:
+		ScrollUpdate(hwnd, &pZim);
 		SendMessage(hWndStatusbar,msg,wParam,lParam);
 		SendMessage(hwndToolBar,msg,wParam,lParam);
 		InitializeStatusBar(hWndStatusbar,1);
@@ -528,7 +524,6 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		}
 		break;
 
-
 	case WM_LBUTTONDOWN:
 		mouseBeenPushed=1;
 		SetCapture(hwnd);
@@ -602,6 +597,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		PopulatePopupMenu(contextMenu); //my function to add copy, paste, etc
 		TrackPopupMenuEx(contextMenu, TPM_LEFTALIGN| TPM_TOPALIGN, point.x, point.y, hwnd, NULL);
 		DestroyMenu(contextMenu);
+		break;
+	case WM_VSCROLL:
+		return HandleVScroll(hwnd, &pZim, wParam);
 		break;
 	case WM_MOUSEWHEEL:
 		return OnMouseWheel(hwnd, &pZim, (short)HIWORD(wParam));
@@ -1026,8 +1024,11 @@ int CloseZimFile(ZIM_STRUCTURE *LoadedZim) {
 }
 
 
-int PaintWindow(HWND hwnd) {
+#define MOVEINDICATOR_WIDTH 6
+#define EDGE_MARGIN 4
+#define ICON_SIZE 48
 
+int PaintWindow(HWND hwnd) {
 	HDC hdc;
 	PAINTSTRUCT psPaint;
 	RECT clientRect;
@@ -1281,18 +1282,57 @@ int PaintWindow(HWND hwnd) {
 							tempVeriStruct=tempBlockStruct->ptrFurtherBlockDetail;
 							if (tempVeriStruct) {
 								counterVeriPart=tempVeriStruct->numberVeriObjects;
-								while (counterVeriPart) {
+								if (counterVeriPart<3)	{
+									while (counterVeriPart) {
+										y+=16;
+										sprintf(tempString, "Id: %s, Ver: %i.%i.(%i).%i, md5: ",tempVeriStruct->displayblockname, tempVeriStruct->veriFileData.version_a,tempVeriStruct->veriFileData.version_b,tempVeriStruct->veriFileData.version_c,tempVeriStruct->veriFileData.version_d);
+										MD5HexString(tempString+strlen(tempString), tempVeriStruct->veriFileData.md5Digest);
+										lineRect.top=y;
+										lineRect.bottom=y+16;
+										if (tempVeriStruct->nextStructure==NULL)
+											lineRect.bottom=paintSelectRects[i].bottom; //if this is last veri structure, draw to bottom of block
+										ExtTextOut(hdc, EDGE_MARGIN+EDGE_MARGIN+ICON_SIZE, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
+
+										counterVeriPart--;
+										if (counterVeriPart) tempVeriStruct=tempVeriStruct->nextStructure;
+									}
+								}
+								else if	((counterVeriPart>2) && (counterVeriPart<5))	{
+									while (counterVeriPart) {
+										y+=16;
+										sprintf(tempString, "Id: %s, Ver: %i.%i.(%i).%i; ",tempVeriStruct->displayblockname, tempVeriStruct->veriFileData.version_a,tempVeriStruct->veriFileData.version_b,tempVeriStruct->veriFileData.version_c,tempVeriStruct->veriFileData.version_d);
+										lineRect.top=y;
+										lineRect.bottom=y+16;
+
+										counterVeriPart--;
+										tempVeriStruct=tempVeriStruct->nextStructure;
+										if (counterVeriPart)	{
+											sprintf(tempString+strlen(tempString), "Id: %s, Ver: %i.%i.(%i).%i;", tempVeriStruct->displayblockname, tempVeriStruct->veriFileData.version_a,tempVeriStruct->veriFileData.version_b,tempVeriStruct->veriFileData.version_c,tempVeriStruct->veriFileData.version_d);
+											counterVeriPart--;
+											tempVeriStruct=tempVeriStruct->nextStructure;
+										}
+										lineRect.bottom=paintSelectRects[i].bottom; //this is last veri structure, draw to bottom of block
+										ExtTextOut(hdc, EDGE_MARGIN+EDGE_MARGIN+ICON_SIZE, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
+
+									}
+								}
+								else if ((counterVeriPart>4))	{
 									y+=16;
-									sprintf(tempString, "Id: %s, Ver: %i.%i.(%i).%i, md5: ",tempVeriStruct->displayblockname, tempVeriStruct->veriFileData.version_a,tempVeriStruct->veriFileData.version_b,tempVeriStruct->veriFileData.version_c,tempVeriStruct->veriFileData.version_d);
-									MD5HexString(tempString+strlen(tempString), tempVeriStruct->veriFileData.md5Digest);
+									sprintf(tempString, "%s; ", tempVeriStruct->displayblockname);
 									lineRect.top=y;
 									lineRect.bottom=y+16;
-									if (tempVeriStruct->nextStructure==NULL)
-										lineRect.bottom=paintSelectRects[i].bottom; //if this is last veri structure, draw to bottom of block
-									ExtTextOut(hdc, EDGE_MARGIN+EDGE_MARGIN+ICON_SIZE, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
-
 									counterVeriPart--;
-									if (counterVeriPart) tempVeriStruct=tempVeriStruct->nextStructure;
+									tempVeriStruct=tempVeriStruct->nextStructure;
+									while (counterVeriPart)	{
+										sprintf(tempString+strlen(tempString), "%s; ", tempVeriStruct->displayblockname);
+										counterVeriPart--;
+										tempVeriStruct=tempVeriStruct->nextStructure;
+									}
+										lineRect.bottom=paintSelectRects[i].bottom; //this is last veri structure, draw to bottom of block
+										ExtTextOut(hdc, EDGE_MARGIN+EDGE_MARGIN+ICON_SIZE, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
+
+
+
 								}
 							}
 							break;
@@ -1425,10 +1465,10 @@ int DrawCaret(HDC hdc, RECT *lpRect, COLORREF colour1, COLORREF colour2)
 }
 
 
-int MD5HexString(char * outputString, char * MD5array)
+void MD5HexString(char * outputString, char * MD5array)
 {
-sprintf(outputString,"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", MD5array[0]&0xFF,MD5array[1]&0xFF,MD5array[2]&0xFF,MD5array[3]&0xFF,MD5array[4]&0xFF,MD5array[5]&0xFF,MD5array[6]&0xFF,MD5array[7]&0xFF,MD5array[8]&0xFF,MD5array[9]&0xFF,MD5array[10]&0xFF,MD5array[11]&0xFF,MD5array[12]&0xFF,MD5array[13]&0xFF,MD5array[14]&0xFF,MD5array[15]&0xFF);
-return 0;
+	sprintf(outputString,"%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x", MD5array[0]&0xFF,MD5array[1]&0xFF,MD5array[2]&0xFF,MD5array[3]&0xFF,MD5array[4]&0xFF,MD5array[5]&0xFF,MD5array[6]&0xFF,MD5array[7]&0xFF,MD5array[8]&0xFF,MD5array[9]&0xFF,MD5array[10]&0xFF,MD5array[11]&0xFF,MD5array[12]&0xFF,MD5array[13]&0xFF,MD5array[14]&0xFF,MD5array[15]&0xFF);
+	return;
 }
 
 int MD5StringToArray(char * MD5array, char * inputString)
@@ -1445,8 +1485,7 @@ int MD5StringToArray(char * MD5array, char * inputString)
 		MD5array[i/2]=strtoul(&hexnumber[0], NULL, 16);
 		i+=2;
 	}
-return 0;
-
+return i;
 }
 
 int ActivateZimFile(ZIM_STRUCTURE *ZimToActivate)
@@ -1605,7 +1644,7 @@ void *NewBlock(ZIM_STRUCTURE *LoadedZim)
 	tempBlock=LoadedZim->first;
 	for (tempWord=0; tempWord<LoadedZim->wNumBlocks; tempWord++) {
 		if (tempBlock->next==NULL) {
-				tempBlock->next=newBlock;
+			tempBlock->next=newBlock;
 		}
 		tempBlock=tempBlock->next;
 	}
@@ -1910,7 +1949,7 @@ int DisableSelected(ZIM_STRUCTURE *LoadedZim)
 			tempBlockStruct->flags =tempBlockStruct->flags ^ BSFLAG_DONTWRITE;
 		tempBlockStruct=tempBlockStruct->next;
 	}
-return 0;
+	return 0;
 }
 
 int DeleteSelectedBlocks(ZIM_STRUCTURE *LoadedZim)
@@ -1943,7 +1982,6 @@ int DeleteBlock(ZIM_STRUCTURE *LoadedZim, WORD blocknumber)
 	BLOCK_STRUCTURE *ptrBlockStruct;
 	BLOCK_STRUCTURE *prevBlockStruct;
 
-	//BLOCK_STRUCTURE
 	WORD tempWord;
 
 	if (blocknumber>=LoadedZim->wNumBlocks) return 0; //if we don't have a block that high, don't bother
@@ -2015,7 +2053,7 @@ int SwapBlocks(ZIM_STRUCTURE *LoadedZim, WORD blockA, WORD blockB)
 		ptrBlockStructA->next=ptrBlockStructB->next;
 		ptrBlockStructB->next=tempBlockHolder.next;
 	}
-return 1;
+	return 1;
 }
 
 int MoveBlockAfter(ZIM_STRUCTURE *LoadedZim, int blockSource, int blockDest)
@@ -2126,6 +2164,7 @@ BLOCK_STRUCTURE *GetBlockNumber(ZIM_STRUCTURE *LoadedZim, WORD blocknumber)
 
 	ptrCounterBlock=LoadedZim->first;
 	for (tempWord=0; tempWord<LoadedZim->wNumBlocks; tempWord++) {
+	//while (ptrCounterBlock)	{
 		if (tempWord==blocknumber) return ptrCounterBlock;
 
 		ptrCounterBlock=ptrCounterBlock->next;
@@ -2259,6 +2298,7 @@ int SelectedCount(ZIM_STRUCTURE *LoadedZim)
 	n=0;
 	ptrCounterBlock=LoadedZim->first;
 	for (tempWord=0; tempWord<LoadedZim->wNumBlocks; tempWord++) {
+	//while (ptrCounterBlock)	{
 		if (ptrCounterBlock->flags&BSFLAG_ISSELECTED)
 			n++;
 		ptrCounterBlock=ptrCounterBlock->next;
@@ -2320,6 +2360,7 @@ int RedrawSelectedBlocks(HWND hwnd, ZIM_STRUCTURE *LoadedZim)
 	WORD tempWord;
 
 	ptrCounterBlock=LoadedZim->first;
+	//while (ptrCounterBlock)	{
 	for (tempWord=0; tempWord<LoadedZim->wNumBlocks; tempWord++) {
 		if (ptrCounterBlock->flags & BSFLAG_ISSELECTED)
 			RedrawBlock(hwnd, LoadedZim, tempWord);
@@ -2523,7 +2564,7 @@ long OnMouseWheel(HWND hwnd, ZIM_STRUCTURE *LoadedZim, short nDelta)
 
 	ScrollUpdate(hwnd, LoadedZim);
 
-return 0;
+	return 0;
 }
 
 void ScrollUpdate(HWND hwnd, ZIM_STRUCTURE *LoadedZim)
@@ -2540,4 +2581,44 @@ void ScrollUpdate(HWND hwnd, ZIM_STRUCTURE *LoadedZim)
     SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
 
 	return;
+}
+
+long HandleVScroll(HWND hwnd, ZIM_STRUCTURE *LoadedZim, WPARAM wParam)
+{
+	short nSBCode;
+	short nScrollPos;
+
+	nSBCode=LOWORD(wParam);
+
+	switch (nSBCode)	{
+		case SB_LINEDOWN:
+			topDisplayBlock++;
+			break;
+		case SB_LINEUP:
+			topDisplayBlock--;
+			break;
+		case SB_PAGEUP:
+			topDisplayBlock-=numberFullyDisplayedBlocks;
+			break;
+		case SB_PAGEDOWN:
+			topDisplayBlock+=numberFullyDisplayedBlocks;
+			break;
+		case SB_TOP:
+			topDisplayBlock=0;
+			break;
+		case SB_BOTTOM:
+			break;
+		case SB_THUMBTRACK:
+			nScrollPos = HIWORD(wParam);
+			topDisplayBlock = nScrollPos;
+			break;
+
+	}
+
+	if (topDisplayBlock<0) topDisplayBlock=0;
+	if (topDisplayBlock>=LoadedZim->wNumBlocks-numberFullyDisplayedBlocks) topDisplayBlock=LoadedZim->wNumBlocks-numberFullyDisplayedBlocks;
+
+	ScrollUpdate(hwnd, LoadedZim);
+	InvalidateRect(hwnd, NULL, FALSE);
+	return 0;
 }

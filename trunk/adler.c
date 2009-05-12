@@ -1,6 +1,8 @@
 #include "adler.h"
 
 //memset the adlerhold to zero to begin
+
+//This algorithm is inefficient apparently. Will change to the zlib one at some stage.
 unsigned long int ChecksumAdler32(ADLER_STRUCTURE *adlerhold, unsigned char *data, size_t len)
 {
 	unsigned long int a;

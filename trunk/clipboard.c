@@ -190,8 +190,18 @@ int EditPaste(HWND hwnd, ZIM_STRUCTURE *LoadedZim) {
 		memcpy(&n, ptrCbData+cch, sizeof(WORD));
 		cch+=sizeof(WORD);
 
+		newBlock=NULL;
 		for (count=0; count<n; count++) {
-			newBlock = NewBlock(LoadedZim);
+			if (newBlock==NULL)
+				newBlock = NewBlock(LoadedZim);
+			else	{
+				newBlock->next=malloc(sizeof(BLOCK_STRUCTURE));
+				newBlock=newBlock->next;
+				if (newBlock)	{
+					memset(newBlock, 0, sizeof(BLOCK_STRUCTURE));
+					LoadedZim->wNumBlocks++;
+				}
+			}
 			memcpy(newBlock, ptrCbData+cch, sizeof(BLOCK_STRUCTURE));
 			cch+=sizeof(BLOCK_STRUCTURE);
 
