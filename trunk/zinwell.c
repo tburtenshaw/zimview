@@ -266,15 +266,20 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 				InvalidateRect(hwndMain, NULL, FALSE);
 			break;
 		case IDM_OPEN:
-		if (GetFilename(filename,sizeof(filename))) {
-			if (pZim.displayFilename[0]) {
-				if (MessageBox(hwnd, "You already have a file open. Are you sure you want to open a new one?", "ZimView", MB_OKCANCEL|MB_ICONQUESTION|MB_DEFBUTTON2)==IDCANCEL)
-					break;
-				else {CloseZimFile(&pZim);	SetWindowText(hwnd, "ZimView");}
+			if (GetFilename(filename,sizeof(filename))) {
+				if (pZim.displayFilename[0]) {
+					if (MessageBox(hwnd, "You already have a file open. Are you sure you want to open a new one?", "ZimView", MB_OKCANCEL|MB_ICONQUESTION|MB_DEFBUTTON2)==IDCANCEL)	{
+						return;
+					}
+					else {
+						CloseZimFile(&pZim);	SetWindowText(hwnd, "ZimView");
+					}
+				}
+			OpenZimFile(hwnd, &pZim, filename); //the opens the file, and loads the zim while checking for errors
+			UpdateWindow(hwnd);
+			ScrollUpdate(hwnd, &pZim);
 			}
-		OpenZimFile(hwnd, &pZim, filename); //the opens the file, and loads the zim while checking for errors
-		}
-		break;
+			break;
 		case IDM_SAVEAS:
 			SaveAsZim(&pZim);
 			break;
@@ -788,152 +793,154 @@ int LoadZimFile(ZIM_STRUCTURE * LoadedZim) {
 
 	DWORD blockidDword;
 
-			//Find the real file length, and rewind file
-			fseek(LoadedZim->pZimFile, 0, SEEK_END);
-			LoadedZim->dwRealFileLen=ftell(LoadedZim->pZimFile);
-			rewind(LoadedZim->pZimFile);
+	//Find the real file length, and rewind file
+	fseek(LoadedZim->pZimFile, 0, SEEK_END);
+	LoadedZim->dwRealFileLen=ftell(LoadedZim->pZimFile);
+	rewind(LoadedZim->pZimFile);
 
-			//If the file is too small for even a header, don't pursue it
-			if (LoadedZim->dwRealFileLen<sizeof(zimHeader))
-				return LOADZIM_ERR_SIZEIMPOSSIBLE;
+	//If the file is too small for even a header, don't pursue it
+	if (LoadedZim->dwRealFileLen<sizeof(zimHeader))
+		return LOADZIM_ERR_SIZEIMPOSSIBLE;
 
-			memset(&adlerhold, 0, sizeof(ADLER_STRUCTURE)); //set a=0, b=0 (broken adler)
-			LoadedZim->dwRealChecksum=	AdlerOnFile(LoadedZim->pZimFile, &adlerhold, 4, LoadedZim->dwRealFileLen-4);
-			if ((adlerhold.a==0xDE) && (adlerhold.b==0xAD) && (LoadedZim->dwRealChecksum==0)) return LOADZIM_ERR_MEMORYPROBLEM;
+	memset(&adlerhold, 0, sizeof(ADLER_STRUCTURE)); //set a=0, b=0 (broken adler)
+	LoadedZim->dwRealChecksum=	AdlerOnFile(LoadedZim->pZimFile, &adlerhold, 4, LoadedZim->dwRealFileLen-4);
+	if ((adlerhold.a==0xDE) && (adlerhold.b==0xAD) && (LoadedZim->dwRealChecksum==0)) return LOADZIM_ERR_MEMORYPROBLEM;
 
 
-			rewind(LoadedZim->pZimFile);
+	rewind(LoadedZim->pZimFile);
 
-			//Load the header (as is) into zimHeader
-			fread(&zimHeader, sizeof(zimHeader), 1, LoadedZim->pZimFile);
+	//Load the header (as is) into zimHeader
+	fread(&zimHeader, sizeof(zimHeader), 1, LoadedZim->pZimFile);
 
-			//Transfer data from zimHeader to LoadedZim while fixing endianess
-			LoadedZim->wNumBlocks=WORD_swap_endian(zimHeader.wNumBlocks);
-			LoadedZim->dwTotalFileLen=DWORD_swap_endian(zimHeader.dwTotalFileLen);
-			LoadedZim->dwChecksum=DWORD_swap_endian(zimHeader.dwChecksum); //?endianess
-			LoadedZim->wCustomerNumber=zimHeader.wCustomerNumber; //?big endian
+	//Transfer data from zimHeader to LoadedZim while fixing endianess
+	LoadedZim->wNumBlocks=WORD_swap_endian(zimHeader.wNumBlocks);
+	LoadedZim->dwTotalFileLen=DWORD_swap_endian(zimHeader.dwTotalFileLen);
+	LoadedZim->dwChecksum=DWORD_swap_endian(zimHeader.dwChecksum); //?endianess
+	LoadedZim->wCustomerNumber=zimHeader.wCustomerNumber; //?big endian
 
-			//If the number of blocks is less than zero, then something is wrong
-			if (LoadedZim->wNumBlocks<0) {
-				return LOADZIM_ERR_BLOCKNUMBERIMPOSSIBLE;
-			}
+	//If the number of blocks is less than zero, then something is wrong
+	if (LoadedZim->wNumBlocks<0) {
+		return LOADZIM_ERR_BLOCKNUMBERIMPOSSIBLE;
+	}
 
-			//If there are too many blocks for the number of block locations (DWORDs), then return
-			if ((sizeof(zimHeader) + sizeof(DWORD) * LoadedZim->wNumBlocks)>LoadedZim->dwRealFileLen)
-				return LOADZIM_ERR_BLOCKNUMBERIMPOSSIBLE;
+	//If there are too many blocks for the number of block locations (DWORDs), then return
+	if ((sizeof(zimHeader) + sizeof(DWORD) * LoadedZim->wNumBlocks)>LoadedZim->dwRealFileLen)
+		return LOADZIM_ERR_BLOCKNUMBERIMPOSSIBLE;
 
-			LoadedZim->dwBlockStartLocArray=malloc(LoadedZim->wNumBlocks * sizeof(DWORD));
-			if (LoadedZim->dwBlockStartLocArray==NULL)
-				return LOADZIM_ERR_MEMORYPROBLEM;
-			memset(LoadedZim->dwBlockStartLocArray, 0, LoadedZim->wNumBlocks * sizeof(DWORD));
+	//Check that the number of blocks isn't higher than the defined maximum number of blocks
+	if (LoadedZim->wNumBlocks>MAXBLOCKS)	{
+		return LOADZIM_ERR_NUMBERABOVEMAX;
+	}
 
-			LoadedZim->first=NULL;
+	LoadedZim->dwBlockStartLocArray=malloc(LoadedZim->wNumBlocks * sizeof(DWORD));
+	if (LoadedZim->dwBlockStartLocArray==NULL)
+		return LOADZIM_ERR_MEMORYPROBLEM;
+	memset(LoadedZim->dwBlockStartLocArray, 0, LoadedZim->wNumBlocks * sizeof(DWORD)); //blank the array
 
-			//Read where the blocks are located, and load them into internal structure, check for obvious errors
-			for (tempWord=0;tempWord<LoadedZim->wNumBlocks; tempWord++) {
-				fread(&LoadedZim->dwBlockStartLocArray[tempWord],sizeof(DWORD),1,LoadedZim->pZimFile);
-				//Convert to big endian
-				LoadedZim->dwBlockStartLocArray[tempWord]=DWORD_swap_endian(LoadedZim->dwBlockStartLocArray[tempWord]);
+	//Read block offsets and load them into internal structure, check for obvious errors
+	for (tempWord=0;tempWord<LoadedZim->wNumBlocks; tempWord++) {
+		fread(&LoadedZim->dwBlockStartLocArray[tempWord],sizeof(DWORD),1,LoadedZim->pZimFile);
+		//Convert to big endian
+		LoadedZim->dwBlockStartLocArray[tempWord]=DWORD_swap_endian(LoadedZim->dwBlockStartLocArray[tempWord]);
 
-				//if the block is located before the header, it's not going to be a block (probably) OR if the block is meant to be at a position greater than the real file size, then stop
-				if ( (LoadedZim->dwBlockStartLocArray[tempWord]<=sizeof(zimHeader)) || (LoadedZim->dwBlockStartLocArray[tempWord]> LoadedZim->dwRealFileLen-sizeof(blockHeader)) ) {
-					free(LoadedZim->dwBlockStartLocArray); //free the memory allocated for the array
-					LoadedZim->wNumBlocks=0;
-					return LOADZIM_ERR_BLOCKOUTOFBOUNDS; }
+		//if the block is located before the header, it's not going to be a block (probably) OR if the block is meant to be at a position greater than the real file size, then stop
+		if ( (LoadedZim->dwBlockStartLocArray[tempWord]<=sizeof(zimHeader)) || (LoadedZim->dwBlockStartLocArray[tempWord]> LoadedZim->dwRealFileLen-sizeof(blockHeader)) ) {
+			free(LoadedZim->dwBlockStartLocArray); //free the memory allocated for the array
+			LoadedZim->wNumBlocks=0;
+			return LOADZIM_ERR_BLOCKOUTOFBOUNDS; }
+	}
 
-			}
+	LoadedZim->first=NULL;
+	oldBlockStruct=LoadedZim->first;
+	//Go through each block, and add it to the linked list
+	for (tempWord=0;tempWord<LoadedZim->wNumBlocks; tempWord++) {
+		//Read the block header
+		fseek(LoadedZim->pZimFile, LoadedZim->dwBlockStartLocArray[tempWord], SEEK_SET);
+		fread(&blockHeader, sizeof(blockHeader), 1, LoadedZim->pZimFile);
 
-			oldBlockStruct=LoadedZim->first;
-			//Go through each block, and add it to the linked list
-			for (tempWord=0;tempWord<LoadedZim->wNumBlocks; tempWord++) {
-				//Read the block header
-				fseek(LoadedZim->pZimFile, LoadedZim->dwBlockStartLocArray[tempWord], SEEK_SET);
-				fread(&blockHeader, sizeof(blockHeader), 1, LoadedZim->pZimFile);
+		// NOTE IN BOTH THESE ERRORS, I NEED TO free the previously malloc'd structures
+		if (DWORD_swap_endian(blockHeader.dwDataLength)<sizeof(blockHeader)) { //if the length of the block too small
+			LoadedZim->wNumBlocks=0;
+			return LOADZIM_ERR_BLOCKSIZEIMPOSSIBLE;
+		}
 
-				/* NOTE IN BOTH THESE ERRORS, I NEED TO free the previously malloc'd structures */
-				if (DWORD_swap_endian(blockHeader.dwDataLength)<sizeof(blockHeader)) { //if the length of the block too small
-					LoadedZim->wNumBlocks=0;
-					return LOADZIM_ERR_BLOCKSIZEIMPOSSIBLE;
-				}
+		if (DWORD_swap_endian(blockHeader.dwDataLength)+LoadedZim->dwBlockStartLocArray[tempWord]>LoadedZim->dwRealFileLen) { //or if bigger than remaining space in file
+			LoadedZim->wNumBlocks=0;
+			return LOADZIM_ERR_BLOCKSIZEIMPOSSIBLE;
+		}
 
-				if (DWORD_swap_endian(blockHeader.dwDataLength)+LoadedZim->dwBlockStartLocArray[tempWord]>LoadedZim->dwRealFileLen) { //or if bigger than remaining space in file
-					LoadedZim->wNumBlocks=0;
-					return LOADZIM_ERR_BLOCKSIZEIMPOSSIBLE;
-				}
+		tempBlockStruct=malloc(sizeof(BLOCK_STRUCTURE));
+		memset(tempBlockStruct, 0, sizeof(BLOCK_STRUCTURE));
 
-				tempBlockStruct=malloc(sizeof(BLOCK_STRUCTURE));
-				memset(tempBlockStruct, 0, sizeof(BLOCK_STRUCTURE));
+		if (tempWord==0) LoadedZim->first=tempBlockStruct;
+		else oldBlockStruct->next=tempBlockStruct;
 
-				if (tempWord==0) LoadedZim->first=tempBlockStruct;
-				else oldBlockStruct->next=tempBlockStruct;
+		tempBlockStruct->next=NULL;
 
-				tempBlockStruct->next=NULL;
+		tempBlockStruct->dwDataLength =		DWORD_swap_endian(blockHeader.dwDataLength);
+		tempBlockStruct->dwBlockStartLoc =	LoadedZim->dwBlockStartLocArray[tempWord];
+		tempBlockStruct->dwDestStartLoc =	tempBlockStruct->dwBlockStartLoc;
+		tempBlockStruct->dwChecksum=DWORD_swap_endian(blockHeader.dwChecksum);
+		tempBlockStruct->name[0]=blockHeader.name[0];
+		tempBlockStruct->name[1]=blockHeader.name[1];
+		tempBlockStruct->name[2]=blockHeader.name[2];
+		tempBlockStruct->name[3]=blockHeader.name[3];
+		tempBlockStruct->name[4]=0;
 
-				tempBlockStruct->dwDataLength =		DWORD_swap_endian(blockHeader.dwDataLength);
-				tempBlockStruct->dwBlockStartLoc =	LoadedZim->dwBlockStartLocArray[tempWord];
-				tempBlockStruct->dwDestStartLoc =	tempBlockStruct->dwBlockStartLoc;
-				tempBlockStruct->dwChecksum=DWORD_swap_endian(blockHeader.dwChecksum);
-				tempBlockStruct->name[0]=blockHeader.name[0];
-				tempBlockStruct->name[1]=blockHeader.name[1];
-				tempBlockStruct->name[2]=blockHeader.name[2];
-				tempBlockStruct->name[3]=blockHeader.name[3];
-				tempBlockStruct->name[4]=0;
+		tempBlockStruct->blockSignature[0]=blockHeader.blockSignature[0];
+		tempBlockStruct->blockSignature[1]=blockHeader.blockSignature[1];
+		tempBlockStruct->blockSignature[2]=blockHeader.blockSignature[2];
+		tempBlockStruct->blockSignature[3]=blockHeader.blockSignature[3];
 
-				tempBlockStruct->blockSignature[0]=blockHeader.blockSignature[0];
-				tempBlockStruct->blockSignature[1]=blockHeader.blockSignature[1];
-				tempBlockStruct->blockSignature[2]=blockHeader.blockSignature[2];
-				tempBlockStruct->blockSignature[3]=blockHeader.blockSignature[3];
+		//Calculate the real checksum on the block in two parts
+		memset(&adlerhold, 0, sizeof(ADLER_STRUCTURE));
+		AdlerOnFile(LoadedZim->pZimFile, &adlerhold, tempBlockStruct->dwBlockStartLoc+sizeof(blockHeader), tempBlockStruct->dwDataLength);
+		if ((adlerhold.a==0xDE) && (adlerhold.b==0xAD) && (1==0)) return LOADZIM_ERR_MEMORYPROBLEM;
+		tempBlockStruct->dwRealChecksum=AdlerOnFile(LoadedZim->pZimFile, &adlerhold, tempBlockStruct->dwBlockStartLoc, sizeof(blockHeader)-sizeof(blockHeader.dwChecksum));
+		if ((adlerhold.a==0xDE) && (adlerhold.b==0xAD) && (tempBlockStruct->dwRealChecksum==0)) return LOADZIM_ERR_MEMORYPROBLEM;
 
-				//Calculate the real checksum on the block in two parts
-				memset(&adlerhold, 0, sizeof(ADLER_STRUCTURE));
-				AdlerOnFile(LoadedZim->pZimFile, &adlerhold, tempBlockStruct->dwBlockStartLoc+sizeof(blockHeader), tempBlockStruct->dwDataLength);
-				if ((adlerhold.a==0xDE) && (adlerhold.b==0xAD) && (1==0)) return LOADZIM_ERR_MEMORYPROBLEM;
-				tempBlockStruct->dwRealChecksum=AdlerOnFile(LoadedZim->pZimFile, &adlerhold, tempBlockStruct->dwBlockStartLoc, sizeof(blockHeader)-sizeof(blockHeader.dwChecksum));
-				if ((adlerhold.a==0xDE) && (adlerhold.b==0xAD) && (tempBlockStruct->dwRealChecksum==0)) return LOADZIM_ERR_MEMORYPROBLEM;
+		//Calculate the md5 of the block
+		cvs_MD5Init(&MD5context);
+		MD5OnFile(LoadedZim->pZimFile, &MD5context, tempBlockStruct->dwBlockStartLoc+sizeof(blockHeader), tempBlockStruct->dwDataLength);
+		cvs_MD5Final (&tempBlockStruct->md5, &MD5context);
 
-				//Calculate the md5 of the block
-				cvs_MD5Init(&MD5context);
-				MD5OnFile(LoadedZim->pZimFile, &MD5context, tempBlockStruct->dwBlockStartLoc+sizeof(blockHeader), tempBlockStruct->dwDataLength);
-				cvs_MD5Final (&tempBlockStruct->md5, &MD5context);
+		//get a DWORD from the block name
+		blockidDword=0;
+		blockidDword |= (tempBlockStruct->name[3] << 24);
+		blockidDword |= (tempBlockStruct->name[2] << 16);
+		blockidDword |= (tempBlockStruct->name[1] << 8);
+		blockidDword |= tempBlockStruct->name[0];
 
-				//get a DWORD from the block name
-				blockidDword=0;
-				blockidDword |= (tempBlockStruct->name[3] << 24);
-				blockidDword |= (tempBlockStruct->name[2] << 16);
-				blockidDword |= (tempBlockStruct->name[1] << 8);
-				blockidDword |= tempBlockStruct->name[0];
+		switch (blockidDword) {
+			//First do what is common to root, code and kern, load, nvrm
+			case BID_DWORD_ROOT:
+			case BID_DWORD_CODE:
+			case BID_DWORD_KERN:
+			case BID_DWORD_LOAD:
+			case BID_DWORD_NVRM:
+				if (blockidDword==BID_DWORD_ROOT) tempBlockStruct->typeOfBlock=BTYPE_ROOT;
+				if (blockidDword==BID_DWORD_CODE) tempBlockStruct->typeOfBlock=BTYPE_CODE;
+				if (blockidDword==BID_DWORD_KERN) tempBlockStruct->typeOfBlock=BTYPE_KERN;
+				if (blockidDword==BID_DWORD_LOAD) tempBlockStruct->typeOfBlock=BTYPE_LOAD;
+				if (blockidDword==BID_DWORD_NVRM) tempBlockStruct->typeOfBlock=BTYPE_NVRM;
+				tempBlockStruct->ptrFurtherBlockDetail=ReadUsualBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwBlockStartLoc + sizeof(blockHeader));
+				break;
+			case BID_DWORD_VERI:
+				tempBlockStruct->typeOfBlock=BTYPE_VERI;
+				tempBlockStruct->ptrFurtherBlockDetail=ReadVeriBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwBlockStartLoc + sizeof(blockHeader));
+				break;
+			case BID_DWORD_BOXI:
+				tempBlockStruct->typeOfBlock=BTYPE_BOXI;
+				tempBlockStruct->ptrFurtherBlockDetail=ReadBoxiBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwBlockStartLoc + sizeof(blockHeader));
+				break;
+			default: //?UVER ?MCUP
+				tempBlockStruct->typeOfBlock=0;
+				break;
+		}
+		oldBlockStruct=tempBlockStruct;
+	}
 
-				switch (blockidDword) {
-
-				//First do what is common to root, code and kern, load, nvrm
-				case BID_DWORD_ROOT:
-				case BID_DWORD_CODE:
-				case BID_DWORD_KERN:
-				case BID_DWORD_LOAD:
-				case BID_DWORD_NVRM:
-					if (blockidDword==BID_DWORD_ROOT) tempBlockStruct->typeOfBlock=BTYPE_ROOT;
-					if (blockidDword==BID_DWORD_CODE) tempBlockStruct->typeOfBlock=BTYPE_CODE;
-					if (blockidDword==BID_DWORD_KERN) tempBlockStruct->typeOfBlock=BTYPE_KERN;
-					if (blockidDword==BID_DWORD_LOAD) tempBlockStruct->typeOfBlock=BTYPE_LOAD;
-					if (blockidDword==BID_DWORD_NVRM) tempBlockStruct->typeOfBlock=BTYPE_NVRM;
-					tempBlockStruct->ptrFurtherBlockDetail=ReadUsualBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwBlockStartLoc + sizeof(blockHeader));
-					break;
-				case BID_DWORD_VERI:
-					tempBlockStruct->typeOfBlock=BTYPE_VERI;
-					tempBlockStruct->ptrFurtherBlockDetail=ReadVeriBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwBlockStartLoc + sizeof(blockHeader));
-					break;
-				case BID_DWORD_BOXI:
-					tempBlockStruct->typeOfBlock=BTYPE_BOXI;
-					tempBlockStruct->ptrFurtherBlockDetail=ReadBoxiBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwBlockStartLoc + sizeof(blockHeader));
-					break;
-				default: //?UVER ?MCUP
-					tempBlockStruct->typeOfBlock=0;
-					break;
-				}
-				oldBlockStruct=tempBlockStruct;
-			}
-
-			free(LoadedZim->dwBlockStartLocArray); //Free the memory the block start points were stored.
+	free(LoadedZim->dwBlockStartLocArray); //Free the memory the block start points were stored.
 
 	if (LoadedZim->wNumBlocks > ((LoadedZim->dwRealFileLen-12)/24))
 		return LOADZIM_ERR_BLOCKNUMBERUNLIKELY;
@@ -941,7 +948,7 @@ int LoadZimFile(ZIM_STRUCTURE * LoadedZim) {
 	if (LoadedZim->dwRealFileLen!=LoadedZim->dwTotalFileLen)
 		return LOADZIM_ERR_SIZEDESCREP;
 
-return LOADZIM_ERR_SUCCESS; //default
+	return LOADZIM_ERR_SUCCESS; //default
 }
 
 
@@ -1412,7 +1419,7 @@ int PaintWindow(HWND hwnd) {
 		}
 
 		EndPaint (hwnd, &psPaint);
-return 0;
+	return 0;
 }
 
 int DrawCaret(HDC hdc, RECT *lpRect, COLORREF colour1, COLORREF colour2)
@@ -1476,7 +1483,7 @@ int MD5StringToArray(char * MD5array, char * inputString)
 	char hexnumber[3];
 	int i;
 
-	hexnumber[2]=0;
+	hexnumber[2]=0;	//zero terminator
 	i=0;
 	while (inputString[i] && i<32) {
 		hexnumber[0]=inputString[i];
@@ -1485,7 +1492,8 @@ int MD5StringToArray(char * MD5array, char * inputString)
 		MD5array[i/2]=strtoul(&hexnumber[0], NULL, 16);
 		i+=2;
 	}
-return i;
+
+	return i;
 }
 
 int ActivateZimFile(ZIM_STRUCTURE *ZimToActivate)
@@ -1504,44 +1512,44 @@ int ActivateZimFile(ZIM_STRUCTURE *ZimToActivate)
 
 int OpenZimFile(HWND hwnd, ZIM_STRUCTURE *ZimToOpen, char * filename)
 {
-int i;
-char tempString[255];
+	int i;
+	char tempString[255];
 
-if (filename[0]=='\"') {
-	filename++;
-	i=strlen(filename);
-	filename[i-1]='\0';
-}
+	if (filename[0]=='\"') {
+		filename++;
+		i=strlen(filename);
+		filename[i-1]='\0';
+	}
 
-caretedBlock=0;
-memset(ZimToOpen, 0, sizeof(pZim));
-ZimToOpen->pZimFile =fopen(filename,"rb");
-if (ZimToOpen->pZimFile!=NULL) {
-	//Clear then set the pZim filename
-	sprintf(ZimToOpen->displayFilename,"%s",filename);
-	ZimToOpen->displayFilenameNoPath=strrchr(ZimToOpen->displayFilename,92)+1;
-    if (ZimToOpen->displayFilenameNoPath==NULL) ZimToOpen->displayFilenameNoPath=ZimToOpen->displayFilename;
-	i=LoadZimFile(ZimToOpen);
-	if (i==0) {
-		sprintf(tempString, "ZimView - %s",ZimToOpen->displayFilenameNoPath);
-		SetWindowText(hwnd, tempString);
-		InvalidateRect (hwnd, NULL, TRUE);
+	caretedBlock=0;
+	memset(ZimToOpen, 0, sizeof(pZim));
+	ZimToOpen->pZimFile =fopen(filename,"rb");
+	if (ZimToOpen->pZimFile!=NULL) {
+		//Clear then set the pZim filename
+		sprintf(ZimToOpen->displayFilename,"%s",filename);
+		ZimToOpen->displayFilenameNoPath=strrchr(ZimToOpen->displayFilename,92)+1;
+	    if (ZimToOpen->displayFilenameNoPath==NULL) ZimToOpen->displayFilenameNoPath=ZimToOpen->displayFilename;
+		i=LoadZimFile(ZimToOpen);
+		if (i==0) {
+			sprintf(tempString, "ZimView - %s",ZimToOpen->displayFilenameNoPath);
+			SetWindowText(hwnd, tempString);
+			InvalidateRect (hwnd, NULL, TRUE);
+		}
+		else {
+			CloseZimFile(ZimToOpen);
+			SetWindowText(hwnd, "ZimView");
+			InvalidateRect (hwnd, NULL, TRUE);
+			MessageBox(hwnd, "This program is not yet robust enough to handle broken .zim files. File not loaded.", "ZimView", MB_OK);
+			return 1;
+		}
 	}
 	else {
-		CloseZimFile(ZimToOpen);
-		SetWindowText(hwnd, "ZimView");
-		InvalidateRect (hwnd, NULL, TRUE);
-		MessageBox(hwnd, "This program is not yet robust enough to handle broken .zim files. File not loaded.", "ZimView", MB_OK);
+		sprintf(tempString, "Unable to open file: %s.", filename);
+		MessageBox(hwnd, tempString, "ZimView", MB_OK|MB_ICONEXCLAMATION);
 		return 1;
-		}
-}
-else {
-	sprintf(tempString, "Unable to open file: %s.", filename);
-	MessageBox(hwnd, tempString, "ZimView", MB_OK|MB_ICONEXCLAMATION);
-	return 1;
-}
+	}
 
-return 0;
+	return 0;
 }
 
 int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exportFile, int includeHeader)
@@ -1711,8 +1719,8 @@ void *ReadBoxiBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
 
 void *ReadVeriBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
 {
-VERI_STRUCTURE *tempVeriStruct;
-WORD counterVeriPart;
+	VERI_STRUCTURE *tempVeriStruct;
+	WORD counterVeriPart;
 
 	Block->ptrFurtherBlockDetail=malloc(sizeof(VERI_STRUCTURE)); //the internal structure
 	tempVeriStruct=Block->ptrFurtherBlockDetail;
@@ -1739,7 +1747,7 @@ WORD counterVeriPart;
 	return Block->ptrFurtherBlockDetail;
 	}
 
-return NULL;
+	return NULL;
 }
 
 
@@ -1791,7 +1799,7 @@ WORD CalculateOffsetForWriting(ZIM_STRUCTURE *LoadedZim)
 	}
 	LoadedZim->dwTotalFileLen=blockOffset;
 
-return countOfWritableBlocks;
+	return countOfWritableBlocks;
 }
 
 int SaveAsZim(ZIM_STRUCTURE *LoadedZim)
