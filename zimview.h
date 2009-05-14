@@ -1,3 +1,4 @@
+#define MAXBLOCKS 0x7FFF	//in reality a maximum of 16 would be sufficient
 #define BLOCKSIZE 0x10000 //try to avoid allocating more than 1 meg of memory during file operations
 
 struct sZimHeader //Endian oblivious - used to fread direct from zim
@@ -143,6 +144,7 @@ struct internalBlockStructure //used internally
 #define LOADZIM_ERR_BLOCKSIZEIMPOSSIBLE 6 //The size of a block is either too small or too large
 #define LOADZIM_ERR_BLOCKSIGWRONG 7 //The signiture BS00 is not present
 #define LOADZIM_ERR_MEMORYPROBLEM 8 //Unable to malloc (i.e. malloc returns NULL)
+#define LOADZIM_ERR_NUMBERABOVEMAX 9 //Trying to load more than MAXBLOCKS blocks
 
 #define EXPORTBLOCK_ERR_SUCCESS 0
 #define EXPORTBLOCK_ERR_MEMORYPROBLEM 8

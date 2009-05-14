@@ -32,19 +32,24 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
     pHdr = (DLGHDR_PROPERTIES *) GetWindowLong(hwnd, GWL_USERDATA);
 	iSel = TabCtrl_GetCurSel(pHdr->hwndTab);
 
-    if (pHdr->hwndDisplay != NULL)
+    if (pHdr->hwndDisplay != NULL)	{
+		if (pHdr->oldiSel==1)	{ //if we're moving from the info block, potentially save the data
+			if (pHdr->selectedBlock->typeOfBlock==BTYPE_BOXI)
+				FillBoxiStructFromBoxiDlg(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct);
+		}
 		DestroyWindow(pHdr->hwndDisplay);
+	}
 
 	pHdr->hwndDisplay = CreateDialogIndirect(hInst, pHdr->apRes[iSel], hwnd, ChildDlg);
 	if (iSel>0)	{
 		switch (pHdr->selectedBlock->typeOfBlock)	{
 			case BTYPE_BOXI:
-				FillBoxiDlgFromBoxiStruct(pHdr->hwndDisplay, pHdr->selectedBlock);
+				FillBoxiDlgFromBoxiStruct(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct);
 		}
 	}
 
 	InvalidateRect(pHdr->hwndDisplay, NULL, TRUE);
-
+	pHdr->oldiSel=iSel;
 	return;
 }
 
@@ -55,6 +60,7 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	HANDLE hTab;
 	int nSel;
 	BLOCK_STRUCTURE *selectedBlock;
+	BOXI_STRUCTURE *tempBoxiStruct;
 	char tempString[255];
 
 	ZIM_STRUCTURE *ZimToUse;
@@ -80,6 +86,7 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 			hTab=GetDlgItem(hwnd, IDC_PROPERTIESTAB);
 			pHdr->hwndTab=hTab;
+			pHdr->oldiSel=0;
 
 			if (nSel==1)
 		    	pHdr->apRes[0] = DoLockDlgRes(MAKEINTRESOURCE(IDD_PROPERTIES_MAIN));
@@ -103,6 +110,8 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				switch (selectedBlock->typeOfBlock)	{
 					case BTYPE_BOXI:
 						pHdr->apRes[1] = DoLockDlgRes(MAKEINTRESOURCE(IDD_PROPERTIES_BOXI));
+						tempBoxiStruct=selectedBlock->ptrFurtherBlockDetail;
+						memcpy(&pHdr->dlgBoxiStruct, tempBoxiStruct, sizeof(BOXI_STRUCTURE));
 						break;
 					case BTYPE_VERI:
 						pHdr->apRes[1] = DoLockDlgRes(MAKEINTRESOURCE(IDD_PROPERTIES_VERI));
@@ -145,8 +154,10 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					EndDialog(hwnd,1);
 					return 1;
 				case IDAPPLY:
+					PropertiesApplyChanges(hwnd);
 					return 1;
 				case IDOK:
+					PropertiesApplyChanges(hwnd);
 					LocalFree(pHdr);
 					EndDialog(hwnd,1);
 					return 1;
@@ -155,6 +166,32 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
+
+void PropertiesApplyChanges(HWND hwnd)
+{
+	DLGHDR_PROPERTIES *pHdr;
+	BLOCK_STRUCTURE *selectedBlock;
+
+    pHdr = (DLGHDR_PROPERTIES *) GetWindowLong(hwnd, GWL_USERDATA);
+
+	if (pHdr->selectedBlock)	{
+		selectedBlock=pHdr->selectedBlock;
+
+		switch (selectedBlock->typeOfBlock)	{
+			case BTYPE_BOXI:
+
+				if (pHdr->oldiSel==1)
+					FillBoxiStructFromBoxiDlg(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct);
+
+				CreateValidBoxiBlockFromBoxiStruct(selectedBlock, &pHdr->dlgBoxiStruct);
+				break;
+		}
+
+	}
+
+	return;
+}
+
 
 BOOL _stdcall ChangeCustomerNumberDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -243,7 +280,8 @@ BOOL _stdcall BlockCreateBoxiDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 						MessageBox(hwnd, "There is insufficient memory to create a new BOXI block.", "Create BOXI block", MB_OK|MB_ICONEXCLAMATION);
 						return 0;
 					}
-					FillBoxiStructFromBoxiDlg(hwnd, newBlock);
+					FillBoxiStructFromBoxiDlg(hwnd, newBlock->ptrFurtherBlockDetail);
+					CreateValidBoxiBlockFromBoxiStruct(newBlock, newBlock->ptrFurtherBlockDetail);
 					EndDialog(hwnd,1);
 					return 1;
 				case IDCANCEL:
@@ -255,66 +293,68 @@ BOOL _stdcall BlockCreateBoxiDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	return 0;
 }
 
-void FillBoxiDlgFromBoxiStruct(HWND hwnd, BLOCK_STRUCTURE *boxiBlock)
+void FillBoxiDlgFromBoxiStruct(HWND hwnd, BOXI_STRUCTURE *boxiStruct)
 {
-	BOXI_STRUCTURE *tempBoxiStruct;
 	char buffer[255];
 
-	tempBoxiStruct=boxiBlock->ptrFurtherBlockDetail;
-
-	sprintf(buffer, "0x%x", tempBoxiStruct->boxiFileData.uiOUI);
+	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.uiOUI);
 	SetDlgItemText(hwnd, IDC_BOXIOUI, &buffer[0]);
-	sprintf(buffer, "0x%x", tempBoxiStruct->boxiFileData.uiStarterImageSize);
+	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.uiStarterImageSize);
 	SetDlgItemText(hwnd, IDC_BOXISTARTERIMAGESIZE, &buffer[0]);
-	sprintf(buffer, "0x%x", tempBoxiStruct->boxiFileData.wHwVersion);
+	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.wHwVersion);
 	SetDlgItemText(hwnd, IDC_BOXIHWV, &buffer[0]);
-	sprintf(buffer, "0x%x", tempBoxiStruct->boxiFileData.wSwVersion);
+	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.wSwVersion);
 	SetDlgItemText(hwnd, IDC_BOXISWV, &buffer[0]);
-	sprintf(buffer, "0x%x", tempBoxiStruct->boxiFileData.wHwModel);
+	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.wHwModel);
 	SetDlgItemText(hwnd, IDC_BOXIHWM, &buffer[0]);
-	sprintf(buffer, "0x%x", tempBoxiStruct->boxiFileData.wSwModel);
+	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.wSwModel);
 	SetDlgItemText(hwnd, IDC_BOXISWM, &buffer[0]);
-	MD5HexString(&buffer[0], tempBoxiStruct->boxiFileData.abStarterMD5Digest);
+	MD5HexString(&buffer[0], boxiStruct->boxiFileData.abStarterMD5Digest);
 	SetDlgItemText(hwnd, IDC_BOXISTARTERMD5, &buffer[0]);
 	return;
 }
 
-void FillBoxiStructFromBoxiDlg(HWND hwnd, BLOCK_STRUCTURE *boxiBlock)
+void FillBoxiStructFromBoxiDlg(HWND hwnd, BOXI_STRUCTURE *boxiStruct)
 {
-	BOXI_STRUCTURE *tempBoxiStruct;
 	char buffer[255];
 
+	memset(&boxiStruct->boxiFileData, 0, sizeof(BOXIBLOCK_STRUCTURE));
+
+	GetDlgItemText(hwnd, IDC_BOXIOUI, &buffer[0], 255);
+	boxiStruct->boxiFileData.uiOUI=strtoul(&buffer[0], NULL, 0);
+	GetDlgItemText(hwnd, IDC_BOXISTARTERIMAGESIZE, &buffer[0], 255);
+	boxiStruct->boxiFileData.uiStarterImageSize=strtoul(&buffer[0], NULL, 0);
+	GetDlgItemText(hwnd, IDC_BOXIHWV, &buffer[0], 255);
+	boxiStruct->boxiFileData.wHwVersion=strtoul(&buffer[0], NULL, 0);
+	GetDlgItemText(hwnd, IDC_BOXISWV, &buffer[0], 255);
+	boxiStruct->boxiFileData.wSwVersion=strtoul(&buffer[0], NULL, 0);
+	GetDlgItemText(hwnd, IDC_BOXIHWM, &buffer[0], 255);
+	boxiStruct->boxiFileData.wHwModel=strtoul(&buffer[0], NULL, 0);
+	GetDlgItemText(hwnd, IDC_BOXISWM, &buffer[0], 255);
+	boxiStruct->boxiFileData.wSwModel=strtoul(&buffer[0], NULL, 0);
+
+	GetDlgItemText(hwnd, IDC_BOXISTARTERMD5, &buffer[0], 255);
+	MD5StringToArray(boxiStruct->boxiFileData.abStarterMD5Digest, &buffer[0]);
+
+	return;
+}
+
+
+void CreateValidBoxiBlockFromBoxiStruct(BLOCK_STRUCTURE *boxiBlock, BOXI_STRUCTURE *boxiStruct)
+{
 	ADLER_STRUCTURE adlerholder;
 	struct cvs_MD5Context MD5context;
 	struct sBlockHeader blockHeader;
 
-	tempBoxiStruct=boxiBlock->ptrFurtherBlockDetail;
-	memset(&tempBoxiStruct->boxiFileData, 0, sizeof(BOXIBLOCK_STRUCTURE));
-
-	GetDlgItemText(hwnd, IDC_BOXIOUI, &buffer[0], 255);
-	tempBoxiStruct->boxiFileData.uiOUI=strtoul(&buffer[0], NULL, 0);
-	GetDlgItemText(hwnd, IDC_BOXISTARTERIMAGESIZE, &buffer[0], 255);
-	tempBoxiStruct->boxiFileData.uiStarterImageSize=strtoul(&buffer[0], NULL, 0);
-	GetDlgItemText(hwnd, IDC_BOXIHWV, &buffer[0], 255);
-	tempBoxiStruct->boxiFileData.wHwVersion=strtoul(&buffer[0], NULL, 0);
-	GetDlgItemText(hwnd, IDC_BOXISWV, &buffer[0], 255);
-	tempBoxiStruct->boxiFileData.wSwVersion=strtoul(&buffer[0], NULL, 0);
-	GetDlgItemText(hwnd, IDC_BOXIHWM, &buffer[0], 255);
-	tempBoxiStruct->boxiFileData.wHwModel=strtoul(&buffer[0], NULL, 0);
-	GetDlgItemText(hwnd, IDC_BOXISWM, &buffer[0], 255);
-	tempBoxiStruct->boxiFileData.wSwModel=strtoul(&buffer[0], NULL, 0);
-
-	GetDlgItemText(hwnd, IDC_BOXISTARTERMD5, &buffer[0], 255);
-	MD5StringToArray(tempBoxiStruct->boxiFileData.abStarterMD5Digest, &buffer[0]);
-
+	memcpy(boxiBlock->ptrFurtherBlockDetail, boxiStruct, sizeof(BOXIBLOCK_STRUCTURE));
 	//Now calculate MD5 and adler on this block
 	//MD5 just on the data
 	cvs_MD5Init(&MD5context);
-	cvs_MD5Update (&MD5context, &(tempBoxiStruct->boxiFileData), sizeof(BOXIBLOCK_STRUCTURE));
+	cvs_MD5Update (&MD5context, &(boxiStruct->boxiFileData), sizeof(BOXIBLOCK_STRUCTURE));
 	cvs_MD5Final (&boxiBlock->md5, &MD5context);
 	//Adler32 on the data then block header
 	memset(&adlerholder, 0, sizeof(adlerholder));
-	ChecksumAdler32(&adlerholder, &(tempBoxiStruct->boxiFileData), sizeof(BOXIBLOCK_STRUCTURE)); //the boxi we loaded
+	ChecksumAdler32(&adlerholder, &(boxiStruct->boxiFileData), sizeof(BOXIBLOCK_STRUCTURE)); //the boxi we loaded
 	GenerateBlockHeader(&blockHeader, boxiBlock->dwDataLength, 0, "BOXI");
 	boxiBlock->blockSignature[0]=blockHeader.blockSignature[0];
 	boxiBlock->blockSignature[1]=blockHeader.blockSignature[1];
@@ -325,7 +365,6 @@ void FillBoxiStructFromBoxiDlg(HWND hwnd, BLOCK_STRUCTURE *boxiBlock)
 
 	return;
 }
-
 
 BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -989,74 +1028,74 @@ BOOL _stdcall BlockCreateVeriDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 
 int DetectTypeOfBlock(HWND hwnd, char *filename)
 {
-FILE *impBlock;
-DWORD magic;
+	FILE *impBlock;
+	DWORD magic;
 
-SQUASHFS_SUPER_BLOCK sqshHeader;
-DWORD fileLength;
-DWORD blockFileLengthData;
+	SQUASHFS_SUPER_BLOCK sqshHeader;
+	DWORD fileLength;
+	DWORD blockFileLengthData;
 
-impBlock= fopen(filename, "rb");
-if (impBlock==NULL) return 0;
+	impBlock= fopen(filename, "rb");
+	if (impBlock==NULL) return 0;
 
-fseek(impBlock, 0, SEEK_END);
-fileLength=ftell(impBlock);
+	fseek(impBlock, 0, SEEK_END);
+	fileLength=ftell(impBlock);
 
-if (fileLength<8) {fclose(impBlock); return 0;}
-rewind(impBlock);
+	if (fileLength<8) {fclose(impBlock); return 0;}
+	rewind(impBlock);
 
-fread(&magic, 4, 1, impBlock);
-fread(&blockFileLengthData, 4, 1, impBlock);
+	fread(&magic, 4, 1, impBlock);
+	fread(&blockFileLengthData, 4, 1, impBlock);
 
-if (fileLength==DWORD_swap_endian(blockFileLengthData)+sizeof(struct sBlockHeader)) {
-	CheckDlgButton(hwnd, IDC_BLOCKIMPORTINCLUDEHEADER, BST_CHECKED); //the block probably contains a header
-	if (magic==BID_DWORD_LOAD) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTLOAD);}
-	if (magic==BID_DWORD_ROOT) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTROOT);}
-	if (magic==BID_DWORD_CODE) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTCODE);}
-	if (magic==BID_DWORD_KERN) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTKERN);}
-	if (magic==BID_DWORD_NVRM) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTNVRM);}
-	if (magic==BID_DWORD_BOXI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTBOXI);}
-	if (magic==BID_DWORD_VERI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTVERI);}
+	if (fileLength==DWORD_swap_endian(blockFileLengthData)+sizeof(struct sBlockHeader)) {
+		CheckDlgButton(hwnd, IDC_BLOCKIMPORTINCLUDEHEADER, BST_CHECKED); //the block probably contains a header
+		if (magic==BID_DWORD_LOAD) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTLOAD);}
+		if (magic==BID_DWORD_ROOT) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTROOT);}
+		if (magic==BID_DWORD_CODE) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTCODE);}
+		if (magic==BID_DWORD_KERN) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTKERN);}
+		if (magic==BID_DWORD_NVRM) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTNVRM);}
+		if (magic==BID_DWORD_BOXI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTBOXI);}
+		if (magic==BID_DWORD_VERI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTVERI);}
 
-	fclose(impBlock);
-	return 0;
-}
-
-CheckDlgButton(hwnd, IDC_BLOCKIMPORTINCLUDEHEADER, BST_UNCHECKED);
-
-if (((magic==SQUASHFS_MAGIC_LZMA)||(magic==SQUASHFS_MAGIC))&&(fileLength>=sizeof(SQUASHFS_SUPER_BLOCK))) {
-	fseek(impBlock, 0, SEEK_SET);
-	fread(&sqshHeader, sizeof(SQUASHFS_SUPER_BLOCK), 1, impBlock);
-	if ((sqshHeader.inodes>=3)&&(sqshHeader.inodes<=10)) {CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTCODE);}
-	if ((sqshHeader.inodes>=250)&&(sqshHeader.inodes<=350)) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTROOT);}
-
-	fclose(impBlock);
-	return 0;
-	}
-
-if ((magic & 0xffff)==0x8b1f) { //KERNs i have seen are the only GZIP files i've seen
-	CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTKERN);
-	fclose(impBlock);
-	return 0;
-}
-
-
-if (fileLength==36) {//BOXI without header is 36 bytes
-	CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTBOXI);
-	fclose(impBlock);
-	return 0;
-}
-
-if (!(fileLength & 0x1F)) { //if divisible by 32, it _could_ be a VERI block
-
-	if ((magic==BID_DWORD_LOAD)||(magic==BID_DWORD_ROOT)||(magic==BID_DWORD_CODE)||(magic==BID_DWORD_KERN)||(magic==BID_DWORD_NVRM)||(magic==BID_DWORD_BOXI)||(magic==BID_DWORD_VERI)) {
-		CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTVERI);
 		fclose(impBlock);
 		return 0;
 	}
-}
 
-fclose(impBlock);
-return 0;
+	CheckDlgButton(hwnd, IDC_BLOCKIMPORTINCLUDEHEADER, BST_UNCHECKED);
+
+	if (((magic==SQUASHFS_MAGIC_LZMA)||(magic==SQUASHFS_MAGIC))&&(fileLength>=sizeof(SQUASHFS_SUPER_BLOCK))) {
+		fseek(impBlock, 0, SEEK_SET);
+		fread(&sqshHeader, sizeof(SQUASHFS_SUPER_BLOCK), 1, impBlock);
+		if ((sqshHeader.inodes>=3)&&(sqshHeader.inodes<=10)) {CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTCODE);}
+		if ((sqshHeader.inodes>=250)&&(sqshHeader.inodes<=350)) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTROOT);}
+
+		fclose(impBlock);
+		return 0;
+	}
+
+	if ((magic & 0xffff)==0x8b1f) { //KERNs i have seen are the only GZIP files i've seen
+		CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTKERN);
+		fclose(impBlock);
+		return 0;
+	}
+
+
+	if (fileLength==36) {//BOXI without header is 36 bytes
+		CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTBOXI);
+		fclose(impBlock);
+		return 0;
+	}
+
+	if (!(fileLength & 0x1F)) { //if divisible by 32, it _could_ be a VERI block
+
+		if ((magic==BID_DWORD_LOAD)||(magic==BID_DWORD_ROOT)||(magic==BID_DWORD_CODE)||(magic==BID_DWORD_KERN)||(magic==BID_DWORD_NVRM)||(magic==BID_DWORD_BOXI)||(magic==BID_DWORD_VERI)) {
+			CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTVERI);
+			fclose(impBlock);
+			return 0;
+		}
+	}
+
+	fclose(impBlock);
+	return 0;
 }
 

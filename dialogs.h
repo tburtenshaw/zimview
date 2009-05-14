@@ -10,6 +10,8 @@ typedef struct tag_dlghdr {
     DLGTEMPLATE *apRes[C_PAGES];
 	ZIM_STRUCTURE *LoadedZim;
 	BLOCK_STRUCTURE *selectedBlock;
+	BOXI_STRUCTURE dlgBoxiStruct;
+	int oldiSel;
 } DLGHDR_PROPERTIES;
 
 
@@ -26,6 +28,8 @@ BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 DLGTEMPLATE * WINAPI DoLockDlgRes(LPCSTR lpszResName);
 void BlockExportDetailsUpdate(HWND hwnd, ZIM_STRUCTURE *ZimToUse, int blockid);
 void PropertiesDlg_ChangeSelection(HWND hwnd);
-void FillBoxiStructFromBoxiDlg(HWND hwnd, BLOCK_STRUCTURE *boxiBlock);
-void FillBoxiDlgFromBoxiStruct(HWND hwnd, BLOCK_STRUCTURE *boxiBlock);
+void FillBoxiStructFromBoxiDlg(HWND hwnd, BOXI_STRUCTURE *boxiStruct);
+void FillBoxiDlgFromBoxiStruct(HWND hwnd, BOXI_STRUCTURE *boxiStruct);
+void CreateValidBoxiBlockFromBoxiStruct(BLOCK_STRUCTURE *boxiBlock, BOXI_STRUCTURE *boxiStruct);
+void PropertiesApplyChanges(HWND hwnd);
 int DetectTypeOfBlock(HWND hwnd, char *filename);
