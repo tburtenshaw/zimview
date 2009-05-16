@@ -28,12 +28,13 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 {
 	int iSel;
 	DLGHDR_PROPERTIES *pHdr;
+	USUAL_STRUCTURE *tempUsualStruct;
 
     pHdr = (DLGHDR_PROPERTIES *) GetWindowLong(hwnd, GWL_USERDATA);
 	iSel = TabCtrl_GetCurSel(pHdr->hwndTab);
 
     if (pHdr->hwndDisplay != NULL)	{
-		if (pHdr->oldiSel==1)	{ //if we're moving from the info block, potentially save the data
+		if (pHdr->oldiSel==1)	{ //if we're moving from the info tab, potentially save the data
 			if (pHdr->selectedBlock->typeOfBlock==BTYPE_BOXI)
 				FillBoxiStructFromBoxiDlg(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct);
 		}
@@ -41,10 +42,21 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 	}
 
 	pHdr->hwndDisplay = CreateDialogIndirect(hInst, pHdr->apRes[iSel], hwnd, ChildDlg);
-	if (iSel>0)	{
+	if (iSel>0)	{	//if we're switching to the extra info tab
 		switch (pHdr->selectedBlock->typeOfBlock)	{
 			case BTYPE_BOXI:
 				FillBoxiDlgFromBoxiStruct(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct);
+				break;
+			case BTYPE_VERI:
+				break;
+			default:
+				tempUsualStruct = pHdr->selectedBlock->ptrFurtherBlockDetail;
+				if (tempUsualStruct)	{
+					if (tempUsualStruct->sqshHeader)	{
+						FillDlgItemWithSquashFSData(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFO, tempUsualStruct->sqshHeader);
+					}
+				}
+				break;
 		}
 	}
 
@@ -362,6 +374,33 @@ void CreateValidBoxiBlockFromBoxiStruct(BLOCK_STRUCTURE *boxiBlock, BOXI_STRUCTU
 	boxiBlock->blockSignature[3]=blockHeader.blockSignature[3];
 
 	boxiBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
+
+	return;
+}
+
+void FillDlgItemWithSquashFSData(HWND hDlg, int nIDDlgItem, SQUASHFS_SUPER_BLOCK *sqshHeader)
+{
+	char buffer[1024];
+	int bufferOffset=0;
+	int i=0;
+
+	i = sprintf(buffer+bufferOffset, "SquashFS information:\r\n\r\n");
+	bufferOffset+=i;
+	i = sprintf(buffer+bufferOffset, "SquashFS version: %i.%i\r\n", sqshHeader->s_major, sqshHeader->s_minor);
+	bufferOffset+=i;
+	i = sprintf(buffer+bufferOffset, "Filesystem size: %i bytes\r\n", (long)sqshHeader->bytes_used);
+	bufferOffset+=i;
+	i = sprintf(buffer+bufferOffset, "Block size: %i\r\n", sqshHeader->block_size);
+	bufferOffset+=i;
+	i = sprintf(buffer+bufferOffset, "Number of fragments: %i\r\n", sqshHeader->fragments);
+	bufferOffset+=i;
+	i = sprintf(buffer+bufferOffset, "Number of inodes: %i\r\n", sqshHeader->inodes);
+	bufferOffset+=i;
+	i = sprintf(buffer+bufferOffset, "Number of uids: %i\r\n", sqshHeader->no_uids);
+	bufferOffset+=i;
+	i = sprintf(buffer+bufferOffset, "Number of gids: %i\r\n", sqshHeader->no_guids);
+
+	SetDlgItemText(hDlg, nIDDlgItem, &buffer[0]);
 
 	return;
 }
