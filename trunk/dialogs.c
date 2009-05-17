@@ -8,6 +8,7 @@
 #include <windowsx.h>
 #include <commctrl.h>
 #include <string.h>
+#include <time.h>
 #include "zinwellres.h"
 #include "sqsh.h"
 #include "md5.h"
@@ -45,7 +46,7 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 	if (iSel>0)	{	//if we're switching to the extra info tab
 		switch (pHdr->selectedBlock->typeOfBlock)	{
 			case BTYPE_BOXI:
-				FillBoxiDlgFromBoxiStruct(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct);
+				FillBoxiDlgFromBoxiStruct(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct, 0);
 				break;
 			case BTYPE_VERI:
 				break;
@@ -53,6 +54,7 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 				tempUsualStruct = pHdr->selectedBlock->ptrFurtherBlockDetail;
 				if (tempUsualStruct)	{
 					if (tempUsualStruct->sqshHeader)	{
+						SetDlgItemText(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFOGROUPBOX, "SquashFS information");
 						FillDlgItemWithSquashFSData(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFO, tempUsualStruct->sqshHeader);
 					}
 				}
@@ -305,21 +307,30 @@ BOOL _stdcall BlockCreateBoxiDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	return 0;
 }
 
-void FillBoxiDlgFromBoxiStruct(HWND hwnd, BOXI_STRUCTURE *boxiStruct)
+void FillBoxiDlgFromBoxiStruct(HWND hwnd, BOXI_STRUCTURE *boxiStruct, int base)
 {
 	char buffer[255];
 
-	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.uiOUI);
+	char *dec="%i\0";
+	char *hex="0x%x\0";
+
+	if (base==10)
+		hex=dec;
+	else if (base==16)
+		dec=hex;
+
+	//The template for display is entered as the default - if we want all hex then we change dec to look like hex.
+	sprintf(buffer, hex, boxiStruct->boxiFileData.uiOUI);
 	SetDlgItemText(hwnd, IDC_BOXIOUI, &buffer[0]);
-	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.uiStarterImageSize);
+	sprintf(buffer, dec, boxiStruct->boxiFileData.uiStarterImageSize);
 	SetDlgItemText(hwnd, IDC_BOXISTARTERIMAGESIZE, &buffer[0]);
-	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.wHwVersion);
+	sprintf(buffer, hex, boxiStruct->boxiFileData.wHwVersion);
 	SetDlgItemText(hwnd, IDC_BOXIHWV, &buffer[0]);
-	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.wSwVersion);
+	sprintf(buffer, hex, boxiStruct->boxiFileData.wSwVersion);
 	SetDlgItemText(hwnd, IDC_BOXISWV, &buffer[0]);
-	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.wHwModel);
+	sprintf(buffer, hex, boxiStruct->boxiFileData.wHwModel);
 	SetDlgItemText(hwnd, IDC_BOXIHWM, &buffer[0]);
-	sprintf(buffer, "0x%x", boxiStruct->boxiFileData.wSwModel);
+	sprintf(buffer, hex, boxiStruct->boxiFileData.wSwModel);
 	SetDlgItemText(hwnd, IDC_BOXISWM, &buffer[0]);
 	MD5HexString(&buffer[0], boxiStruct->boxiFileData.abStarterMD5Digest);
 	SetDlgItemText(hwnd, IDC_BOXISTARTERMD5, &buffer[0]);
@@ -383,10 +394,22 @@ void FillDlgItemWithSquashFSData(HWND hDlg, int nIDDlgItem, SQUASHFS_SUPER_BLOCK
 	char buffer[1024];
 	int bufferOffset=0;
 	int i=0;
-
-	i = sprintf(buffer+bufferOffset, "SquashFS information:\r\n\r\n");
+	time_t epch;
+	/*
+	printf("\tInodes are %scompressed\n", SQUASHFS_UNCOMPRESSED_INODES(sqshHeader->flags) ? "un" : "");
+	printf("\tData is %scompressed\n", SQUASHFS_UNCOMPRESSED_DATA(sqshHeader->flags) ? "un" : "");
+	printf("\tFragments are %scompressed\n", SQUASHFS_UNCOMPRESSED_FRAGMENTS(sqshHeader->flags) ? "un" : "");
+	printf("\tCheck data is %s present in the filesystem\n", SQUASHFS_CHECK_DATA(sqshHeader->flags) ? "" : "not");
+	printf("\tFragments are %s present in the filesystem\n", SQUASHFS_NO_FRAGMENTS(sqshHeader->flags) ? "not" : "");
+	printf("\tAlways_use_fragments option is %s specified\n", SQUASHFS_ALWAYS_FRAGMENTS(sqshHeader->flags) ? "" : "not");
+	printf("\tDuplicates are %s removed\n", SQUASHFS_DUPLICATES(sqshHeader->flags) ? "" : "not");
+	*/
+	i = sprintf(buffer+bufferOffset, "SquashFS version: %i:%i\r\n", sqshHeader->s_major, sqshHeader->s_minor);
 	bufferOffset+=i;
-	i = sprintf(buffer+bufferOffset, "SquashFS version: %i.%i\r\n", sqshHeader->s_major, sqshHeader->s_minor);
+	epch = sqshHeader->mkfs_time;
+	i = sprintf(buffer+bufferOffset, "File system created: %s", asctime(gmtime(&epch)));
+	bufferOffset+=i;
+	i = sprintf(buffer+bufferOffset, "Flags: 0x%x\r\n", sqshHeader->flags);
 	bufferOffset+=i;
 	i = sprintf(buffer+bufferOffset, "Filesystem size: %i bytes\r\n", (long)sqshHeader->bytes_used);
 	bufferOffset+=i;
