@@ -30,7 +30,7 @@ void BlockExportDetailsUpdate(HWND hwnd, ZIM_STRUCTURE *ZimToUse, int blockid);
 void PropertiesDlg_ChangeSelection(HWND hwnd);
 void FillDlgItemWithSquashFSData(HWND hDlg, int nIDDlgItem, SQUASHFS_SUPER_BLOCK *sqshHeader);
 void FillBoxiStructFromBoxiDlg(HWND hwnd, BOXI_STRUCTURE *boxiStruct);
-void FillBoxiDlgFromBoxiStruct(HWND hwnd, BOXI_STRUCTURE *boxiStruct);
+void FillBoxiDlgFromBoxiStruct(HWND hwnd, BOXI_STRUCTURE *boxiStruct, int base);
 void CreateValidBoxiBlockFromBoxiStruct(BLOCK_STRUCTURE *boxiBlock, BOXI_STRUCTURE *boxiStruct);
 void PropertiesApplyChanges(HWND hwnd);
 int DetectTypeOfBlock(HWND hwnd, char *filename);

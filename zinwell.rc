@@ -244,9 +244,11 @@ IDD_PROPERTIES_USUAL DIALOG 14,28,213,180
 STYLE WS_CHILD|WS_VISIBLE
 FONT 8, "MS Sans Serif"
 {
+   LTEXT "Block details:", 0, 0,0,100,14
    LTEXT "Magic number:", 0, 0,15,100,14
    LTEXT "Data size:", 0, 0,30,100,14
-   LTEXT "SquashFS information:", IDC_PROPERTIESLONGINFO, 0,45,193,100
+   GROUPBOX "Block information", IDC_PROPERTIESLONGINFOGROUPBOX, 0, 45, 213, 101
+   LTEXT "Info", IDC_PROPERTIESLONGINFO, 7,57,199,87
 
 }
 
@@ -258,7 +260,7 @@ FONT 8, "MS Sans Serif"
    LTEXT "ui&OUI:", 0, 0, 15, 27, 10
    EDITTEXT "0x59E", IDC_BOXIOUI, 0, 25, 55, 14
 
-   LTEXT "uiStarterImageSize:", 0, 110, 15, 75, 10
+   LTEXT "uiStarterImageSi&ze:", 0, 110, 15, 75, 10
    EDITTEXT "239844", IDC_BOXISTARTERIMAGESIZE,  110, 25, 55, 14
 
    LTEXT "HwVersion:", 0, 0, 54, 48, 10
@@ -271,7 +273,7 @@ FONT 8, "MS Sans Serif"
    EDITTEXT "4", IDC_BOXISWM, 165, 64, 48, 14
 
    LTEXT "Starter &MD5 digest:", 0, 0, 93, 158, 10
-   EDITTEXT "6787f635c11bd0c072d761fd89bf3ef1", IDC_BOXISTARTERMD5,  0, 103, 158, 14
+   EDITTEXT "md5", IDC_BOXISTARTERMD5,  0, 103, 158, 14
 
 }
 

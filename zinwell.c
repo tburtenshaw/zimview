@@ -1691,7 +1691,37 @@ void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
 		{ //if there's a squashfs file here
 	 		tempUsualStruct->sqshHeader=malloc(sizeof(SQUASHFS_SUPER_BLOCK));
 			fseek(fileToRead, start, SEEK_SET);
-			fread(tempUsualStruct->sqshHeader, sizeof(SQUASHFS_SUPER_BLOCK), 1, fileToRead);
+			//fread(tempUsualStruct->sqshHeader, sizeof(SQUASHFS_SUPER_BLOCK), 1, fileToRead);
+			//Sadly the compiler aligns at 16 bit intervals, and the squashfs has three bytes in a row
+			fread(&tempUsualStruct->sqshHeader->s_magic, sizeof(tempUsualStruct->sqshHeader->s_magic), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->inodes, sizeof(tempUsualStruct->sqshHeader->inodes), 1, fileToRead);
+
+			fread(&tempUsualStruct->sqshHeader->bytes_used_2, sizeof(tempUsualStruct->sqshHeader->bytes_used_2), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->uid_start_2, sizeof(tempUsualStruct->sqshHeader->uid_start_2), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->guid_start_2, sizeof(tempUsualStruct->sqshHeader->guid_start_2), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->inode_table_start_2, sizeof(tempUsualStruct->sqshHeader->inode_table_start_2), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->directory_table_start_2, sizeof(tempUsualStruct->sqshHeader->directory_table_start_2), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->s_major, 2, 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->s_minor, 2, 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->block_size_1, 2, 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->block_log, 2, 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->flags, 1, 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->no_uids, 1, 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->no_guids, 1, 1, fileToRead);
+
+			fread(&tempUsualStruct->sqshHeader->mkfs_time, sizeof(tempUsualStruct->sqshHeader->mkfs_time), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->root_inode, sizeof(tempUsualStruct->sqshHeader->root_inode), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->block_size, sizeof(tempUsualStruct->sqshHeader->block_size), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->fragments, sizeof(tempUsualStruct->sqshHeader->fragments), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->fragment_table_start_2, sizeof(tempUsualStruct->sqshHeader->fragment_table_start_2), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->bytes_used, sizeof(tempUsualStruct->sqshHeader->bytes_used), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->uid_start, sizeof(tempUsualStruct->sqshHeader->uid_start), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->guid_start, sizeof(tempUsualStruct->sqshHeader->guid_start), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->inode_table_start, sizeof(tempUsualStruct->sqshHeader->inode_table_start), 1, fileToRead);
+
+			fread(&tempUsualStruct->sqshHeader->directory_table_start, sizeof(tempUsualStruct->sqshHeader->directory_table_start), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->fragment_table_start, sizeof(tempUsualStruct->sqshHeader->fragment_table_start), 1, fileToRead);
+			fread(&tempUsualStruct->sqshHeader->lookup_table_start, sizeof(tempUsualStruct->sqshHeader->lookup_table_start), 1, fileToRead);
 		}
 
 	if ((tempUsualStruct->magicnumber & 0xFFFF)==0x8b1f) {
