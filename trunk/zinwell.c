@@ -57,6 +57,7 @@ unsigned long int AdlerOnFile(FILE *fileToRead, ADLER_STRUCTURE *adlerhold, DWOR
 		lengthtoread=min(BLOCKSIZE, finish-offset);
 		fread(buffer, lengthtoread, 1, fileToRead);
 		ChecksumAdler32(adlerhold, buffer, lengthtoread);
+		//ChecksumAdler32B(adlerhold, buffer, lengthtoread);
 		offset+=lengthtoread;
 	}
 	free(buffer);

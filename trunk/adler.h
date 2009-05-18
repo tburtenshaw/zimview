@@ -14,3 +14,4 @@ struct adlerstruct
 typedef struct adlerstruct ADLER_STRUCTURE;
 
 unsigned long int ChecksumAdler32(ADLER_STRUCTURE *adlerhold, unsigned char *data, size_t len);
+unsigned long int ChecksumAdler32B(ADLER_STRUCTURE *adlerhold, unsigned char *data, size_t len);
