@@ -43,6 +43,13 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 	}
 
 	pHdr->hwndDisplay = CreateDialogIndirect(hInst, pHdr->apRes[iSel], hwnd, ChildDlg);
+	if (iSel==0)	{
+		if ((pHdr->propertiesType==PT_BLOCK) && (pHdr->selectedBlock))
+			FillPropertiesMainDlg(pHdr->hwndDisplay, pHdr->selectedBlock);
+		if (pHdr->propertiesType==PT_ZIM)
+			FillPropertiesZimDlg(pHdr->hwndDisplay, pHdr->LoadedZim);
+
+	}
 	if (iSel>0)	{	//if we're switching to the extra info tab
 		switch (pHdr->selectedBlock->typeOfBlock)	{
 			case BTYPE_BOXI:
@@ -56,6 +63,10 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 					if (tempUsualStruct->sqshHeader)	{
 						SetDlgItemText(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFOGROUPBOX, "SquashFS information");
 						FillDlgItemWithSquashFSData(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFO, tempUsualStruct->sqshHeader);
+					}
+					if (tempUsualStruct->gzipHeader)	{
+						SetDlgItemText(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFOGROUPBOX, "Gzip information");
+						FillDlgItemWithGzipData(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFO, tempUsualStruct->gzipHeader);
 					}
 				}
 				break;
@@ -102,12 +113,18 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			pHdr->hwndTab=hTab;
 			pHdr->oldiSel=0;
 
-			if (nSel==1)
+			if (nSel==1)	{
 		    	pHdr->apRes[0] = DoLockDlgRes(MAKEINTRESOURCE(IDD_PROPERTIES_MAIN));
-			else if (nSel>1)
+				pHdr->propertiesType=PT_BLOCK;
+			}
+			else if (nSel>1)	{
 		    	pHdr->apRes[0] = DoLockDlgRes(MAKEINTRESOURCE(IDD_PROPERTIES_MULTIPLE));
-			else //nSel<1
+				pHdr->propertiesType=PT_MULTI;
+			}
+			else 	{//nSel<1
 		    	pHdr->apRes[0] = DoLockDlgRes(MAKEINTRESOURCE(IDD_PROPERTIES_ZIMFILE));
+				pHdr->propertiesType=PT_ZIM;
+			}
 
 		    tie.mask = TCIF_TEXT | TCIF_IMAGE;
 		    tie.iImage = -1;
@@ -186,17 +203,21 @@ void PropertiesApplyChanges(HWND hwnd)
 	DLGHDR_PROPERTIES *pHdr;
 	BLOCK_STRUCTURE *selectedBlock;
 
+	char customerNumber[16];
+
     pHdr = (DLGHDR_PROPERTIES *) GetWindowLong(hwnd, GWL_USERDATA);
 
+	if (pHdr->propertiesType==PT_ZIM)	{
+		GetDlgItemText(pHdr->hwndDisplay, IDC_CUSTOMERNUMBER, &customerNumber[0], 16);
+		pHdr->LoadedZim->wCustomerNumber=strtol(&customerNumber[0], NULL, 0);
+
+	}
 	if (pHdr->selectedBlock)	{
 		selectedBlock=pHdr->selectedBlock;
-
 		switch (selectedBlock->typeOfBlock)	{
 			case BTYPE_BOXI:
-
 				if (pHdr->oldiSel==1)
 					FillBoxiStructFromBoxiDlg(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct);
-
 				CreateValidBoxiBlockFromBoxiStruct(selectedBlock, &pHdr->dlgBoxiStruct);
 				break;
 		}
@@ -307,6 +328,49 @@ BOOL _stdcall BlockCreateBoxiDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	return 0;
 }
 
+
+void FillPropertiesZimDlg(HWND hwnd, ZIM_STRUCTURE *loadedZim)
+{
+	char buffer[255];
+
+	SetDlgItemText(hwnd, IDC_PROPERTIESFILENAME, loadedZim->displayFilename);
+
+	sprintf(buffer, "%i", loadedZim->wCustomerNumber);
+	SetDlgItemText(hwnd, IDC_CUSTOMERNUMBER, &buffer[0]);
+
+	sprintf(buffer, "%i", loadedZim->wNumBlocks);
+	SetDlgItemText(hwnd, IDC_PROPERTIESNUMBEROFBLOCKS, &buffer[0]);
+
+	sprintf(buffer, "%i bytes", loadedZim->dwRealFileLen);
+	SetDlgItemText(hwnd, IDC_PROPERTIESSIZE, &buffer[0]);
+
+	sprintf(buffer, "%08X", loadedZim->dwRealChecksum);
+	SetDlgItemText(hwnd, IDC_PROPERTIESADLER, &buffer[0]);
+
+	return;
+}
+
+void FillPropertiesMainDlg(HWND hwnd, BLOCK_STRUCTURE *selectedBlock)
+{
+	char buffer[255];
+
+	SetDlgItemText(hwnd, IDC_PROPERTIESTYPE, selectedBlock->name);
+
+	sprintf(buffer, "%i bytes", selectedBlock->dwDataLength);
+	SetDlgItemText(hwnd, IDC_PROPERTIESSIZE, &buffer[0]);
+
+	sprintf(buffer, "0x%x", selectedBlock->dwDestStartLoc);
+	SetDlgItemText(hwnd, IDC_PROPERTIESOFFSET, &buffer[0]);
+
+	sprintf(buffer, "%08X", selectedBlock->dwRealChecksum);
+	SetDlgItemText(hwnd, IDC_PROPERTIESADLER, &buffer[0]);
+
+	MD5HexString(&buffer[0], selectedBlock->md5);
+	SetDlgItemText(hwnd, IDC_PROPERTIESMD5, &buffer[0]);
+
+	return;
+}
+
 void FillBoxiDlgFromBoxiStruct(HWND hwnd, BOXI_STRUCTURE *boxiStruct, int base)
 {
 	char buffer[255];
@@ -389,12 +453,49 @@ void CreateValidBoxiBlockFromBoxiStruct(BLOCK_STRUCTURE *boxiBlock, BOXI_STRUCTU
 	return;
 }
 
+void FillDlgItemWithGzipData(HWND hDlg, int nIDDlgItem, GZIP_HEADER_BLOCK *gzHeader)
+{
+	char buffer[1024];
+	int bufferOffset=0;
+	int i=0;
+
+	char *os[15];
+	os[0]="FAT filesystem";
+	os[1]="Amiga";
+	os[2]="VMS (or OpenVMS)";
+	os[3]="Unix";
+	os[4]="VM/CMS";
+	os[5]="Atari TOS";
+	os[6]="HPFS filesystem";
+	os[7]="Macintosh";
+	os[8]="Z-System";
+	os[9]="CP/M";
+	os[10]="TOPS-20";
+	os[11]="NTFS filesystem";
+	os[12]="QDOS";
+	os[13]="Acorn RISCOS";
+	os[14]="Unknown";
+
+	i = sprintf(buffer+bufferOffset, "Compression method: %s\r\n", gzHeader->cm==8 ? "deflate":"unknown");
+	bufferOffset+=i;
+	i = sprintf(buffer+bufferOffset, "Created: %s\r\n", asctime(gmtime(&gzHeader->mtime)));
+	bufferOffset+=i;
+
+	i = sprintf(buffer+bufferOffset, "Encoding system: %s", gzHeader->os<14 ? os[gzHeader->os]:os[14]);
+	bufferOffset+=i;
+
+
+
+	SetDlgItemText(hDlg, nIDDlgItem, &buffer[0]);
+
+	return;
+}
+
 void FillDlgItemWithSquashFSData(HWND hDlg, int nIDDlgItem, SQUASHFS_SUPER_BLOCK *sqshHeader)
 {
 	char buffer[1024];
 	int bufferOffset=0;
 	int i=0;
-	time_t epch;
 	/*
 	printf("\tInodes are %scompressed\n", SQUASHFS_UNCOMPRESSED_INODES(sqshHeader->flags) ? "un" : "");
 	printf("\tData is %scompressed\n", SQUASHFS_UNCOMPRESSED_DATA(sqshHeader->flags) ? "un" : "");
@@ -406,8 +507,7 @@ void FillDlgItemWithSquashFSData(HWND hDlg, int nIDDlgItem, SQUASHFS_SUPER_BLOCK
 	*/
 	i = sprintf(buffer+bufferOffset, "SquashFS version: %i:%i\r\n", sqshHeader->s_major, sqshHeader->s_minor);
 	bufferOffset+=i;
-	epch = sqshHeader->mkfs_time;
-	i = sprintf(buffer+bufferOffset, "File system created: %s", asctime(gmtime(&epch)));
+	i = sprintf(buffer+bufferOffset, "Created: %s\r\n", asctime(gmtime(&sqshHeader->mkfs_time)));
 	bufferOffset+=i;
 	i = sprintf(buffer+bufferOffset, "Flags: 0x%x\r\n", sqshHeader->flags);
 	bufferOffset+=i;
