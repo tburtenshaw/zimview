@@ -9,12 +9,14 @@ extern HINSTANCE hInst;
 typedef struct tag_dlghdr {
     HWND hwndTab;       // tab control
     HWND hwndDisplay;   // current child dialog box
+	HWND hwndMain;		// the parent window
     DLGTEMPLATE *apRes[C_PAGES];
 	ZIM_STRUCTURE *LoadedZim;
 	BLOCK_STRUCTURE *selectedBlock;
 	BOXI_STRUCTURE dlgBoxiStruct;
 	int propertiesType;
 	int oldiSel;
+	int selectedBlockNumber;	//if there is only one block
 } DLGHDR_PROPERTIES;
 
 
@@ -37,6 +39,7 @@ void FillBoxiStructFromBoxiDlg(HWND hwnd, BOXI_STRUCTURE *boxiStruct);
 void FillBoxiDlgFromBoxiStruct(HWND hwnd, BOXI_STRUCTURE *boxiStruct, int base);
 void CreateValidBoxiBlockFromBoxiStruct(BLOCK_STRUCTURE *boxiBlock, BOXI_STRUCTURE *boxiStruct);
 void FillPropertiesMainDlg(HWND hwnd, BLOCK_STRUCTURE *selectedBlock);
-void FillPropertiesZimDlg(HWND hwnd, ZIM_STRUCTURE *selectedBlock);
+void FillPropertiesZimDlg(HWND hwnd, ZIM_STRUCTURE *zimStruct);
+void DisplayVeriListView(HWND hwnd, VERI_STRUCTURE *veriStruct);
 void PropertiesApplyChanges(HWND hwnd);
 int DetectTypeOfBlock(HWND hwnd, char *filename);
