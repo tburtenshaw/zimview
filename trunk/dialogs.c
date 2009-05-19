@@ -1,7 +1,5 @@
 //This function contains the dialog boxes and their associated functions
-//In general if EndDialog nResult is 1 the main window needs to be redrawn
-
-
+//In general if EndDialog nResult = 1 the main window needs to be redrawn
 
 #include <stdio.h>
 #include <windows.h>
@@ -56,6 +54,7 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 				FillBoxiDlgFromBoxiStruct(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct, 0);
 				break;
 			case BTYPE_VERI:
+				DisplayVeriListView(pHdr->hwndDisplay, pHdr->selectedBlock->ptrFurtherBlockDetail);
 				break;
 			default:
 				tempUsualStruct = pHdr->selectedBlock->ptrFurtherBlockDetail;
@@ -107,7 +106,8 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			pHdr->LoadedZim=ZimToUse;
 
 			nSel = SelectedCount(ZimToUse);
-			SelectedFirst(ZimToUse, &selectedBlock);
+			pHdr->selectedBlockNumber =  SelectedFirst(ZimToUse, &selectedBlock);
+			pHdr->hwndMain=GetParent(hwnd);
 
 			hTab=GetDlgItem(hwnd, IDC_PROPERTIESTAB);
 			pHdr->hwndTab=hTab;
@@ -210,7 +210,7 @@ void PropertiesApplyChanges(HWND hwnd)
 	if (pHdr->propertiesType==PT_ZIM)	{
 		GetDlgItemText(pHdr->hwndDisplay, IDC_CUSTOMERNUMBER, &customerNumber[0], 16);
 		pHdr->LoadedZim->wCustomerNumber=strtol(&customerNumber[0], NULL, 0);
-
+		InvalidateRect(pHdr->hwndMain, NULL, FALSE);
 	}
 	if (pHdr->selectedBlock)	{
 		selectedBlock=pHdr->selectedBlock;
@@ -221,6 +221,7 @@ void PropertiesApplyChanges(HWND hwnd)
 				CreateValidBoxiBlockFromBoxiStruct(selectedBlock, &pHdr->dlgBoxiStruct);
 				break;
 		}
+		RedrawBlock(pHdr->hwndMain, pHdr->LoadedZim, pHdr->selectedBlockNumber);
 
 	}
 
@@ -1259,5 +1260,78 @@ int DetectTypeOfBlock(HWND hwnd, char *filename)
 
 	fclose(impBlock);
 	return 0;
+}
+
+
+
+void DisplayVeriListView(HWND hwnd, VERI_STRUCTURE *veriStruct)
+{
+	HWND hList;
+	LVCOLUMN column;
+	LVITEM lvItem;
+	int iItem;
+
+	char veriBlockname[8];
+	char veriVersion[24];
+	char veriMD5[40];
+
+	hList=GetDlgItem(hwnd, IDC_BLOCKLIST);
+
+	//SendMessage(hList,LVM_SETEXTENDEDLISTVIEWSTYLE, 0,LVS_EX_FULLROWSELECT);
+
+	column.mask=LVCF_FMT|LVCF_TEXT|LVCF_WIDTH;
+	column.fmt=LVCFMT_LEFT;
+	column.pszText="Block";
+	column.cchTextMax=5;
+	column.cx=40;
+	ListView_InsertColumn(hList,   0,    &column);
+
+	column.pszText="Version";
+	column.cchTextMax=5;
+	column.cx=72;
+	ListView_InsertColumn(hList,   1,    &column);
+
+	column.pszText="MD5";
+	column.cchTextMax=5;
+	column.cx=204;
+	ListView_InsertColumn(hList,   2,    &column);
+
+	iItem=0;
+
+	while (veriStruct)	{
+
+		memset(&lvItem,0,sizeof(lvItem));
+		lvItem.mask=LVIF_TEXT;
+		lvItem.cchTextMax = 8;
+		lvItem.iItem=iItem;
+		lvItem.iSubItem=0;
+		sprintf(&veriBlockname[0], "%s", veriStruct->displayblockname);
+		lvItem.pszText=veriBlockname;
+		SendMessage(hList,LVM_INSERTITEM,iItem,(LPARAM)&lvItem);
+
+
+		sprintf(veriVersion, "%i.%i.%i.%i",
+			veriStruct->veriFileData.version_a,
+			veriStruct->veriFileData.version_b,
+			veriStruct->veriFileData.version_c,
+			veriStruct->veriFileData.version_d);
+		lvItem.cchTextMax = 24;
+		lvItem.iSubItem=1;
+		lvItem.pszText=veriVersion;
+		SendMessage(hList,LVM_SETITEM,iItem,(LPARAM)&lvItem);
+
+		lvItem.cchTextMax = 40;
+		lvItem.iSubItem=2;
+		MD5HexString(&veriMD5[0], veriStruct->veriFileData.md5Digest);
+		lvItem.pszText=veriMD5;
+		SendMessage(hList,LVM_SETITEM,iItem,(LPARAM)&lvItem);
+
+		veriStruct=veriStruct->nextStructure;
+		iItem++;
+	}
+
+
+//	ShowWindow(hList, SW_SHOW);
+	return;
 }
 
