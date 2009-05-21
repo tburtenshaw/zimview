@@ -28,6 +28,7 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 	int iSel;
 	DLGHDR_PROPERTIES *pHdr;
 	USUAL_STRUCTURE *tempUsualStruct;
+	char buffer[255];
 
     pHdr = (DLGHDR_PROPERTIES *) GetWindowLong(hwnd, GWL_USERDATA);
 	iSel = TabCtrl_GetCurSel(pHdr->hwndTab);
@@ -59,6 +60,11 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 			default:
 				tempUsualStruct = pHdr->selectedBlock->ptrFurtherBlockDetail;
 				if (tempUsualStruct)	{
+					sprintf(buffer, "%s (0x%08x)", tempUsualStruct->displaymagicnumber, tempUsualStruct->magicnumber);
+					SetDlgItemText(pHdr->hwndDisplay, IDC_PROPERTIESMAGICNUMBER, &buffer[0]);
+					sprintf(buffer, "%i bytes", pHdr->selectedBlock->dwDataLength);
+					SetDlgItemText(pHdr->hwndDisplay, IDC_PROPERTIESSIZE, &buffer[0]);
+
 					if (tempUsualStruct->sqshHeader)	{
 						SetDlgItemText(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFOGROUPBOX, "SquashFS information");
 						FillDlgItemWithSquashFSData(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFO, tempUsualStruct->sqshHeader);
@@ -281,11 +287,60 @@ BOOL _stdcall AboutDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg) {
+		case WM_NOTIFY:
+			switch(((LPNMHDR)lParam)->idFrom)	{
+				case IDC_BLOCKLIST:
+					switch(((LPNMHDR)lParam)->code)	{
+						case NM_CLICK:
+							DefWindowProc(hwnd, msg, wParam, lParam);
+							break;
+						case LVN_BEGINLABELEDIT:
+							MessageBox(hwnd, "Edit", "t", 0);
+							break;
+						case NM_CUSTOMDRAW:
+   							SetWindowLong(hwnd, DWL_MSGRESULT, ProcessCustomDraw((LPNMLVCUSTOMDRAW)lParam));
+							return TRUE;
+						default:
+							return DefWindowProc(hwnd, msg, wParam, lParam);
+					}
+					break;
+				default:
+					return DefWindowProc(hwnd, msg, wParam, lParam);
+			}
+		break;
 		case WM_CLOSE:
 			EndDialog(hwnd,0);
 			return 1;
+		default:
+			return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
-	return 0;
+	return DefWindowProc(hwnd, msg, wParam, lParam);;
+}
+
+LRESULT ProcessCustomDraw(LPNMLVCUSTOMDRAW lplvcd)
+{
+    switch(lplvcd->nmcd.dwDrawStage)
+    {
+        case CDDS_PREPAINT : //Before the paint cycle begins
+            return CDRF_NOTIFYITEMDRAW;
+
+        case CDDS_ITEMPREPAINT: //Before an item is drawn
+            if (((int)lplvcd->nmcd.dwItemSpec&1)==0)
+            {
+                //customize item appearance
+                lplvcd->clrText   = RGB(255,0,0);
+                lplvcd->clrTextBk = RGB(200,200,200);
+                return CDRF_NEWFONT;
+            }
+            else{
+                lplvcd->clrText   = RGB(0,0,255);
+                lplvcd->clrTextBk = RGB(255,255,255);
+                return CDRF_NEWFONT;
+            }
+            break;
+
+    }
+    return CDRF_DODEFAULT;
 }
 
 
@@ -333,8 +388,14 @@ BOOL _stdcall BlockCreateBoxiDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 void FillPropertiesZimDlg(HWND hwnd, ZIM_STRUCTURE *loadedZim)
 {
 	char buffer[255];
+	char *n;
 
-	SetDlgItemText(hwnd, IDC_PROPERTIESFILENAME, loadedZim->displayFilename);
+	SetDlgItemText(hwnd, IDC_PROPERTIESFILENAME, loadedZim->displayFilenameNoPath);
+
+	sprintf(buffer, "%s", loadedZim->displayFilename);
+	n=strrchr(buffer,92);
+	*n=0;
+	SetDlgItemText(hwnd, IDC_PROPERTIESDIRECTORY, &buffer[0]);
 
 	sprintf(buffer, "%i", loadedZim->wCustomerNumber);
 	SetDlgItemText(hwnd, IDC_CUSTOMERNUMBER, &buffer[0]);
@@ -1098,7 +1159,7 @@ BOOL _stdcall BlockCreateVeriDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 					hList=GetDlgItem(hwnd,IDC_VERIBLOCKSTOADD);
 					numberSelectedLB=SendMessage(hList, LVM_GETITEMCOUNT, 0,0); //we'll use this var for the number of block in veri
 					if (numberSelectedLB<1)	{
-						MessageBox(hwnd, "One or more blocks need to be selected to create a verification block.", "Create VERI block", MB_OK|MB_ICONEXCLAMATION);
+						MessageBox(hwnd, "One or more blocks must be selected to create a verification block.", "Create VERI block", MB_OK|MB_ICONEXCLAMATION);
 						return 1;
 					}
 					newBlock=NewBlock(ZimToUse);
@@ -1277,7 +1338,7 @@ void DisplayVeriListView(HWND hwnd, VERI_STRUCTURE *veriStruct)
 
 	hList=GetDlgItem(hwnd, IDC_BLOCKLIST);
 
-	//SendMessage(hList,LVM_SETEXTENDEDLISTVIEWSTYLE, 0,LVS_EX_FULLROWSELECT);
+	SendMessage(hList,LVM_SETEXTENDEDLISTVIEWSTYLE, 0,LVS_EX_FULLROWSELECT);
 
 	column.mask=LVCF_FMT|LVCF_TEXT|LVCF_WIDTH;
 	column.fmt=LVCFMT_LEFT;

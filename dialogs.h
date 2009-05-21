@@ -43,3 +43,5 @@ void FillPropertiesZimDlg(HWND hwnd, ZIM_STRUCTURE *zimStruct);
 void DisplayVeriListView(HWND hwnd, VERI_STRUCTURE *veriStruct);
 void PropertiesApplyChanges(HWND hwnd);
 int DetectTypeOfBlock(HWND hwnd, char *filename);
+
+LRESULT ProcessCustomDraw (LPNMLVCUSTOMDRAW lplvcd);
