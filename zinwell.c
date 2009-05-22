@@ -281,6 +281,9 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			ScrollUpdate(hwnd, &pZim);
 			}
 			break;
+		case IDM_SAVE:
+			MessageBox(hwnd, "At the moment you have to Save As. I don't want anyone overwriting their original files.", "File not saved", MB_OK|MB_ICONEXCLAMATION);
+			break;
 		case IDM_SAVEAS:
 			SaveAsZim(&pZim);
 			break;
@@ -2476,6 +2479,9 @@ void WINAPI InitMenu(HMENU hmenu)
 
         switch (id)
         {
+			case IDM_REVERT:
+			case IDM_SAVE:
+			case IDM_SAVEAS:
 			case IDM_CLOSE:		//there must be an edited file open
 				if (!pZim.displayFilename[0]) //if the zim isn't loaded
 					fuFlags = MF_BYCOMMAND | MF_GRAYED;
