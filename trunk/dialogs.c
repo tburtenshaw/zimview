@@ -108,6 +108,7 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			ZimToUse=(ZIM_STRUCTURE *)lParam;
 		    // Save a pointer to the DLGHDR structure.
 		    SetWindowLong(hwnd, GWL_USERDATA, (LONG) pHdr);
+			SetFocus(hwnd);
 
 			pHdr->LoadedZim=ZimToUse;
 
@@ -246,6 +247,7 @@ BOOL _stdcall ChangeCustomerNumberDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 			ZimToUse=(ZIM_STRUCTURE *)lParam;
 			sprintf(&customerNumber[0], "%i", ZimToUse->wCustomerNumber);
 			SetDlgItemText(hwnd, IDC_CUSTOMERNUMBER, &customerNumber[0]);
+			SetFocus(hwnd);
 			break;
 		case WM_CLOSE:
 			EndDialog(hwnd,0);
@@ -270,6 +272,9 @@ BOOL _stdcall ChangeCustomerNumberDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM
 BOOL _stdcall AboutDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	switch(msg) {
+		case WM_INITDIALOG:
+			SetFocus(hwnd);
+			break;
 		case WM_CLOSE:
 			EndDialog(hwnd,0);
 			return 1;
@@ -295,7 +300,8 @@ BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							DefWindowProc(hwnd, msg, wParam, lParam);
 							break;
 						case LVN_BEGINLABELEDIT:
-							MessageBox(hwnd, "Edit", "t", 0);
+							MessageBox(hwnd, "Edit", "Test", 0);
+							return 1;
 							break;
 						case NM_CUSTOMDRAW:
    							SetWindowLong(hwnd, DWL_MSGRESULT, ProcessCustomDraw((LPNMLVCUSTOMDRAW)lParam));
@@ -352,6 +358,7 @@ BOOL _stdcall BlockCreateBoxiDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPar
 	switch(msg) {
 		case WM_INITDIALOG:
 		    SetWindowLong(hwnd, GWL_USERDATA, lParam);
+			SetFocus(hwnd);
 			break;
 		case WM_CLOSE:
 			EndDialog(hwnd,0);
@@ -429,6 +436,27 @@ void FillPropertiesMainDlg(HWND hwnd, BLOCK_STRUCTURE *selectedBlock)
 
 	MD5HexString(&buffer[0], selectedBlock->md5);
 	SetDlgItemText(hwnd, IDC_PROPERTIESMD5, &buffer[0]);
+
+
+	if (*(selectedBlock->sourceFilename))	{	//the block needs another file
+		ShowWindow(GetDlgItem(hwnd, IDC_PROPERTIESSOURCEOFFSET), SW_SHOW);
+		ShowWindow(GetDlgItem(hwnd, IDC_PROPERTIESSOURCEOFFSETLABEL), SW_SHOW);
+
+		sprintf(buffer, "0x%x", selectedBlock->dwSourceOffset);
+		SetDlgItemText(hwnd, IDC_PROPERTIESSOURCEOFFSET, NULL);
+		sprintf(buffer, "Source offset:");
+		SetDlgItemText(hwnd, IDC_PROPERTIESSOURCEOFFSETLABEL, buffer);
+		sprintf(buffer, "%s", selectedBlock->sourceFilename);
+	}
+	else	{
+		ShowWindow(GetDlgItem(hwnd, IDC_PROPERTIESSOURCEOFFSET), SW_HIDE);
+		ShowWindow(GetDlgItem(hwnd, IDC_PROPERTIESSOURCEOFFSETLABEL), SW_HIDE);
+		sprintf(buffer, "In memory");
+	}
+
+	SetDlgItemText(hwnd, IDC_PROPERTIESSOURCE, &buffer[0]);
+
+
 
 	return;
 }
@@ -616,6 +644,7 @@ BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch(msg) {
 		case WM_INITDIALOG:
 		   	SetWindowLong(hwnd, GWL_USERDATA, lParam);
+			SetFocus(hwnd);
 			break;
 		case WM_CLOSE:
 			EndDialog(hwnd,0);
@@ -1391,8 +1420,6 @@ void DisplayVeriListView(HWND hwnd, VERI_STRUCTURE *veriStruct)
 		iItem++;
 	}
 
-
-//	ShowWindow(hList, SW_SHOW);
 	return;
 }
 
