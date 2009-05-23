@@ -150,7 +150,7 @@ void InitializeStatusBar(HWND hwndParent,int nrOfParts)
 }
 
 
-static BOOL CreateStatusBar(HWND hwndParent,char *initialText,int nrOfParts)
+static BOOL CreateStatusBar(HWND hwndParent,char *initialText, int nrOfParts)
 {
     hWndStatusbar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_BORDER|SBARS_SIZEGRIP, initialText, hwndParent, IDM_STATUSBAR);
     if(hWndStatusbar)
@@ -753,7 +753,6 @@ HWND CreateAToolBar(HWND hwndParent)
 	return hwndTB;
 }
 
-/*<---------------------------------------------------------------------->*/
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, INT nCmdShow)
 {
 	MSG msg;
@@ -778,7 +777,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hwndToolBar = CreateAToolBar(hwndMain);
 	ShowWindow(hwndMain,SW_SHOW);
 
-	if (strlen(lpCmdLine)>4) 		OpenZimFile(hwndMain, &pZim, lpCmdLine);
+	if (strlen(lpCmdLine)>4)	{
+ 		OpenZimFile(hwndMain, &pZim, lpCmdLine);
+	}
+	EnableToolbarButtons(hwndToolBar, &pZim);
 
 	while (GetMessage(&msg,NULL,0,0)) {
 		if (!TranslateAccelerator(msg.hwnd,hAccelTable,&msg)) {
