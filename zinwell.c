@@ -231,7 +231,12 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUT), hwndMain, AboutDlg);
 			break;
 		case IDM_PROPERTIES:
-			DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_PROPERTIES), hwndMain, PropertiesDlg, (long)&pZim);
+			if (pZim.displayFilename[0]) {
+				DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_PROPERTIES), hwndMain, PropertiesDlg, (long)&pZim);
+			}
+			else {
+				DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUT), hwndMain, AboutDlg);
+			}
 			break;
 		case IDM_BLOCKEXPORT:
 			if (pZim.displayFilename[0]) {
@@ -242,6 +247,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BLOCKIMPORT), hwndMain, BlockImportDlg, (long)&pZim);
 			if (nResult)
 				InvalidateRect(hwndMain, NULL, FALSE);
+			EnableToolbarButtons(hwndToolBar, &pZim);
 			break;
 		case IDM_CUSTOMERNUMBER:
 			if (pZim.displayFilename[0]) {
@@ -260,11 +266,13 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_BOXIBLOCK), hwndMain, BlockCreateBoxiDlg, (long)&pZim);
 			if (nResult)
 				InvalidateRect(hwndMain, NULL, FALSE);
+			EnableToolbarButtons(hwndToolBar, &pZim);
 			break;
 		case IDM_BLOCKCREATEVERIBLOCK:
 			nResult=DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_VERIBLOCK), hwndMain, BlockCreateVeriDlg, (long)&pZim);
 			if (nResult)
 				InvalidateRect(hwndMain, NULL, FALSE);
+			EnableToolbarButtons(hwndToolBar, &pZim);
 			break;
 		case IDM_OPEN:
 			if (GetFilename(filename,sizeof(filename))) {
@@ -279,6 +287,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			OpenZimFile(hwnd, &pZim, filename); //the opens the file, and loads the zim while checking for errors
 			UpdateWindow(hwnd);
 			ScrollUpdate(hwnd, &pZim);
+			EnableToolbarButtons(hwndToolBar, &pZim);
 			}
 			break;
 		case IDM_SAVE:
@@ -299,16 +308,19 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 		case IDM_CLOSE:
 			CloseZimFile(&pZim);
 			SetWindowText(hwnd, "ZimView");
+			EnableToolbarButtons(hwndToolBar, &pZim);
 			InvalidateRect (hwnd, NULL, FALSE);
 			break;
 		case IDM_NEW:
 			if (pZim.displayFilename[0]==0)	{
 				ActivateZimFile(&pZim);
+				EnableToolbarButtons(hwndToolBar, &pZim);
 				InvalidateRect(hwnd, NULL, FALSE);
 			} else	{
 				if(MessageBox(hwnd, "Starting a new file will lose all changes on your open file. Do you want to start a new file?", "New", MB_YESNO|MB_ICONQUESTION)==IDYES)	{
 					CloseZimFile(&pZim);
 					ActivateZimFile(&pZim);
+					EnableToolbarButtons(hwndToolBar, &pZim);
 					InvalidateRect(hwnd, NULL, FALSE);
 				}
 			}
@@ -318,12 +330,15 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			break;
 		case IDM_EDITCOPY:
 			EditCopySelected(hwnd, &pZim, FALSE);
+			EnableToolbarButtons(hwndToolBar, &pZim);
 			break;
 		case IDM_EDITCUT:
 			EditCopySelected(hwnd, &pZim, FALSE);
+			EnableToolbarButtons(hwndToolBar, &pZim);
 			break;
 		case IDM_EDITPASTE:
 			EditPaste(hwnd, &pZim);
+			EnableToolbarButtons(hwndToolBar, &pZim);
 			InvalidateRect(hwnd, NULL, FALSE);
 			break;
 		case IDM_EDITCLEAR:
@@ -339,6 +354,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 				if (caretedBlock>pZim.wNumBlocks-1) caretedBlock=pZim.wNumBlocks-1;
 				if (i>=0) RedrawBetweenBlocks(hwnd, &pZim, i, pZim.wNumBlocks-1); //redraw from first delete block down
 			}
+			EnableToolbarButtons(hwndToolBar, &pZim);
 			break;
 		case IDM_MOVEUP:
 			if (caretedBlock>0) {
@@ -427,7 +443,8 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		}
 		break;
 	case WM_INITMENUPOPUP:
-	    InitMenu((HMENU) wParam);
+		EnableToolbarButtons(hwndToolBar, &pZim);
+	    InitMenu((HMENU) wParam, &pZim);
 	    break;
 	case WM_MENUSELECT:
 		return MsgMenuSelect(hwnd,msg,wParam,lParam);
@@ -489,6 +506,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 				RedrawBlock(hwnd, &pZim, caretedBlock);
 				RedrawBlock(hwnd, &pZim, oldSelectedBlock);
 		}
+		EnableToolbarButtons(hwndToolBar, &pZim);
 		break;
 
 	case WM_LBUTTONUP:
@@ -562,6 +580,7 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 
 		RedrawBlock(hwnd, &pZim, caretedBlock);
 		RedrawBlock(hwnd, &pZim, oldSelectedBlock);
+		EnableToolbarButtons(hwndToolBar, &pZim);
 		break;
 	case WM_CONTEXTMENU:
 		point.x=GET_X_LPARAM(lParam);
@@ -2464,7 +2483,46 @@ int RedrawMoveIndicator(HWND hwnd, int loc)
 return 0;
 }
 
-void WINAPI InitMenu(HMENU hmenu)
+void EnableToolbarButtons(HWND hTB, ZIM_STRUCTURE *LoadedZim)
+{
+	SendMessage(hTB, TB_ENABLEBUTTON, IDM_NEW, MAKELONG(TRUE ,0));
+	SendMessage(hTB, TB_ENABLEBUTTON, IDM_OPEN, MAKELONG(TRUE ,0));
+
+	if (!LoadedZim->displayFilename[0])	{
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_SAVE, MAKELONG(FALSE ,0));
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_PROPERTIES, MAKELONG(FALSE ,0));
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_BLOCKEXPORT, MAKELONG(FALSE ,0));
+	} else {
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_SAVE, MAKELONG(TRUE ,0));
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_PROPERTIES, MAKELONG(TRUE ,0));
+		if (LoadedZim->wNumBlocks>0)
+			SendMessage(hTB, TB_ENABLEBUTTON, IDM_BLOCKEXPORT, MAKELONG(TRUE ,0));
+		else
+			SendMessage(hTB, TB_ENABLEBUTTON, IDM_BLOCKEXPORT, MAKELONG(FALSE ,0));
+
+	}
+
+	if (SelectedCount(LoadedZim)>0)	{
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_EDITCOPY, MAKELONG(TRUE ,0));
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_EDITCUT, MAKELONG(TRUE ,0));
+	} else	{
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_EDITCOPY, MAKELONG(FALSE ,0));
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_EDITCUT, MAKELONG(FALSE ,0));
+	}
+
+
+	if (IsClipboardFormatAvailable(uZimBlockFormat))	{
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_EDITPASTE, MAKELONG(TRUE ,0));
+	} else {
+		SendMessage(hTB, TB_ENABLEBUTTON, IDM_EDITPASTE, MAKELONG(FALSE ,0));
+	}
+
+
+
+	return;
+}
+
+void WINAPI InitMenu(HMENU hmenu, ZIM_STRUCTURE *LoadedZim)
 {
     int  cMenuItems;
     int  nPos;
@@ -2483,7 +2541,7 @@ void WINAPI InitMenu(HMENU hmenu)
 			case IDM_SAVE:
 			case IDM_SAVEAS:
 			case IDM_CLOSE:		//there must be an edited file open
-				if (!pZim.displayFilename[0]) //if the zim isn't loaded
+				if (!LoadedZim->displayFilename[0]) //if the zim isn't loaded
 					fuFlags = MF_BYCOMMAND | MF_GRAYED;
 				else
 					fuFlags = MF_BYCOMMAND | MF_ENABLED;
@@ -2496,10 +2554,10 @@ void WINAPI InitMenu(HMENU hmenu)
 			case IDM_EDITCLEAR:
 			case IDM_MOVEUP:
 			case IDM_MOVEDOWN:
-				if (!pZim.displayFilename[0]) { //if the zim isn't loaded
+				if (!LoadedZim->displayFilename[0]) { //if the zim isn't loaded
 					fuFlags = MF_BYCOMMAND | MF_GRAYED;
 				} else {
-					if (SelectedCount(&pZim)>0)
+					if (SelectedCount(LoadedZim)>0)
 						fuFlags = MF_BYCOMMAND | MF_ENABLED;
 					else
 						fuFlags = MF_BYCOMMAND | MF_GRAYED;
@@ -2509,7 +2567,7 @@ void WINAPI InitMenu(HMENU hmenu)
 			case IDM_SELECTALL:	//we need at least one block to be able to do these
 			case IDM_BLOCKEXPORT:
 			case IDM_BLOCKCREATEVERIBLOCK:
-				if (pZim.displayFilename[0] && (pZim.wNumBlocks>0))
+				if (LoadedZim->displayFilename[0] && (LoadedZim->wNumBlocks>0))
 					fuFlags = MF_BYCOMMAND | MF_ENABLED;
 				else
 					fuFlags = MF_BYCOMMAND | MF_GRAYED;
