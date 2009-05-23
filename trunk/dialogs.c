@@ -1,3 +1,5 @@
+//Consider IsDialogMessage to make tabs work with properties display
+
 //This function contains the dialog boxes and their associated functions
 //In general if EndDialog nResult = 1 the main window needs to be redrawn
 
@@ -401,7 +403,7 @@ void FillPropertiesZimDlg(HWND hwnd, ZIM_STRUCTURE *loadedZim)
 
 	sprintf(buffer, "%s", loadedZim->displayFilename);
 	n=strrchr(buffer,92);
-	*n=0;
+	if (n) 	*n=0;	//if there's a backslash, then crop text to that.
 	SetDlgItemText(hwnd, IDC_PROPERTIESDIRECTORY, &buffer[0]);
 
 	sprintf(buffer, "%i", loadedZim->wCustomerNumber);
@@ -611,7 +613,7 @@ void FillDlgItemWithSquashFSData(HWND hDlg, int nIDDlgItem, SQUASHFS_SUPER_BLOCK
 	bufferOffset+=i;
 	i = sprintf(buffer+bufferOffset, "Number of uids: %i\r\n", sqshHeader->no_uids);
 	bufferOffset+=i;
-	i = sprintf(buffer+bufferOffset, "Number of gids: %i\r\n", sqshHeader->no_guids);
+	i = sprintf(buffer+bufferOffset, "Number of gids: %i", sqshHeader->no_guids);
 
 	SetDlgItemText(hDlg, nIDDlgItem, &buffer[0]);
 

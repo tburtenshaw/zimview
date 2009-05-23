@@ -176,7 +176,6 @@ WORD CalculateOffsetForWriting(ZIM_STRUCTURE *LoadedZim);
 
 int PaintWindow(HWND hwnd);
 int DrawCaret(HDC hdc, RECT *lpRect, COLORREF colour1, COLORREF colour2);
-void WINAPI InitMenu(HMENU hmenu);
 
 int DisableSelected(ZIM_STRUCTURE *LoadedZim);
 int DeleteBlock(ZIM_STRUCTURE *LoadedZim, WORD blocknumber);
@@ -208,4 +207,5 @@ int RedrawBetweenBlocks(HWND hwnd, ZIM_STRUCTURE *LoadedZim, int startblock, int
 int RedrawMoveIndicator(HWND hwnd, int loc);
 
 int PopulatePopupMenu(HMENU hMenu);
-
+void WINAPI InitMenu(HMENU hmenu, ZIM_STRUCTURE *LoadedZim);
+void EnableToolbarButtons(HWND hTB, ZIM_STRUCTURE *LoadedZim);
