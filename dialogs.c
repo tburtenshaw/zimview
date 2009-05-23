@@ -293,18 +293,33 @@ BOOL _stdcall AboutDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	HWND hwndEditControl;
+	char buffer[255];
+	int index;
+
+	LPNMHDR lpNMHDR = ((LPNMHDR)lParam);
+
 	switch(msg) {
 		case WM_NOTIFY:
-			switch(((LPNMHDR)lParam)->idFrom)	{
+			switch(lpNMHDR->idFrom)	{
 				case IDC_BLOCKLIST:
-					switch(((LPNMHDR)lParam)->code)	{
+					switch(lpNMHDR->code)	{
 						case NM_CLICK:
 							DefWindowProc(hwnd, msg, wParam, lParam);
 							break;
 						case LVN_BEGINLABELEDIT:
-							MessageBox(hwnd, "Edit", "Test", 0);
+							hwndEditControl = ListView_GetEditControl(lpNMHDR->hwndFrom);
+							index=ListView_GetNextItem(lpNMHDR->hwndFrom, -1, LVNI_FOCUSED);
+							ListView_GetItemText(lpNMHDR->hwndFrom, index, 0, &buffer[0], 255);
+							SendMessage(hwndEditControl, WM_SETTEXT, 0, (LPARAM)&buffer[0]);
 							return 1;
-							break;
+						case LVN_ENDLABELEDIT:
+							hwndEditControl = ListView_GetEditControl(lpNMHDR->hwndFrom);
+							SendMessage(hwndEditControl, WM_GETTEXT, 255, (LPARAM)&buffer[0]);
+							index=ListView_GetNextItem(lpNMHDR->hwndFrom, -1, LVNI_FOCUSED);
+							ListView_SetItemText(lpNMHDR->hwndFrom, index, 0, &buffer[0]);
+							//MessageBox(hwnd, buffer, "Test", 0);
+							return 1;
 						case NM_CUSTOMDRAW:
    							SetWindowLong(hwnd, DWL_MSGRESULT, ProcessCustomDraw((LPNMLVCUSTOMDRAW)lParam));
 							return TRUE;
