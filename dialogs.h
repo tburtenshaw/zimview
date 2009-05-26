@@ -14,6 +14,7 @@ typedef struct tag_dlghdr {
 	ZIM_STRUCTURE *LoadedZim;
 	BLOCK_STRUCTURE *selectedBlock;
 	BOXI_STRUCTURE dlgBoxiStruct;
+	VERI_STRUCTURE dlgVeriStruct;
 	int propertiesType;
 	int oldiSel;
 	int selectedBlockNumber;	//if there is only one block

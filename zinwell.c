@@ -582,6 +582,11 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		RedrawBlock(hwnd, &pZim, oldSelectedBlock);
 		EnableToolbarButtons(hwndToolBar, &pZim);
 		break;
+	case WM_LBUTTONDBLCLK:
+		if (pZim.displayFilename[0]) {
+			DialogBoxParam(hInst, MAKEINTRESOURCE(IDD_PROPERTIES), hwndMain, PropertiesDlg, (long)&pZim);
+		}
+		break;
 	case WM_CONTEXTMENU:
 		point.x=GET_X_LPARAM(lParam);
 		point.y=GET_Y_LPARAM(lParam);
@@ -1596,7 +1601,7 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 	} else
 		exportLength=exportLength+sizeof(struct sBlockHeader);
 
-	if (!(Block->flags & BSFLAG_INMEMORY)) {
+	if ((!(Block->flags & BSFLAG_INMEMORY)) && (Block->typeOfBlock!=BTYPE_BOXI) && (Block->typeOfBlock!=BTYPE_VERI)) {
 		//Reserve some memory for the block
 		exportData=malloc(exportLength);
 		if (exportData==NULL) return EXPORTBLOCK_ERR_MEMORYPROBLEM;
@@ -1607,7 +1612,7 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 		free(exportData);
 	}
 
-	if (Block->flags & BSFLAG_INMEMORY) {
+	else {	//we don't want to read direct from the file
 		//Write the header
 		if (includeHeader) {
 			GenerateBlockHeader(&blockHeader, Block->dwDataLength, Block->dwRealChecksum, Block->name);

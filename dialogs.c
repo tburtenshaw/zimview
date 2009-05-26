@@ -296,29 +296,85 @@ BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	HWND hwndEditControl;
 	char buffer[255];
 	int index;
+	int subitem;
+	int maxLength;	//the maximum allowed length of edit box
+	RECT subitemRect; //to hold the RECT that we will resize the editbox to
 
-	LPNMHDR lpNMHDR = ((LPNMHDR)lParam);
+	DLGHDR_PROPERTIES *pHdr;	//pointer to the parent's header info
+	char *pEnd;	//used as pointer to next part of version
+	VERI_STRUCTURE *changingVeriStruct;
+	int i;
+
+	LPNMHDR lpNMHdr = ((LPNMHDR)lParam);
+	LPNMITEMACTIVATE lpNMItem = (LPNMITEMACTIVATE)lParam;
 
 	switch(msg) {
 		case WM_NOTIFY:
-			switch(lpNMHDR->idFrom)	{
+			switch(lpNMHdr->idFrom)	{
 				case IDC_BLOCKLIST:
-					switch(lpNMHDR->code)	{
+					switch(lpNMHdr->code)	{
 						case NM_CLICK:
+							//sprintf(buffer, "Hi %i %i", lpNMItem->iItem, lpNMItem->iSubItem);
+							//MessageBox(hwnd, buffer ,"t",0);
+							SetWindowLong(lpNMHdr->hwndFrom, GWL_USERDATA, MAKELONG(lpNMItem->iSubItem, lpNMItem->iItem));	//set the use long to the pointer to the
 							DefWindowProc(hwnd, msg, wParam, lParam);
 							break;
 						case LVN_BEGINLABELEDIT:
-							hwndEditControl = ListView_GetEditControl(lpNMHDR->hwndFrom);
-							index=ListView_GetNextItem(lpNMHDR->hwndFrom, -1, LVNI_FOCUSED);
-							ListView_GetItemText(lpNMHDR->hwndFrom, index, 0, &buffer[0], 255);
+							subitem=LOWORD(GetWindowLong(lpNMHdr->hwndFrom, GWL_USERDATA));
+
+							if (subitem==0)	maxLength=4;	//longest "BLOK"
+							if (subitem==1)	maxLength=19;	//longest "0xff.0xff.0xff.0xff"
+							if (subitem==2)	maxLength=32; 	//md5 string
+
+							hwndEditControl = ListView_GetEditControl(lpNMHdr->hwndFrom);
+							index=ListView_GetNextItem(lpNMHdr->hwndFrom, -1, LVNI_FOCUSED);
+
+							//Get the text from the listview and put it in editbox
+							ListView_GetItemText(lpNMHdr->hwndFrom, index, subitem, &buffer[0], 255);
 							SendMessage(hwndEditControl, WM_SETTEXT, 0, (LPARAM)&buffer[0]);
+							SendMessage(hwndEditControl, EM_SETLIMITTEXT, maxLength, 0);
+
+							//Resize appropriately
+							ListView_GetSubItemRect(lpNMHdr->hwndFrom, index, subitem, LVIR_LABEL, &subitemRect);
+							SendMessage(hwndEditControl, EM_SETRECT, 0, (LPARAM)&subitemRect);	//dunno why this doesn't work
+//							MoveWindow(hwndEditControl, subitemRect.left, subitemRect.top, subitemRect.right-subitemRect.left, subitemRect.bottom-subitemRect.top, TRUE);
+
 							return 1;
 						case LVN_ENDLABELEDIT:
-							hwndEditControl = ListView_GetEditControl(lpNMHDR->hwndFrom);
-							SendMessage(hwndEditControl, WM_GETTEXT, 255, (LPARAM)&buffer[0]);
-							index=ListView_GetNextItem(lpNMHDR->hwndFrom, -1, LVNI_FOCUSED);
-							ListView_SetItemText(lpNMHDR->hwndFrom, index, 0, &buffer[0]);
-							//MessageBox(hwnd, buffer, "Test", 0);
+							subitem=LOWORD(GetWindowLong(lpNMHdr->hwndFrom, GWL_USERDATA));
+
+							hwndEditControl = ListView_GetEditControl(lpNMHdr->hwndFrom);
+							SendMessage(hwndEditControl, WM_GETTEXT, 255, (LPARAM)&buffer[0]);	//get the text from the edit box
+							index=ListView_GetNextItem(lpNMHdr->hwndFrom, -1, LVNI_FOCUSED);
+
+							pHdr=(void *)GetWindowLong(GetParent(GetParent(lpNMHdr->hwndFrom)), GWL_USERDATA);	//get the selected block from the grandparent window
+
+							//we won't keep this... we need a copy of the veri data so the user can cancel changes
+							changingVeriStruct=pHdr->selectedBlock->ptrFurtherBlockDetail;
+
+							for (i=0;(i<changingVeriStruct->numberVeriObjects) && (i<index); i++)	{
+								changingVeriStruct=changingVeriStruct->nextStructure;
+							}
+
+							if (subitem==1)	{
+								changingVeriStruct->veriFileData.version_a=strtol(buffer, &pEnd, 0); //strtol relies on fact . is an non-readable char
+								if (*pEnd != '\0')
+									changingVeriStruct->veriFileData.version_b=strtol(pEnd+1, &pEnd, 0);
+								if (*pEnd != '\0')
+									changingVeriStruct->veriFileData.version_c=strtol(pEnd+1, &pEnd, 0);
+								if (*pEnd != '\0')
+									changingVeriStruct->veriFileData.version_d=strtol(pEnd+1, NULL, 0);
+
+								sprintf(buffer, "%i.%i.%i.%i", changingVeriStruct->veriFileData.version_a, changingVeriStruct->veriFileData.version_b,changingVeriStruct->veriFileData.version_c, changingVeriStruct->veriFileData.version_d);
+							}
+							else if (subitem==2)	{
+								MD5StringToArray(changingVeriStruct->veriFileData.md5Digest, &buffer[0]);
+								MD5HexString(&buffer[0], changingVeriStruct->veriFileData.md5Digest);
+							}
+
+
+
+							ListView_SetItemText(lpNMHdr->hwndFrom, index, subitem, &buffer[0]);
 							return 1;
 						case NM_CUSTOMDRAW:
    							SetWindowLong(hwnd, DWL_MSGRESULT, ProcessCustomDraw((LPNMLVCUSTOMDRAW)lParam));
@@ -351,12 +407,12 @@ LRESULT ProcessCustomDraw(LPNMLVCUSTOMDRAW lplvcd)
             if (((int)lplvcd->nmcd.dwItemSpec&1)==0)
             {
                 //customize item appearance
-                lplvcd->clrText   = RGB(255,0,0);
-                lplvcd->clrTextBk = RGB(200,200,200);
+                lplvcd->clrText   = RGB(0,0,0);
+                lplvcd->clrTextBk = RGB(255,255,255);
                 return CDRF_NEWFONT;
             }
             else{
-                lplvcd->clrText   = RGB(0,0,255);
+                lplvcd->clrText   = RGB(255,80,0);
                 lplvcd->clrTextBk = RGB(255,255,255);
                 return CDRF_NEWFONT;
             }
