@@ -30,8 +30,6 @@ HINSTANCE hInst;		// Instance handle
 HWND hwndMain;		//Main window handle
 
 HWND hwndToolBar;
-LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg,WPARAM wParam,LPARAM lParam);
-
 HWND  hWndStatusbar;
 
 unsigned long int AdlerOnFile(FILE *fileToRead, ADLER_STRUCTURE *adlerhold, DWORD offset, DWORD len)
@@ -862,6 +860,7 @@ int LoadZimFile(ZIM_STRUCTURE * LoadedZim) {
 		return LOADZIM_ERR_NUMBERABOVEMAX;
 	}
 
+	//Allocate some space for the array
 	LoadedZim->dwBlockStartLocArray=malloc(LoadedZim->wNumBlocks * sizeof(DWORD));
 	if (LoadedZim->dwBlockStartLocArray==NULL)
 		return LOADZIM_ERR_MEMORYPROBLEM;
@@ -908,9 +907,10 @@ int LoadZimFile(ZIM_STRUCTURE * LoadedZim) {
 		tempBlockStruct->next=NULL;
 
 		tempBlockStruct->dwDataLength =		DWORD_swap_endian(blockHeader.dwDataLength);
-		tempBlockStruct->dwBlockStartLoc =	LoadedZim->dwBlockStartLocArray[tempWord];
-		tempBlockStruct->dwDestStartLoc =	tempBlockStruct->dwBlockStartLoc;
+		tempBlockStruct->dwSourceOffset =	LoadedZim->dwBlockStartLocArray[tempWord];
+		tempBlockStruct->dwDestStartLoc =	tempBlockStruct->dwSourceOffset;
 		tempBlockStruct->dwChecksum=DWORD_swap_endian(blockHeader.dwChecksum);
+
 		tempBlockStruct->name[0]=blockHeader.name[0];
 		tempBlockStruct->name[1]=blockHeader.name[1];
 		tempBlockStruct->name[2]=blockHeader.name[2];
@@ -924,14 +924,14 @@ int LoadZimFile(ZIM_STRUCTURE * LoadedZim) {
 
 		//Calculate the real checksum on the block in two parts
 		memset(&adlerhold, 0, sizeof(ADLER_STRUCTURE));
-		AdlerOnFile(LoadedZim->pZimFile, &adlerhold, tempBlockStruct->dwBlockStartLoc+sizeof(blockHeader), tempBlockStruct->dwDataLength);
+		AdlerOnFile(LoadedZim->pZimFile, &adlerhold, tempBlockStruct->dwSourceOffset+sizeof(blockHeader), tempBlockStruct->dwDataLength);
 		if ((adlerhold.a==0xDE) && (adlerhold.b==0xAD) && (1==0)) return LOADZIM_ERR_MEMORYPROBLEM;
-		tempBlockStruct->dwRealChecksum=AdlerOnFile(LoadedZim->pZimFile, &adlerhold, tempBlockStruct->dwBlockStartLoc, sizeof(blockHeader)-sizeof(blockHeader.dwChecksum));
+		tempBlockStruct->dwRealChecksum=AdlerOnFile(LoadedZim->pZimFile, &adlerhold, tempBlockStruct->dwSourceOffset, sizeof(blockHeader)-sizeof(blockHeader.dwChecksum));
 		if ((adlerhold.a==0xDE) && (adlerhold.b==0xAD) && (tempBlockStruct->dwRealChecksum==0)) return LOADZIM_ERR_MEMORYPROBLEM;
 
 		//Calculate the md5 of the block
 		cvs_MD5Init(&MD5context);
-		MD5OnFile(LoadedZim->pZimFile, &MD5context, tempBlockStruct->dwBlockStartLoc+sizeof(blockHeader), tempBlockStruct->dwDataLength);
+		MD5OnFile(LoadedZim->pZimFile, &MD5context, tempBlockStruct->dwSourceOffset+sizeof(blockHeader), tempBlockStruct->dwDataLength);
 		cvs_MD5Final (&tempBlockStruct->md5, &MD5context);
 
 		//get a DWORD from the block name
@@ -953,15 +953,17 @@ int LoadZimFile(ZIM_STRUCTURE * LoadedZim) {
 				if (blockidDword==BID_DWORD_KERN) tempBlockStruct->typeOfBlock=BTYPE_KERN;
 				if (blockidDword==BID_DWORD_LOAD) tempBlockStruct->typeOfBlock=BTYPE_LOAD;
 				if (blockidDword==BID_DWORD_NVRM) tempBlockStruct->typeOfBlock=BTYPE_NVRM;
-				tempBlockStruct->ptrFurtherBlockDetail=ReadUsualBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwBlockStartLoc + sizeof(blockHeader));
+				tempBlockStruct->ptrFurtherBlockDetail=ReadUsualBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwSourceOffset + sizeof(blockHeader));
+				tempBlockStruct->flags|=BSFLAG_EXTERNFILE;
+				sprintf(tempBlockStruct->sourceFilename, "%s", LoadedZim->displayFilename);
 				break;
 			case BID_DWORD_VERI:
 				tempBlockStruct->typeOfBlock=BTYPE_VERI;
-				tempBlockStruct->ptrFurtherBlockDetail=ReadVeriBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwBlockStartLoc + sizeof(blockHeader));
+				tempBlockStruct->ptrFurtherBlockDetail=ReadVeriBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwSourceOffset + sizeof(blockHeader));
 				break;
 			case BID_DWORD_BOXI:
 				tempBlockStruct->typeOfBlock=BTYPE_BOXI;
-				tempBlockStruct->ptrFurtherBlockDetail=ReadBoxiBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwBlockStartLoc + sizeof(blockHeader));
+				tempBlockStruct->ptrFurtherBlockDetail=ReadBoxiBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwSourceOffset + sizeof(blockHeader));
 				break;
 			default: //?UVER ?MCUP
 				tempBlockStruct->typeOfBlock=0;
@@ -1211,7 +1213,7 @@ int PaintWindow(HWND hwnd) {
 					//Decide the text colour to draw
 					if (tempBlockStruct->flags & BSFLAG_DONTWRITE)
 							SetTextColor(hdc, RGB(128, 128, 128));
-					else if (tempBlockStruct->flags & BSFLAG_INMEMORY)
+					else if (tempBlockStruct->flags & BSFLAG_HASCHANGED)
 						{
 							SetTextColor(hdc, RGB(0, 0, 128));
 						}
@@ -1594,14 +1596,14 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 	char *usualData;
 	int counterVeriPart;
 
-	exportOffset=Block->dwBlockStartLoc;
+	exportOffset=Block->dwSourceOffset;
 	exportLength=Block->dwDataLength;
 	if (!includeHeader) {
 		exportOffset=exportOffset+sizeof(struct sBlockHeader);
 	} else
 		exportLength=exportLength+sizeof(struct sBlockHeader);
 
-	if ((!(Block->flags & BSFLAG_INMEMORY)) && (Block->typeOfBlock!=BTYPE_BOXI) && (Block->typeOfBlock!=BTYPE_VERI)) {
+	if ((!(Block->flags & BSFLAG_HASCHANGED)) && (Block->typeOfBlock!=BTYPE_BOXI) && (Block->typeOfBlock!=BTYPE_VERI)) {
 		//Reserve some memory for the block
 		exportData=malloc(exportLength);
 		if (exportData==NULL) return EXPORTBLOCK_ERR_MEMORYPROBLEM;
@@ -1673,7 +1675,7 @@ void *NewBlock(ZIM_STRUCTURE *LoadedZim)
 	memset(newBlock, 0, sizeof(BLOCK_STRUCTURE));
 	if (LoadedZim->wNumBlocks==0) { //if there's no blocks, then the block goes to first
 		LoadedZim->first=newBlock;
-		newBlock->flags=BSFLAG_INMEMORY; //we'll set that its in memory
+		newBlock->flags=BSFLAG_HASCHANGED; //we'll set that its in memory
 		LoadedZim->wNumBlocks++;
 		return newBlock;
 	}
@@ -1687,7 +1689,7 @@ void *NewBlock(ZIM_STRUCTURE *LoadedZim)
 		tempBlock=tempBlock->next;
 	}
 
-	newBlock->flags=BSFLAG_INMEMORY; //we'll set that its in memory
+	newBlock->flags=BSFLAG_HASCHANGED; //we'll set that its in memory
 	LoadedZim->wNumBlocks++;
 
 	return newBlock;
@@ -1927,15 +1929,15 @@ int SaveAsZim(ZIM_STRUCTURE *LoadedZim)
 		for (tempWord=0; tempWord<LoadedZim->wNumBlocks; tempWord++) {
 
 			//if it's referenced in the old version, then we really can't keep it.
-			if ((tempBlock->flags & BSFLAG_DONTWRITE) && (!(tempBlock->flags & BSFLAG_INMEMORY))) {
+			if ((tempBlock->flags & BSFLAG_DONTWRITE) && (!(tempBlock->flags & BSFLAG_HASCHANGED))) {
 				DeleteBlock(LoadedZim, tempWord);
 				tempWord--;
 			}
 
 			tempBlock->flags&=0xFE;
 
-
-			tempBlock->dwBlockStartLoc=tempBlock->dwDestStartLoc;
+			sprintf(tempBlock->sourceFilename, "%s",filename);
+			tempBlock->dwSourceOffset=tempBlock->dwDestStartLoc;
 			tempBlock=tempBlock->next;
 		}
 

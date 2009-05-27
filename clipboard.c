@@ -206,7 +206,7 @@ int EditPaste(HWND hwnd, ZIM_STRUCTURE *LoadedZim) {
 			cch+=sizeof(BLOCK_STRUCTURE);
 
 			newBlock->next=NULL;
-			newBlock->flags=BSFLAG_INMEMORY;
+			newBlock->flags=BSFLAG_HASCHANGED;
 
 			if (newBlock->ptrFurtherBlockDetail) {
 				switch(newBlock->typeOfBlock)	{

@@ -107,9 +107,10 @@ struct internalZimStructure //used internally
  BLOCK_STRUCTURE *first; //first block in linked list of blocks
 };
 
-#define BSFLAG_INMEMORY		0x01 //the block can be represented without needing external file
-#define BSFLAG_DONTWRITE	0x02 //don't write the block when saving
-#define BSFLAG_ISSELECTED	0x04 //the block is selected
+#define BSFLAG_HASCHANGED	0x01 //the block has been altered, or is new, since the loading of the zim file
+#define BSFLAG_EXTERNFILE	0x02 //the block requires another file (i.e. it will have a soureFilename and offset)
+#define BSFLAG_DONTWRITE	0x04 //don't write the block when saving
+#define BSFLAG_ISSELECTED	0x08 //the block is selected
 
 struct internalBlockStructure //used internally
 {
@@ -120,15 +121,17 @@ struct internalBlockStructure //used internally
   DWORD dwChecksum; //actual checksum (Adler-32) in the file
   DWORD dwRealChecksum; //calculated checksum
 
-  DWORD dwBlockStartLoc; //the location of the start of the block data in the main zim file
+  //DWORD dwBlockStartLoc; //the location of the start of the block data in the main zim file
   DWORD dwDestStartLoc; //when we write a block to a new zim file, this is where. this is calculated before Save.
+
+  char sourceFilename[MAX_PATH]; //link to external file
+  DWORD dwSourceOffset; //where the data starts in this external block
+
 
   unsigned char md5[16];
 
   char typeOfBlock; //1=ROOT, 2=CODE, 3=VERI, 4=BOXI, 5=KERN, 6=LOAD, 7=NVRM
   void *ptrFurtherBlockDetail; //pointer to a structure that holds further specific information about the block
-  char sourceFilename[MAX_PATH]; //link to external file
-  DWORD dwSourceOffset; //where the data starts in this external block
 
   char flags; //see BSFLAG_
 
@@ -148,6 +151,8 @@ struct internalBlockStructure //used internally
 
 #define EXPORTBLOCK_ERR_SUCCESS 0
 #define EXPORTBLOCK_ERR_MEMORYPROBLEM 8
+
+LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg,WPARAM wParam,LPARAM lParam);
 
 void MD5HexString(char * outputString, char * MD5array);
 int MD5StringToArray(char * MD5array, char * inputString);
