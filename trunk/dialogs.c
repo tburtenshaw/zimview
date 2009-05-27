@@ -221,13 +221,15 @@ void PropertiesApplyChanges(HWND hwnd)
 		pHdr->LoadedZim->wCustomerNumber=strtol(&customerNumber[0], NULL, 0);
 		InvalidateRect(pHdr->hwndMain, NULL, FALSE);
 	}
-	if (pHdr->selectedBlock)	{
-		selectedBlock=pHdr->selectedBlock;
+
+	selectedBlock=pHdr->selectedBlock;
+	if (selectedBlock)	{
 		switch (selectedBlock->typeOfBlock)	{
 			case BTYPE_BOXI:
 				if (pHdr->oldiSel==1)
 					FillBoxiStructFromBoxiDlg(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct);
 				CreateValidBoxiBlockFromBoxiStruct(selectedBlock, &pHdr->dlgBoxiStruct);
+				selectedBlock->flags|=BSFLAG_HASCHANGED;
 				break;
 		}
 		RedrawBlock(pHdr->hwndMain, pHdr->LoadedZim, pHdr->selectedBlockNumber);
@@ -511,14 +513,13 @@ void FillPropertiesMainDlg(HWND hwnd, BLOCK_STRUCTURE *selectedBlock)
 	SetDlgItemText(hwnd, IDC_PROPERTIESMD5, &buffer[0]);
 
 
-	if (*(selectedBlock->sourceFilename))	{	//the block needs another file
+	if ((*(selectedBlock->sourceFilename)) && (selectedBlock->flags & BSFLAG_EXTERNFILE))	{	//the block needs another file
 		ShowWindow(GetDlgItem(hwnd, IDC_PROPERTIESSOURCEOFFSET), SW_SHOW);
 		ShowWindow(GetDlgItem(hwnd, IDC_PROPERTIESSOURCEOFFSETLABEL), SW_SHOW);
 
 		sprintf(buffer, "0x%x", selectedBlock->dwSourceOffset);
-		SetDlgItemText(hwnd, IDC_PROPERTIESSOURCEOFFSET, NULL);
-		sprintf(buffer, "Source offset:");
-		SetDlgItemText(hwnd, IDC_PROPERTIESSOURCEOFFSETLABEL, buffer);
+		SetDlgItemText(hwnd, IDC_PROPERTIESSOURCEOFFSET, buffer);
+		SetDlgItemText(hwnd, IDC_PROPERTIESSOURCEOFFSETLABEL, "Source offset:");
 		sprintf(buffer, "%s", selectedBlock->sourceFilename);
 	}
 	else	{
@@ -528,8 +529,6 @@ void FillPropertiesMainDlg(HWND hwnd, BLOCK_STRUCTURE *selectedBlock)
 	}
 
 	SetDlgItemText(hwnd, IDC_PROPERTIESSOURCE, &buffer[0]);
-
-
 
 	return;
 }
@@ -659,15 +658,7 @@ void FillDlgItemWithSquashFSData(HWND hDlg, int nIDDlgItem, SQUASHFS_SUPER_BLOCK
 	char buffer[1024];
 	int bufferOffset=0;
 	int i=0;
-	/*
-	printf("\tInodes are %scompressed\n", SQUASHFS_UNCOMPRESSED_INODES(sqshHeader->flags) ? "un" : "");
-	printf("\tData is %scompressed\n", SQUASHFS_UNCOMPRESSED_DATA(sqshHeader->flags) ? "un" : "");
-	printf("\tFragments are %scompressed\n", SQUASHFS_UNCOMPRESSED_FRAGMENTS(sqshHeader->flags) ? "un" : "");
-	printf("\tCheck data is %s present in the filesystem\n", SQUASHFS_CHECK_DATA(sqshHeader->flags) ? "" : "not");
-	printf("\tFragments are %s present in the filesystem\n", SQUASHFS_NO_FRAGMENTS(sqshHeader->flags) ? "not" : "");
-	printf("\tAlways_use_fragments option is %s specified\n", SQUASHFS_ALWAYS_FRAGMENTS(sqshHeader->flags) ? "" : "not");
-	printf("\tDuplicates are %s removed\n", SQUASHFS_DUPLICATES(sqshHeader->flags) ? "" : "not");
-	*/
+
 	i = sprintf(buffer+bufferOffset, "SquashFS version: %i:%i\r\n", sqshHeader->s_major, sqshHeader->s_minor);
 	bufferOffset+=i;
 	i = sprintf(buffer+bufferOffset, "Created: %s\r\n", asctime(gmtime(&sqshHeader->mkfs_time)));
@@ -837,7 +828,7 @@ BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							cvs_MD5Update (&MD5context, &(tempBoxiStruct->boxiFileData), sizeof(BOXIBLOCK_STRUCTURE));
 							cvs_MD5Final (&newBlock->md5, &MD5context);
 
-							newBlock->flags=BSFLAG_INMEMORY;
+							newBlock->flags=BSFLAG_HASCHANGED;
 						}
 						//ROOT, CODE, KERN, NVRM, LOAD (usual) blocks - handle these the same
 						if ((newBlock->typeOfBlock==BTYPE_ROOT)||(newBlock->typeOfBlock==BTYPE_CODE)||(newBlock->typeOfBlock==BTYPE_KERN)||(newBlock->typeOfBlock==BTYPE_NVRM)||(newBlock->typeOfBlock==BTYPE_LOAD)) {
@@ -857,7 +848,7 @@ BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							newBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
 							cvs_MD5Final (&newBlock->md5, &MD5context);
 
-							newBlock->flags=BSFLAG_INMEMORY;
+							newBlock->flags=BSFLAG_HASCHANGED|BSFLAG_EXTERNFILE;
 						}
 						//Load a VERI block
 						if (newBlock->typeOfBlock==BTYPE_VERI) {
@@ -882,7 +873,7 @@ BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							}
 							newBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
 							cvs_MD5Final (&newBlock->md5, &MD5context);
-							newBlock->flags=BSFLAG_INMEMORY;
+							newBlock->flags=BSFLAG_HASCHANGED;
 						}
 					fclose(importFile);
 					}
@@ -922,7 +913,6 @@ BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	}
 	return 0;
 }
-
 
 
 BOOL _stdcall BlockExportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -1092,8 +1082,8 @@ void BlockExportDetailsUpdate(HWND hwnd, ZIM_STRUCTURE *ZimToUse, int blockid)
 	sprintf(tempString, "%i bytes", selectedBlockStruct.dwDataLength);
 	SetDlgItemText(hwnd, IDC_BLOCKEXPORTSIZE,tempString);
 
-	if (!(selectedBlockStruct.flags & BSFLAG_INMEMORY))	sprintf(tempString, "0x%x (%i)", selectedBlockStruct.dwBlockStartLoc, selectedBlockStruct.dwBlockStartLoc);
-	if (selectedBlockStruct.flags & BSFLAG_INMEMORY)	sprintf(tempString, "Stored in memory");
+	if (selectedBlockStruct.flags & BSFLAG_EXTERNFILE)	sprintf(tempString, "0x%x (%i)", selectedBlockStruct.dwSourceOffset, selectedBlockStruct.dwSourceOffset);
+	else sprintf(tempString, "Stored in memory");
 	SetDlgItemText(hwnd, IDC_BLOCKEXPORTOFFSET,tempString);
 
 
