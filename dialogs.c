@@ -228,8 +228,11 @@ void PropertiesApplyChanges(HWND hwnd)
 			case BTYPE_BOXI:
 				if (pHdr->oldiSel==1)
 					FillBoxiStructFromBoxiDlg(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct);
-				CreateValidBoxiBlockFromBoxiStruct(selectedBlock, &pHdr->dlgBoxiStruct);
-				selectedBlock->flags|=BSFLAG_HASCHANGED;
+				//no point updating if oldboxistruct==newboxistruct
+				if (memcmp(&pHdr->dlgBoxiStruct, selectedBlock->ptrFurtherBlockDetail, sizeof(BOXI_STRUCTURE)))	{
+					CreateValidBoxiBlockFromBoxiStruct(selectedBlock, &pHdr->dlgBoxiStruct);
+					selectedBlock->flags|=BSFLAG_HASCHANGED;
+				}
 				break;
 		}
 		RedrawBlock(pHdr->hwndMain, pHdr->LoadedZim, pHdr->selectedBlockNumber);
