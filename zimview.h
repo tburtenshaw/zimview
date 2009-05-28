@@ -109,8 +109,9 @@ struct internalZimStructure //used internally
 
 #define BSFLAG_HASCHANGED	0x01 //the block has been altered, or is new, since the loading of the zim file
 #define BSFLAG_EXTERNFILE	0x02 //the block requires another file (i.e. it will have a soureFilename and offset)
-#define BSFLAG_DONTWRITE	0x04 //don't write the block when saving
-#define BSFLAG_ISSELECTED	0x08 //the block is selected
+#define BSFLAG_SOURCECONTAINSHEADER	0x04	//the offset associated with the file linked to contains a header
+#define BSFLAG_DONTWRITE	0x08 //don't write the block when saving
+#define BSFLAG_ISSELECTED	0x10 //the block is selected
 
 struct internalBlockStructure //used internally
 {

@@ -770,8 +770,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		WS_MINIMIZEBOX|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_MAXIMIZEBOX|WS_CAPTION|WS_BORDER|WS_SYSMENU|WS_THICKFRAME|WS_VSCROLL,
 		CW_USEDEFAULT,0,CW_USEDEFAULT,0, NULL, NULL, hInst, NULL);
 
-	CreateWindow("ZimViewWndClass","ZimView1", WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_BORDER,
-		CW_USEDEFAULT,0,CW_USEDEFAULT,0, hwndMain, NULL, hInst, NULL);
+	//CreateWindow("ZimViewWndClass","ZimView1", WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_BORDER,
+	//	CW_USEDEFAULT,0,CW_USEDEFAULT,0, hwndMain, NULL, hInst, NULL);
 
 	if (hwndMain == (HWND)0)
 		return 0;
@@ -784,6 +784,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
  		OpenZimFile(hwndMain, &pZim, lpCmdLine);
 	}
 	EnableToolbarButtons(hwndToolBar, &pZim);
+	ScrollUpdate(hwndMain, &pZim);
 
 	while (GetMessage(&msg,NULL,0,0)) {
 		if (!TranslateAccelerator(msg.hwnd,hAccelTable,&msg)) {
@@ -909,6 +910,9 @@ int LoadZimFile(ZIM_STRUCTURE * LoadedZim) {
 		tempBlockStruct->dwDataLength =		DWORD_swap_endian(blockHeader.dwDataLength);
 		tempBlockStruct->dwSourceOffset =	LoadedZim->dwBlockStartLocArray[tempWord];
 		tempBlockStruct->dwDestStartLoc =	tempBlockStruct->dwSourceOffset;
+		tempBlockStruct->flags|=BSFLAG_SOURCECONTAINSHEADER;
+		sprintf(tempBlockStruct->sourceFilename, "%s", LoadedZim->displayFilename);
+
 		tempBlockStruct->dwChecksum=DWORD_swap_endian(blockHeader.dwChecksum);
 
 		tempBlockStruct->name[0]=blockHeader.name[0];
@@ -1605,6 +1609,9 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 	} else
 		exportLength=exportLength+sizeof(struct sBlockHeader);
 
+/*
+	//Remove this - we'll stop making the distinction between block from parent and block from extern file
+
 	if ((!(Block->flags & BSFLAG_HASCHANGED)) && (Block->typeOfBlock!=BTYPE_BOXI) && (Block->typeOfBlock!=BTYPE_VERI)) {
 		//Reserve some memory for the block
 		exportData=malloc(exportLength);
@@ -1615,8 +1622,9 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 		fwrite(exportData, exportLength, 1, exportFile);
 		free(exportData);
 	}
-
-	else {	//we don't want to read direct from the file
+*/
+	//else
+		{	//we don't want to read direct from the file
 		//Write the header
 		if (includeHeader) {
 			GenerateBlockHeader(&blockHeader, Block->dwDataLength, Block->dwRealChecksum, Block->name);
@@ -1639,7 +1647,7 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 				counterVeriPart--;
 				if (counterVeriPart) tempVeriStruct=tempVeriStruct->nextStructure;
 			}
-		return 0;
+			return 0;
 		}
 		//If it's a usual type, the file data is contained in another one.
 		if ((Block->typeOfBlock==BTYPE_CODE)||(Block->typeOfBlock==BTYPE_KERN)||(Block->typeOfBlock==BTYPE_ROOT)||(Block->typeOfBlock==BTYPE_LOAD)||(Block->typeOfBlock==BTYPE_NVRM)) {
@@ -1647,7 +1655,7 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 				usualSourceFile=fopen(Block->sourceFilename, "rb");
 				if (usualSourceFile)	{
 					usualData=malloc(Block->dwDataLength);
-					fseek(usualSourceFile, Block->dwSourceOffset, SEEK_SET);
+					fseek(usualSourceFile, (Block->flags&BSFLAG_SOURCECONTAINSHEADER) ? Block->dwSourceOffset+sizeof(struct sBlockHeader):Block->dwSourceOffset, SEEK_SET);
 					fread(usualData, Block->dwDataLength, 1, usualSourceFile);
 					fclose(usualSourceFile);
 					fwrite(usualData, Block->dwDataLength, 1, exportFile);
