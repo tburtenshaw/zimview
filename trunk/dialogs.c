@@ -646,6 +646,10 @@ void FillDlgItemWithGzipData(HWND hDlg, int nIDDlgItem, GZIP_HEADER_BLOCK *gzHea
 	i = sprintf(buffer+bufferOffset, "Encoding system: %s", gzHeader->os<14 ? os[gzHeader->os]:os[14]);
 	bufferOffset+=i;
 
+	if (gzHeader->filename[0])	{
+		i = sprintf(buffer+bufferOffset, "\r\nOriginal file: %s", gzHeader->filename);
+	//	bufferOffset+=i;
+	}
 
 
 	SetDlgItemText(hDlg, nIDDlgItem, &buffer[0]);

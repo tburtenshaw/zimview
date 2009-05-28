@@ -1698,6 +1698,7 @@ void *NewBlock(ZIM_STRUCTURE *LoadedZim)
 void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
 {
 	USUAL_STRUCTURE *tempUsualStruct;
+	WORD tempXLEN;	//used by gzip
 
 	Block->ptrFurtherBlockDetail=malloc(sizeof(USUAL_STRUCTURE));
 	memset(Block->ptrFurtherBlockDetail, 0, sizeof(USUAL_STRUCTURE));
@@ -1759,7 +1760,37 @@ void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
 	if ((tempUsualStruct->magicnumber & 0xFFFF)==0x8b1f) {
 		tempUsualStruct->gzipHeader=malloc(sizeof(GZIP_HEADER_BLOCK));
 		fseek(fileToRead, start, SEEK_SET);
-		fread(tempUsualStruct->gzipHeader, sizeof(GZIP_HEADER_BLOCK), 1, fileToRead);
+
+		//fread(tempUsualStruct->gzipHeader, sizeof(GZIP_HEADER_BLOCK), 1, fileToRead);
+		//Same again, can't read all as a batch because of alignment issues.
+		fread(&tempUsualStruct->gzipHeader->id1, sizeof(char), 1, fileToRead);
+		fread(&tempUsualStruct->gzipHeader->id2, sizeof(char), 1, fileToRead);
+		fread(&tempUsualStruct->gzipHeader->cm, sizeof(char), 1, fileToRead);
+		fread(&tempUsualStruct->gzipHeader->flg, sizeof(char), 1, fileToRead);
+		fread(&tempUsualStruct->gzipHeader->mtime, sizeof(DWORD), 1, fileToRead);
+		fread(&tempUsualStruct->gzipHeader->xfl, sizeof(char), 1, fileToRead);
+		fread(&tempUsualStruct->gzipHeader->os, sizeof(char), 1, fileToRead);
+
+		if (tempUsualStruct->gzipHeader->flg & GZIP_FEXTRA)	{	//skip the extra block if it exists
+			fread(&tempXLEN, sizeof(WORD),1, fileToRead);
+			fseek(fileToRead, tempXLEN, SEEK_CUR);
+		}
+
+		tempUsualStruct->gzipHeader->filename[0]=0;
+		if (tempUsualStruct->gzipHeader->flg & GZIP_FNAME)	{	//read the filename
+			//need to read null-terminated string
+			auto	char c;
+			auto	int i;
+
+			i=0;
+			do	{
+				c=fgetc(fileToRead);
+				tempUsualStruct->gzipHeader->filename[i]=c;
+				i++;
+
+			}	while (c && i<MAX_PATH);
+//			MessageBox(0, buffer, "T", 0);	//message box crashes, as it causes a repaint //NEED TO FIX ROOT CAUSE
+		}
 	}
 
 return tempUsualStruct;

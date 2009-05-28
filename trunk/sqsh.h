@@ -50,6 +50,14 @@ struct gzip_header_block {
 	DWORD mtime;
 	char xfl;
 	char os;
+	//we read the above separately - note from below this is not the order things occur in the file
+	char filename[MAX_PATH];
 };
 
 typedef struct gzip_header_block GZIP_HEADER_BLOCK;
+
+#define GZIP_FTEXT	0x1
+#define GZIP_FHCRC	0x2
+#define GZIP_FEXTRA	0x4
+#define GZIP_FNAME	0x8
+#define GZIP_FCOMMENT	0x10
