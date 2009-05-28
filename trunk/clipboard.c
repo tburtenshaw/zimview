@@ -206,7 +206,7 @@ int EditPaste(HWND hwnd, ZIM_STRUCTURE *LoadedZim) {
 			cch+=sizeof(BLOCK_STRUCTURE);
 
 			newBlock->next=NULL;
-			newBlock->flags=BSFLAG_HASCHANGED;
+			newBlock->flags|=BSFLAG_HASCHANGED;
 
 			if (newBlock->ptrFurtherBlockDetail) {
 				switch(newBlock->typeOfBlock)	{
@@ -229,6 +229,7 @@ int EditPaste(HWND hwnd, ZIM_STRUCTURE *LoadedZim) {
 							memcpy(tempUsualStruct->sqshHeader, ptrCbData+cch, sizeof(SQUASHFS_SUPER_BLOCK));
 							cch+=sizeof(SQUASHFS_SUPER_BLOCK);
 						}
+						newBlock->flags|=BSFLAG_EXTERNFILE;
 						break;
 					case BTYPE_BOXI:
 						newBlock->ptrFurtherBlockDetail=malloc(sizeof(BOXI_STRUCTURE));

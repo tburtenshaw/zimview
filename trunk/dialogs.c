@@ -520,7 +520,8 @@ void FillPropertiesMainDlg(HWND hwnd, BLOCK_STRUCTURE *selectedBlock)
 		ShowWindow(GetDlgItem(hwnd, IDC_PROPERTIESSOURCEOFFSET), SW_SHOW);
 		ShowWindow(GetDlgItem(hwnd, IDC_PROPERTIESSOURCEOFFSETLABEL), SW_SHOW);
 
-		sprintf(buffer, "0x%x", selectedBlock->dwSourceOffset);
+		sprintf(buffer, "0x%x%s", selectedBlock->dwSourceOffset, selectedBlock->flags&BSFLAG_SOURCECONTAINSHEADER ?" (including header)":"");
+
 		SetDlgItemText(hwnd, IDC_PROPERTIESSOURCEOFFSET, buffer);
 		SetDlgItemText(hwnd, IDC_PROPERTIESSOURCEOFFSETLABEL, "Source offset:");
 		sprintf(buffer, "%s", selectedBlock->sourceFilename);
