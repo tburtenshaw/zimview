@@ -1094,6 +1094,7 @@ int PaintWindow(HWND hwnd) {
 	WORD counterVeriPart;
 
 	BLOCK_STRUCTURE *tempBlockStruct;
+	BLOCK_STRUCTURE *firstDisplayBlockStruct;
 	BOXI_STRUCTURE *tempBoxiStruct;
 	VERI_STRUCTURE *tempVeriStruct;
 	USUAL_STRUCTURE *tempUsualStruct;
@@ -1114,10 +1115,11 @@ int PaintWindow(HWND hwnd) {
 	headerRect.bottom=headerRect.top+heightHeader;
 
 	y=headerRect.bottom;
-	tempBlockStruct=GetBlockNumber(&pZim, topDisplayBlock); //pZim.first;
+	firstDisplayBlockStruct=GetBlockNumber(&pZim, topDisplayBlock);
 
+	tempBlockStruct=firstDisplayBlockStruct;
 	numberFullyDisplayedBlocks=0;
-	for (i=0;(i<pZim.wNumBlocks-topDisplayBlock)&&(i<255);i++) {
+	for (i=0;(i<pZim.wNumBlocks-topDisplayBlock)&&(i<255)&&(tempBlockStruct);i++) {
 		paintSelectRects[i].top=y;
 		paintSelectRects[i].left=clientRect.left;
 		paintSelectRects[i].right=clientRect.right;
@@ -1192,9 +1194,9 @@ int PaintWindow(HWND hwnd) {
 			}
 
 //List the blocks
-			tempBlockStruct=GetBlockNumber(&pZim, topDisplayBlock); //pZim.first;
+			tempBlockStruct = firstDisplayBlockStruct;
 			numberDisplayedBlocks=0;
-			for (i=0;(i<pZim.wNumBlocks-topDisplayBlock)&&(paintSelectRects[i].top<clientRect.bottom);i++) {
+			for (i=0;(i<pZim.wNumBlocks-topDisplayBlock)&&(paintSelectRects[i].top<clientRect.bottom)&&(tempBlockStruct);i++) {
 				numberDisplayedBlocks++;
 				if (RectVisible(hdc, &paintSelectRects[i])) {
 					y=paintSelectRects[i].top+2;
@@ -1787,9 +1789,8 @@ void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
 				c=fgetc(fileToRead);
 				tempUsualStruct->gzipHeader->filename[i]=c;
 				i++;
-
-			}	while (c && i<MAX_PATH);
-//			MessageBox(0, buffer, "T", 0);	//message box crashes, as it causes a repaint //NEED TO FIX ROOT CAUSE
+			}	while (c && i<MAX_PATH-1);
+			tempUsualStruct->gzipHeader->filename[i]=0;
 		}
 	}
 
@@ -2462,7 +2463,7 @@ int RedrawSelectedBlocks(HWND hwnd, ZIM_STRUCTURE *LoadedZim)
 
 	ptrCounterBlock=LoadedZim->first;
 	//while (ptrCounterBlock)	{
-	for (tempWord=0; tempWord<LoadedZim->wNumBlocks; tempWord++) {
+	for (tempWord=0; (tempWord<LoadedZim->wNumBlocks && ptrCounterBlock); tempWord++) {
 		if (ptrCounterBlock->flags & BSFLAG_ISSELECTED)
 			RedrawBlock(hwnd, LoadedZim, tempWord);
 
