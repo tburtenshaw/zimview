@@ -95,7 +95,7 @@ CAPTION "About ZimView"
 FONT 8, "MS Sans Serif"
 BEGIN
     DEFPUSHBUTTON   "OK", IDOK, 143, 56, 50, 14
-    LTEXT           "ZimView (v0.03 alpha)", IDC_STATIC, 50, 15, 130, 12
+    LTEXT           "ZimView (v0.03 beta)", IDC_STATIC, 50, 15, 130, 12
     LTEXT           "A Zinwell/Olevia firmware viewer.", IDC_STATIC, 50, 30, 130, 12
 	LTEXT           "Not for distribution.", IDC_STATIC, 50, 42, 100, 12
     ICON            IDI_FIRST, IDC_STATIC, 14, 15, 21, 20
@@ -393,7 +393,7 @@ BEGIN
        	    VALUE "LegalCopyright", "Copyright © 2009\0"
        	    VALUE "OriginalFilename", "zimview.exe\0"
        	    VALUE "ProductName", "ZimView\0"
-       	    VALUE "ProductVersion", "0.03 alpha\0"
+       	    VALUE "ProductVersion", "0.03 beta\0"
        	END
 
 	END

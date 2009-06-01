@@ -223,6 +223,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 
 	char filename[MAX_PATH];
 	int i;
+	int result;
 
 	switch(id) {
 		case IDM_ABOUT:
@@ -292,7 +293,11 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			MessageBox(hwnd, "At the moment you have to Save As. I don't want anyone overwriting their original files.", "File not saved", MB_OK|MB_ICONEXCLAMATION);
 			break;
 		case IDM_SAVEAS:
-			SaveAsZim(&pZim);
+			result = SaveAsZim(hwnd, &pZim);
+			if (result==WRITESAVEZIM_ERR_NOTEMP)
+				MessageBox(hwnd, "Could not open temporary file.", "File not saved", MB_OK|MB_ICONEXCLAMATION);
+			if (result==WRITESAVEZIM_ERR_BLOCKERR)
+				MessageBox(hwnd, "Error writing block to file.", "File not saved", MB_OK|MB_ICONEXCLAMATION);
 			break;
 		case IDM_REVERT:
 			if (pZim.displayFilename[0]) {
@@ -1594,7 +1599,7 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 {
 	DWORD exportOffset;
 	DWORD exportLength;
-	char *exportData;
+	//char *exportData;
 	struct sBlockHeader blockHeader;
 	BOXI_STRUCTURE *tempBoxiStruct;
 	VERI_STRUCTURE *tempVeriStruct;
@@ -1604,40 +1609,25 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 
 	exportOffset=Block->dwSourceOffset;
 	exportLength=Block->dwDataLength;
-	if (!includeHeader) {
+	if (!includeHeader)
 		exportOffset=exportOffset+sizeof(struct sBlockHeader);
-	} else
+	else
 		exportLength=exportLength+sizeof(struct sBlockHeader);
 
-/*
-	//Remove this - we'll stop making the distinction between block from parent and block from extern file
-
-	if ((!(Block->flags & BSFLAG_HASCHANGED)) && (Block->typeOfBlock!=BTYPE_BOXI) && (Block->typeOfBlock!=BTYPE_VERI)) {
-		//Reserve some memory for the block
-		exportData=malloc(exportLength);
-		if (exportData==NULL) return EXPORTBLOCK_ERR_MEMORYPROBLEM;
-		fseek(LoadedZim->pZimFile, exportOffset, SEEK_SET);
-		fread(exportData, exportLength, 1,LoadedZim->pZimFile);
-
-		fwrite(exportData, exportLength, 1, exportFile);
-		free(exportData);
+	//Write the header
+	if (includeHeader) {
+		GenerateBlockHeader(&blockHeader, Block->dwDataLength, Block->dwRealChecksum, Block->name);
+		fwrite(&blockHeader, sizeof(struct sBlockHeader), 1, exportFile);
 	}
-*/
-	//else
-		{	//we don't want to read direct from the file
-		//Write the header
-		if (includeHeader) {
-			GenerateBlockHeader(&blockHeader, Block->dwDataLength, Block->dwRealChecksum, Block->name);
-			fwrite(&blockHeader, sizeof(struct sBlockHeader), 1, exportFile);
-		}
-		//If it's a BOXI type
-		if (Block->typeOfBlock==BTYPE_BOXI) {
+
+	switch (Block->typeOfBlock)	{
+
+		case BTYPE_BOXI:
 			tempBoxiStruct=Block->ptrFurtherBlockDetail;
 			fwrite(&tempBoxiStruct->boxiFileData, sizeof(BOXIBLOCK_STRUCTURE), 1, exportFile);
-			return 0;
-		}
-		//If it's a VERI type
-		if (Block->typeOfBlock==BTYPE_VERI) {
+			break;
+
+		case BTYPE_VERI:
 			tempVeriStruct=Block->ptrFurtherBlockDetail;
 			counterVeriPart=tempVeriStruct->numberVeriObjects;
 			while (counterVeriPart) {
@@ -1647,26 +1637,34 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 				counterVeriPart--;
 				if (counterVeriPart) tempVeriStruct=tempVeriStruct->nextStructure;
 			}
-			return 0;
-		}
-		//If it's a usual type, the file data is contained in another one.
-		if ((Block->typeOfBlock==BTYPE_CODE)||(Block->typeOfBlock==BTYPE_KERN)||(Block->typeOfBlock==BTYPE_ROOT)||(Block->typeOfBlock==BTYPE_LOAD)||(Block->typeOfBlock==BTYPE_NVRM)) {
-			if (Block->sourceFilename) {
-				usualSourceFile=fopen(Block->sourceFilename, "rb");
-				if (usualSourceFile)	{
-					usualData=malloc(Block->dwDataLength);
-					fseek(usualSourceFile, (Block->flags&BSFLAG_SOURCECONTAINSHEADER) ? Block->dwSourceOffset+sizeof(struct sBlockHeader):Block->dwSourceOffset, SEEK_SET);
-					fread(usualData, Block->dwDataLength, 1, usualSourceFile);
-					fclose(usualSourceFile);
-					fwrite(usualData, Block->dwDataLength, 1, exportFile);
-					free(usualData);
-				}
-			}
-			return 0;
-		}
+			break;
+
+		case BTYPE_CODE:
+		case BTYPE_KERN:
+		case BTYPE_ROOT:
+		case BTYPE_LOAD:
+		case BTYPE_NVRM:
+			if (!Block->sourceFilename)
+				return WBTF_ERR_NOSOURCE;
+
+			usualSourceFile=fopen(Block->sourceFilename, "rb");
+			if (!usualSourceFile)
+				return WBTF_ERR_FILENOTFOUND;	//error
+
+			usualData=malloc(Block->dwDataLength);
+			if (!usualData)
+				return WBTF_ERR_MEMORYALLOCATION;
+
+			fseek(usualSourceFile, (Block->flags&BSFLAG_SOURCECONTAINSHEADER) ? Block->dwSourceOffset+sizeof(struct sBlockHeader):Block->dwSourceOffset, SEEK_SET);
+			fread(usualData, Block->dwDataLength, 1, usualSourceFile);
+				fclose(usualSourceFile);
+			fwrite(usualData, Block->dwDataLength, 1, exportFile);
+			free(usualData);
+			break;
 	}
 
-return 0;
+
+	return WBTF_ERR_SUCCESS;
 }
 
 
@@ -1904,7 +1902,7 @@ WORD CalculateOffsetForWriting(ZIM_STRUCTURE *LoadedZim)
 	return countOfWritableBlocks;
 }
 
-int SaveAsZim(ZIM_STRUCTURE *LoadedZim)
+int SaveAsZim(HWND hwnd, ZIM_STRUCTURE *LoadedZim)
 {
 	FILE *SaveFile;
 
@@ -1915,6 +1913,8 @@ int SaveAsZim(ZIM_STRUCTURE *LoadedZim)
 	char tempString[255];
 	BLOCK_STRUCTURE *tempBlock;
 	WORD tempWord;
+
+	int result;
 
 	memset(&ofnExportTo,0,sizeof(ofnExportTo));
 	ofnExportTo.lStructSize = sizeof(ofnExportTo);
@@ -1934,7 +1934,7 @@ int SaveAsZim(ZIM_STRUCTURE *LoadedZim)
 
 		SaveFile=fopen(filename, "r");
 		if (!(SaveFile==NULL)) {
-			if (MessageBox(hwndMain, "This file already exists. Are you sure you want to replace it?", "Saves As", MB_YESNO|MB_ICONEXCLAMATION)==IDNO)	{
+			if (MessageBox(hwnd, "This file already exists. Are you sure you want to replace it?", "Saves As", MB_YESNO|MB_ICONEXCLAMATION)==IDNO)	{
 				fclose(SaveFile);
 				return 0;
 			}
@@ -1948,22 +1948,29 @@ int SaveAsZim(ZIM_STRUCTURE *LoadedZim)
 		sprintf(&temporaryfilename[0], "%s%s%s", &temporarypath[0], strrchr(filename,92)+1 ,".tmp");
 
 		SaveFile=fopen(temporaryfilename, "w+b");
-		WriteZimFile(LoadedZim, SaveFile);
+		if (!SaveFile)	//couldn't open temp file
+			return WRITESAVEZIM_ERR_NOTEMP;
+		result = WriteZimFile(LoadedZim, SaveFile);
 		fclose(SaveFile);
+
+		if (result)	{//error when writing temp file
+			DeleteFile(&temporaryfilename[0]);
+			return WRITESAVEZIM_ERR_BLOCKERR;
+		}
+
 		if (LoadedZim->pZimFile)
 			fclose(LoadedZim->pZimFile);
 
 		//then move temp file to filename
 		MoveFileEx(&temporaryfilename[0], &filename[0], MOVEFILE_WRITE_THROUGH|MOVEFILE_REPLACE_EXISTING);
 
-
 		//Update the window
 		sprintf(LoadedZim->displayFilename, "%s", ofnExportTo.lpstrFile);
 		LoadedZim->displayFilenameNoPath=strrchr(LoadedZim->displayFilename,92)+1;
 
 		sprintf(tempString, "ZimView - %s",LoadedZim->displayFilenameNoPath);
-		SetWindowText(hwndMain, tempString);
-		InvalidateRect (hwndMain, NULL, TRUE);
+		SetWindowText(hwnd, tempString);
+		InvalidateRect (hwnd, NULL, TRUE);
 
 		tempBlock=LoadedZim->first;
 		for (tempWord=0; tempWord<LoadedZim->wNumBlocks; tempWord++) {
@@ -1991,7 +1998,7 @@ int SaveAsZim(ZIM_STRUCTURE *LoadedZim)
 	}
 
 
-return 0;
+return WRITESAVEZIM_ERR_SUCCESS;
 }
 
 int WriteZimFile(ZIM_STRUCTURE *LoadedZim, FILE *outputZim)
@@ -2003,6 +2010,8 @@ int WriteZimFile(ZIM_STRUCTURE *LoadedZim, FILE *outputZim)
 	DWORD startLoc;
 	DWORD adler;
 	WORD wNumBlocks;
+
+	int result;
 
 	ADLER_STRUCTURE adlerholder;
 
@@ -2029,7 +2038,9 @@ int WriteZimFile(ZIM_STRUCTURE *LoadedZim, FILE *outputZim)
 	tempBlock=LoadedZim->first;
 	for (tempWord=0; tempWord<LoadedZim->wNumBlocks; tempWord++) {
 		if (!(tempBlock->flags & BSFLAG_DONTWRITE)) { //don't write blocks we don't want to write
-			WriteBlockToFile(LoadedZim, tempBlock, outputZim, 1);
+			result = WriteBlockToFile(LoadedZim, tempBlock, outputZim, 1);
+			if (result)
+				return WRITESAVEZIM_ERR_BLOCKERR;
 		}
 		tempBlock=tempBlock->next;
 	}
@@ -2045,7 +2056,7 @@ int WriteZimFile(ZIM_STRUCTURE *LoadedZim, FILE *outputZim)
 	fseek(outputZim, 0, SEEK_SET);
 	fwrite(&adler, sizeof(DWORD), 1, outputZim);
 
-	return 0;
+	return WRITESAVEZIM_ERR_SUCCESS;
 }
 
 int DisableSelected(ZIM_STRUCTURE *LoadedZim)

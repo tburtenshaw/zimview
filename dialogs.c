@@ -341,8 +341,10 @@ BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 							//Resize appropriately
 							ListView_GetSubItemRect(lpNMHdr->hwndFrom, index, subitem, LVIR_LABEL, &subitemRect);
-							SendMessage(hwndEditControl, EM_SETRECT, 0, (LPARAM)&subitemRect);	//dunno why this doesn't work
+//							SendMessage(hwndEditControl, EM_SETRECT, 0, (LPARAM)&subitemRect);	//doesn't work with single lines
 //							MoveWindow(hwndEditControl, subitemRect.left, subitemRect.top, subitemRect.right-subitemRect.left, subitemRect.bottom-subitemRect.top, TRUE);
+//							MoveWindow(hwndEditControl, 50, 20, 100, 100, TRUE);
+							SetWindowPos(hwndEditControl, NULL, subitemRect.left, subitemRect.top, 0,0,SWP_NOZORDER|SWP_NOSIZE);
 
 							return 1;
 						case LVN_ENDLABELEDIT:
@@ -398,7 +400,7 @@ BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		default:
 			return DefWindowProc(hwnd, msg, wParam, lParam);
 	}
-	return DefWindowProc(hwnd, msg, wParam, lParam);;
+	return DefWindowProc(hwnd, msg, wParam, lParam);
 }
 
 LRESULT ProcessCustomDraw(LPNMLVCUSTOMDRAW lplvcd)
@@ -651,7 +653,7 @@ void FillDlgItemWithGzipData(HWND hDlg, int nIDDlgItem, GZIP_HEADER_BLOCK *gzHea
 	bufferOffset+=i;
 
 	if (gzHeader->filename[0])	{
-		i = sprintf(buffer+bufferOffset, "\r\nOriginal file: %s", gzHeader->filename);
+		sprintf(buffer+bufferOffset, "\r\nOriginal file: %s", gzHeader->filename);
 	//	bufferOffset+=i;
 	}
 
@@ -683,7 +685,7 @@ void FillDlgItemWithSquashFSData(HWND hDlg, int nIDDlgItem, SQUASHFS_SUPER_BLOCK
 	bufferOffset+=i;
 	i = sprintf(buffer+bufferOffset, "Number of uids: %i\r\n", sqshHeader->no_uids);
 	bufferOffset+=i;
-	i = sprintf(buffer+bufferOffset, "Number of gids: %i", sqshHeader->no_guids);
+	sprintf(buffer+bufferOffset, "Number of gids: %i", sqshHeader->no_guids);
 
 	SetDlgItemText(hDlg, nIDDlgItem, &buffer[0]);
 
@@ -928,6 +930,7 @@ BOOL _stdcall BlockExportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	ZIM_STRUCTURE *ZimToUse;
 	int i;
 	int selectedBlockId;
+	int result;
 	char tempString[511]; //needs to accommodate a longish info string about each block
 	BLOCK_STRUCTURE *tempBlockStruct;
 	BLOCK_STRUCTURE selectedBlockStruct;
@@ -1048,7 +1051,12 @@ BOOL _stdcall BlockExportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							}
 
 						filePtrExport = fopen(ofnExportTo.lpstrFile, "wb");
-						WriteBlockToFile(ZimToUse, &selectedBlockStruct, filePtrExport, (includeHeader==BST_CHECKED));
+						result = WriteBlockToFile(ZimToUse, &selectedBlockStruct, filePtrExport, (includeHeader==BST_CHECKED));
+						if ((result == WBTF_ERR_FILENOTFOUND)||(result == WBTF_ERR_NOSOURCE))
+							MessageBox(hwnd, "The source file for this block could not be found.", "Export unsuccessful", MB_ICONEXCLAMATION);
+						if (result == WBTF_ERR_MEMORYALLOCATION)
+							MessageBox(hwnd, "Memory allocation error.", "Export unsuccessful", MB_ICONEXCLAMATION);
+
 						fclose(filePtrExport);
 
 						EndDialog(hwnd, 1);
