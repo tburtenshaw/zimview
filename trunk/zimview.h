@@ -153,6 +153,15 @@ struct internalBlockStructure //used internally
 #define EXPORTBLOCK_ERR_SUCCESS 0
 #define EXPORTBLOCK_ERR_MEMORYPROBLEM 8
 
+#define WBTF_ERR_SUCCESS 0
+#define WBTF_ERR_FILENOTFOUND 1
+#define WBTF_ERR_MEMORYALLOCATION 2
+#define WBTF_ERR_NOSOURCE 3
+
+#define WRITESAVEZIM_ERR_SUCCESS 0
+#define WRITESAVEZIM_ERR_NOTEMP 1	//can't open temporary file
+#define WRITESAVEZIM_ERR_BLOCKERR 2	//error writing blocks
+
 LRESULT CALLBACK MainWndProc(HWND hwnd, UINT msg,WPARAM wParam,LPARAM lParam);
 
 void MD5HexString(char * outputString, char * MD5array);
@@ -170,7 +179,7 @@ int ActivateZimFile(ZIM_STRUCTURE *LoadedZim);
 
 int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exportFile, int includeHeader);
 int WriteZimFile(ZIM_STRUCTURE *LoadedZim, FILE *outputZim);
-int SaveAsZim(ZIM_STRUCTURE *LoadedZim);
+int SaveAsZim(HWND hwnd, ZIM_STRUCTURE *LoadedZim);
 
 void *NewBlock(ZIM_STRUCTURE *LoadedZim);
 void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start);
