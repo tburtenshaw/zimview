@@ -145,14 +145,14 @@ void InitializeStatusBar(HWND hwndParent,int nrOfParts)
     SendMessage(hWndStatusbar, SB_SETPARTS, nrOfParts, (LPARAM)(LPINT)ptArray);
 
     UpdateStatusBar("Ready", 0, 0);
+	return;
 }
 
 
 static BOOL CreateStatusBar(HWND hwndParent,char *initialText, int nrOfParts)
 {
-    hWndStatusbar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_BORDER|SBARS_SIZEGRIP, initialText, hwndParent, IDM_STATUSBAR);
-    if(hWndStatusbar)
-    {
+	hWndStatusbar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_BORDER|SBARS_SIZEGRIP, initialText, hwndParent, IDM_STATUSBAR);
+    if(hWndStatusbar)	{
         InitializeStatusBar(hwndParent,nrOfParts);
         return TRUE;
     }
@@ -648,7 +648,6 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 	default:
 		return DefWindowProc(hwnd,msg,wParam,lParam);
 	}
-/*@@3<-@@*/
 	return 0;
 }
 
@@ -1267,13 +1266,6 @@ int PaintWindow(HWND hwnd) {
 						lineRect.bottom=paintSelectRects[i].bottom; //as this is last line
 					ExtTextOut(hdc, EDGE_MARGIN+EDGE_MARGIN+ICON_SIZE, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
 
-					/*
-					y+=16;
-					sprintf(tempString, "md5: ");
-					MD5HexString(tempString+5, tempBlockStruct->md5);
-					TextOut(hdc, EDGE_MARGIN+EDGE_MARGIN+ICON_SIZE, y, tempString, strlen(tempString));
-					*/
-
 					//Before we decide which icon to use
 					intIconResource=IDI_UNKNOWNBLOCK;
 
@@ -1800,7 +1792,7 @@ void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
 		}
 	}
 
-return tempUsualStruct;
+	return tempUsualStruct;
 }
 
 
@@ -1997,8 +1989,7 @@ int SaveAsZim(HWND hwnd, ZIM_STRUCTURE *LoadedZim)
 
 	}
 
-
-return WRITESAVEZIM_ERR_SUCCESS;
+	return WRITESAVEZIM_ERR_SUCCESS;
 }
 
 int WriteZimFile(ZIM_STRUCTURE *LoadedZim, FILE *outputZim)
@@ -2291,8 +2282,7 @@ BLOCK_STRUCTURE *GetBlockNumber(ZIM_STRUCTURE *LoadedZim, WORD blocknumber)
 		ptrCounterBlock=ptrCounterBlock->next;
 	}
 
-return NULL;
-
+	return NULL;
 }
 
 int SelectToggleBlock(HWND hwnd, ZIM_STRUCTURE *LoadedZim, WORD blockToSelect)
@@ -2577,8 +2567,6 @@ void EnableToolbarButtons(HWND hTB, ZIM_STRUCTURE *LoadedZim)
 		SendMessage(hTB, TB_ENABLEBUTTON, IDM_EDITPASTE, MAKELONG(FALSE ,0));
 	}
 
-
-
 	return;
 }
 
@@ -2704,7 +2692,7 @@ int PopulatePopupMenu(HMENU hMenu)
 	menuItemInfo.cch = 11;
 	InsertMenuItem(hMenu, 6, TRUE, &menuItemInfo);
 
-return 1;
+	return 1;
 }
 
 long OnMouseWheel(HWND hwnd, ZIM_STRUCTURE *LoadedZim, short nDelta)
