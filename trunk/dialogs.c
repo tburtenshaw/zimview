@@ -57,7 +57,8 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 				FillBoxiDlgFromBoxiStruct(pHdr->hwndDisplay, &pHdr->dlgBoxiStruct, 0);
 				break;
 			case BTYPE_VERI:
-				DisplayVeriListView(pHdr->hwndDisplay, pHdr->selectedBlock->ptrFurtherBlockDetail);
+				//DisplayVeriListView(pHdr->hwndDisplay, pHdr->selectedBlock->ptrFurtherBlockDetail);
+				DisplayVeriListView(pHdr->hwndDisplay, &pHdr->dlgVeriStruct);
 				break;
 			default:
 				tempUsualStruct = pHdr->selectedBlock->ptrFurtherBlockDetail;
@@ -93,6 +94,7 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	int nSel;
 	BLOCK_STRUCTURE *selectedBlock;
 	BOXI_STRUCTURE *tempBoxiStruct;
+	VERI_STRUCTURE *tempVeriStruct;
 	char tempString[255];
 
 	ZIM_STRUCTURE *ZimToUse;
@@ -155,6 +157,7 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						break;
 					case BTYPE_VERI:
 						pHdr->apRes[1] = DoLockDlgRes(MAKEINTRESOURCE(IDD_PROPERTIES_VERI));
+						VeriStructMakeCopy(&pHdr->dlgVeriStruct, selectedBlock->ptrFurtherBlockDetail);
 						break;
 					default:
 						pHdr->apRes[1] = DoLockDlgRes(MAKEINTRESOURCE(IDD_PROPERTIES_USUAL));
@@ -183,13 +186,22 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         	default:
             	return DefWindowProc(hwnd, msg, wParam, lParam);
 			}
-			return 0;
+			break;
 		case WM_CLOSE:
+    		pHdr = (DLGHDR_PROPERTIES *) GetWindowLong(hwnd, GWL_USERDATA);
+			tempVeriStruct=&pHdr->dlgVeriStruct;
+			if (tempVeriStruct->nextStructure)
+				VeriStructFree(tempVeriStruct->nextStructure);
+			LocalFree(pHdr);
 			EndDialog(hwnd,0);
 			return 1;
 		case WM_COMMAND:
 			switch (LOWORD(wParam)) {
 				case IDCANCEL:
+    				pHdr = (DLGHDR_PROPERTIES *) GetWindowLong(hwnd, GWL_USERDATA);
+					tempVeriStruct=&pHdr->dlgVeriStruct;
+					if (tempVeriStruct->nextStructure)
+						VeriStructFree(tempVeriStruct->nextStructure);
 					LocalFree(pHdr);
 					EndDialog(hwnd,1);
 					return 1;
@@ -198,12 +210,68 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					return 1;
 				case IDOK:
 					PropertiesApplyChanges(hwnd);
+		    		pHdr = (DLGHDR_PROPERTIES *) GetWindowLong(hwnd, GWL_USERDATA);
+					tempVeriStruct=&pHdr->dlgVeriStruct;
+					if (tempVeriStruct->nextStructure)
+						VeriStructFree(tempVeriStruct->nextStructure);
 					LocalFree(pHdr);
 					EndDialog(hwnd,1);
 					return 1;
 			}
 			break;
 	}
+	return 0;
+}
+
+int VeriStructMakeCopy(VERI_STRUCTURE *destVeri, VERI_STRUCTURE *sourceVeri)
+{
+	//int n;
+	//int i;
+
+	VERI_STRUCTURE *tempPointer;
+
+	//n=sourceVeri->numberVeriObjects;
+	tempPointer=NULL;
+
+	while (sourceVeri)	{
+		memcpy(destVeri, sourceVeri, sizeof(VERI_STRUCTURE));
+		destVeri->prevStructure=tempPointer;
+		tempPointer=destVeri;	//save this for pointer to prev
+		if (sourceVeri->nextStructure)
+			destVeri->nextStructure=malloc(sizeof(VERI_STRUCTURE));
+		destVeri=destVeri->nextStructure;
+		sourceVeri=sourceVeri->nextStructure;
+	}
+
+	return 0;
+}
+
+int VeriStructCopyData(VERI_STRUCTURE *destVeri, VERI_STRUCTURE *sourceVeri)
+{
+
+	while (sourceVeri)	{
+		destVeri->numberVeriObjects=sourceVeri->numberVeriObjects;
+		memcpy(&destVeri->displayblockname[0], &sourceVeri->displayblockname[0], 5);
+		memcpy(&destVeri->veriFileData, &sourceVeri->veriFileData, sizeof(VERIBLOCK_STRUCTURE));
+
+		sourceVeri=sourceVeri->nextStructure;
+		destVeri=destVeri->nextStructure;
+	}
+
+
+	return 0;
+}
+
+int VeriStructFree(VERI_STRUCTURE *deleteVeri)
+{
+	VERI_STRUCTURE *tempPtr;
+
+	while (deleteVeri)	{
+		tempPtr=deleteVeri->nextStructure;
+		free(deleteVeri);
+		deleteVeri=tempPtr;
+	}
+
 	return 0;
 }
 
@@ -233,6 +301,9 @@ void PropertiesApplyChanges(HWND hwnd)
 					CreateValidBoxiBlockFromBoxiStruct(selectedBlock, &pHdr->dlgBoxiStruct);
 					selectedBlock->flags|=BSFLAG_HASCHANGED;
 				}
+				break;
+			case BTYPE_VERI:
+				VeriStructCopyData(selectedBlock->ptrFurtherBlockDetail, &pHdr->dlgVeriStruct);
 				break;
 		}
 		RedrawBlock(pHdr->hwndMain, pHdr->LoadedZim, pHdr->selectedBlockNumber);
@@ -356,8 +427,7 @@ BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 							pHdr=(void *)GetWindowLong(GetParent(GetParent(lpNMHdr->hwndFrom)), GWL_USERDATA);	//get the selected block from the grandparent window
 
-							//we won't keep this... we need a copy of the veri data so the user can cancel changes
-							changingVeriStruct=pHdr->selectedBlock->ptrFurtherBlockDetail;
+							changingVeriStruct=&pHdr->dlgVeriStruct;
 
 							for (i=0;(i<changingVeriStruct->numberVeriObjects) && (i<index); i++)	{
 								changingVeriStruct=changingVeriStruct->nextStructure;
@@ -1125,7 +1195,7 @@ void BlockExportDetailsUpdate(HWND hwnd, ZIM_STRUCTURE *ZimToUse, int blockid)
 
 	SetDlgItemText(hwnd, IDC_BLOCKEXPORTDETAIL, tempString);
 
-return;
+	return;
 }
 
 BOOL _stdcall BlockCreateVeriDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
