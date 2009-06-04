@@ -225,12 +225,8 @@ BOOL _stdcall PropertiesDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 int VeriStructMakeCopy(VERI_STRUCTURE *destVeri, VERI_STRUCTURE *sourceVeri)
 {
-	//int n;
-	//int i;
-
 	VERI_STRUCTURE *tempPointer;
 
-	//n=sourceVeri->numberVeriObjects;
 	tempPointer=NULL;
 
 	while (sourceVeri)	{
@@ -303,12 +299,49 @@ void PropertiesApplyChanges(HWND hwnd)
 				}
 				break;
 			case BTYPE_VERI:
-				VeriStructCopyData(selectedBlock->ptrFurtherBlockDetail, &pHdr->dlgVeriStruct);
+				VeriApplyChanges(selectedBlock, pHdr);
+				//tempVeriStruct=selectedBlock->ptrFurtherBlockDetail;
+				//VeriStructCopyData(tempVeriStruct, &pHdr->dlgVeriStruct);
+				//memset(&adlerholder, 0, sizeof(adlerholder));
+				//ChecksumAdler32(&adlerholder, &(tempVeriStruct->veriFileData), sizeof(VERIBLOCK_STRUCTURE));
+				//selectedBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
 				break;
 		}
 		RedrawBlock(pHdr->hwndMain, pHdr->LoadedZim, pHdr->selectedBlockNumber);
 
 	}
+
+	return;
+}
+
+void VeriApplyChanges(BLOCK_STRUCTURE *selectedBlock, DLGHDR_PROPERTIES *pHdr)
+{
+	VERI_STRUCTURE *tempVeriStruct;
+	ADLER_STRUCTURE adlerholder;
+	struct cvs_MD5Context MD5context;
+
+	struct sBlockHeader blockHeader;
+
+	tempVeriStruct=selectedBlock->ptrFurtherBlockDetail;
+	VeriStructCopyData(tempVeriStruct, &pHdr->dlgVeriStruct);
+
+	//Initialise adler and md5 holders
+	memset(&adlerholder, 0, sizeof(adlerholder));
+	cvs_MD5Init(&MD5context);
+
+	while (tempVeriStruct)	{
+		//Calculate the adler and md5 for all the Veris
+		ChecksumAdler32(&adlerholder, &(tempVeriStruct->veriFileData), sizeof(VERIBLOCK_STRUCTURE));
+		cvs_MD5Update (&MD5context, &(tempVeriStruct->veriFileData), sizeof(VERIBLOCK_STRUCTURE));
+		tempVeriStruct=tempVeriStruct->nextStructure;
+	}
+
+	//finalise MD5
+	cvs_MD5Final (&selectedBlock->md5, &MD5context);
+	//Need to calc adler on block header too
+	GenerateBlockHeader(&blockHeader, selectedBlock->dwDataLength, 0, "VERI");
+	selectedBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
+
 
 	return;
 }

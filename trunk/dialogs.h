@@ -41,6 +41,7 @@ void FillBoxiDlgFromBoxiStruct(HWND hwnd, BOXI_STRUCTURE *boxiStruct, int base);
 void CreateValidBoxiBlockFromBoxiStruct(BLOCK_STRUCTURE *boxiBlock, BOXI_STRUCTURE *boxiStruct);
 void FillPropertiesMainDlg(HWND hwnd, BLOCK_STRUCTURE *selectedBlock);
 void FillPropertiesZimDlg(HWND hwnd, ZIM_STRUCTURE *zimStruct);
+void VeriApplyChanges(BLOCK_STRUCTURE *selectedBlock, DLGHDR_PROPERTIES *pHdr);
 int VeriStructMakeCopy(VERI_STRUCTURE *destVeri, VERI_STRUCTURE *sourceVeri);
 int VeriStructCopyData(VERI_STRUCTURE *destVeri, VERI_STRUCTURE *sourceVeri);
 int VeriStructFree(VERI_STRUCTURE *deleteVeri);
