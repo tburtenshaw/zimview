@@ -465,8 +465,20 @@ BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							for (i=0;(i<changingVeriStruct->numberVeriObjects) && (i<index); i++)	{
 								changingVeriStruct=changingVeriStruct->nextStructure;
 							}
+							if (subitem==0)	{	//if block edited
+								changingVeriStruct->displayblockname[0]=buffer[0];
+								changingVeriStruct->displayblockname[1]=buffer[1];
+								changingVeriStruct->displayblockname[2]=buffer[2];
+								changingVeriStruct->displayblockname[3]=buffer[3];
+								changingVeriStruct->displayblockname[4]=0;
+								changingVeriStruct->veriFileData.blockName[0]=buffer[0];
+								changingVeriStruct->veriFileData.blockName[1]=buffer[1];
+								changingVeriStruct->veriFileData.blockName[2]=buffer[2];
+								changingVeriStruct->veriFileData.blockName[3]=buffer[3];
 
-							if (subitem==1)	{
+							}
+
+							if (subitem==1)	{	//if version edited
 								changingVeriStruct->veriFileData.version_a=strtol(buffer, &pEnd, 0); //strtol relies on fact . is an non-readable char
 								if (*pEnd != '\0')
 									changingVeriStruct->veriFileData.version_b=strtol(pEnd+1, &pEnd, 0);
@@ -477,7 +489,7 @@ BOOL _stdcall ChildDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 								sprintf(buffer, "%i.%i.%i.%i", changingVeriStruct->veriFileData.version_a, changingVeriStruct->veriFileData.version_b,changingVeriStruct->veriFileData.version_c, changingVeriStruct->veriFileData.version_d);
 							}
-							else if (subitem==2)	{
+							else if (subitem==2)	{	//if md5 edited
 								MD5StringToArray(changingVeriStruct->veriFileData.md5Digest, &buffer[0]);
 								MD5HexString(&buffer[0], changingVeriStruct->veriFileData.md5Digest);
 							}
