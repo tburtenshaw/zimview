@@ -337,6 +337,8 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			break;
 		case IDM_EDITCUT:
 			EditCopySelected(hwnd, &pZim, FALSE);
+			DisableSelected(&pZim);
+			RedrawSelectedBlocks(hwnd, &pZim);
 			EnableToolbarButtons(hwndToolBar, &pZim);
 			break;
 		case IDM_EDITPASTE:
