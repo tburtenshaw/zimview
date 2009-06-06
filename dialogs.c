@@ -299,12 +299,8 @@ void PropertiesApplyChanges(HWND hwnd)
 				}
 				break;
 			case BTYPE_VERI:
-				VeriApplyChanges(selectedBlock, pHdr);
-				//tempVeriStruct=selectedBlock->ptrFurtherBlockDetail;
-				//VeriStructCopyData(tempVeriStruct, &pHdr->dlgVeriStruct);
-				//memset(&adlerholder, 0, sizeof(adlerholder));
-				//ChecksumAdler32(&adlerholder, &(tempVeriStruct->veriFileData), sizeof(VERIBLOCK_STRUCTURE));
-				//selectedBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
+				if (VeriApplyChanges(selectedBlock, pHdr))
+					selectedBlock->flags|=BSFLAG_HASCHANGED;
 				break;
 		}
 		RedrawBlock(pHdr->hwndMain, pHdr->LoadedZim, pHdr->selectedBlockNumber);
@@ -314,10 +310,11 @@ void PropertiesApplyChanges(HWND hwnd)
 	return;
 }
 
-void VeriApplyChanges(BLOCK_STRUCTURE *selectedBlock, DLGHDR_PROPERTIES *pHdr)
+int VeriApplyChanges(BLOCK_STRUCTURE *selectedBlock, DLGHDR_PROPERTIES *pHdr)
 {
 	VERI_STRUCTURE *tempVeriStruct;
 	ADLER_STRUCTURE adlerholder;
+	DWORD tempChecksum;
 	struct cvs_MD5Context MD5context;
 
 	struct sBlockHeader blockHeader;
@@ -326,6 +323,7 @@ void VeriApplyChanges(BLOCK_STRUCTURE *selectedBlock, DLGHDR_PROPERTIES *pHdr)
 	VeriStructCopyData(tempVeriStruct, &pHdr->dlgVeriStruct);
 
 	//Initialise adler and md5 holders
+	tempChecksum=selectedBlock->dwRealChecksum;
 	memset(&adlerholder, 0, sizeof(adlerholder));
 	cvs_MD5Init(&MD5context);
 
@@ -342,8 +340,10 @@ void VeriApplyChanges(BLOCK_STRUCTURE *selectedBlock, DLGHDR_PROPERTIES *pHdr)
 	GenerateBlockHeader(&blockHeader, selectedBlock->dwDataLength, 0, "VERI");
 	selectedBlock->dwRealChecksum = ChecksumAdler32(&adlerholder, &blockHeader, sizeof(struct sBlockHeader)-sizeof(DWORD)); //the start of the header without checksum
 
+	if (tempChecksum==selectedBlock->dwRealChecksum)
+		return 0;
 
-	return;
+	return 1;
 }
 
 
