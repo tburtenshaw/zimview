@@ -24,13 +24,13 @@ int numberDisplayedBlocks=0;		//used for calculating what to draw
 int numberFullyDisplayedBlocks=0;	//used for calculating scrolling (a half block displayed should not be counted, and it should include the highest number that fits)
 RECT paintSelectRects[255];
 
-struct internalZimStructure pZim;
+struct internalZimStructure pZim;	//The main zim file structure
 
 HINSTANCE hInst;		// Instance handle
 HWND hwndMain;		//Main window handle
 
 HWND hwndToolBar;
-HWND  hWndStatusbar;
+HWND  hwndStatusbar;
 
 unsigned long int AdlerOnFile(FILE *fileToRead, ADLER_STRUCTURE *adlerhold, DWORD offset, DWORD len)
 {
@@ -91,7 +91,7 @@ void MD5OnFile(FILE *fileToRead, struct cvs_MD5Context *ctx, DWORD offset, DWORD
 
 void UpdateStatusBar(LPSTR lpszStatusString, WORD partNumber, WORD displayFlags)
 {
-    SendMessage(hWndStatusbar, SB_SETTEXT, partNumber | displayFlags, (LPARAM)lpszStatusString);
+    SendMessage(hwndStatusbar, SB_SETTEXT, partNumber | displayFlags, (LPARAM)lpszStatusString);
 }
 
 
@@ -142,7 +142,7 @@ void InitializeStatusBar(HWND hwndParent,int nrOfParts)
     ptArray[nrOfParts-1] = rect.right;
 
     ReleaseDC(hwndParent, hDC);
-    SendMessage(hWndStatusbar, SB_SETPARTS, nrOfParts, (LPARAM)(LPINT)ptArray);
+    SendMessage(hwndStatusbar, SB_SETPARTS, nrOfParts, (LPARAM)(LPINT)ptArray);
 
     UpdateStatusBar("Ready", 0, 0);
 	return;
@@ -151,8 +151,8 @@ void InitializeStatusBar(HWND hwndParent,int nrOfParts)
 
 static BOOL CreateStatusBar(HWND hwndParent,char *initialText, int nrOfParts)
 {
-	hWndStatusbar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_BORDER|SBARS_SIZEGRIP, initialText, hwndParent, IDM_STATUSBAR);
-    if(hWndStatusbar)	{
+	hwndStatusbar = CreateStatusWindow(WS_CHILD | WS_VISIBLE | WS_BORDER|SBARS_SIZEGRIP, initialText, hwndParent, IDM_STATUSBAR);
+    if(hwndStatusbar)	{
         InitializeStatusBar(hwndParent,nrOfParts);
         return TRUE;
     }
@@ -309,6 +309,10 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			}
 			break;
 		case IDM_CLOSE:
+			if	(HasFileBeenAltered(&pZim))	{
+				if (MessageBox(hwnd, "Closing will lose all changes. Are you sure you want to close this file?", "Close", MB_YESNO|MB_ICONQUESTION)==IDNO)
+					return;
+			}
 			CloseZimFile(&pZim);
 			SetWindowText(hwnd, "ZimView");
 			EnableToolbarButtons(hwndToolBar, &pZim);
@@ -336,8 +340,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			EnableToolbarButtons(hwndToolBar, &pZim);
 			break;
 		case IDM_EDITCUT:
-			EditCopySelected(hwnd, &pZim, FALSE);
-			DisableSelected(&pZim);
+			EditCopySelected(hwnd, &pZim, TRUE);
 			RedrawSelectedBlocks(hwnd, &pZim);
 			EnableToolbarButtons(hwndToolBar, &pZim);
 			break;
@@ -359,6 +362,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 				if (caretedBlock>pZim.wNumBlocks-1) caretedBlock=pZim.wNumBlocks-1;
 				if (i>=0) RedrawBetweenBlocks(hwnd, &pZim, i, pZim.wNumBlocks-1); //redraw from first delete block down
 			}
+			ScrollUpdate(hwnd, &pZim);
 			EnableToolbarButtons(hwndToolBar, &pZim);
 			break;
 		case IDM_MOVEUP:
@@ -419,9 +423,9 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		break;
 	case WM_SIZE:
 		ScrollUpdate(hwnd, &pZim);
-		SendMessage(hWndStatusbar,msg,wParam,lParam);
+		SendMessage(hwndStatusbar,msg,wParam,lParam);
 		SendMessage(hwndToolBar,msg,wParam,lParam);
-		InitializeStatusBar(hWndStatusbar,1);
+		InitializeStatusBar(hwndStatusbar,1);
 		if (showCaret)	{
 			if ((caretedBlock>=topDisplayBlock) && (caretedBlock<topDisplayBlock+numberDisplayedBlocks))	{
 				tempRect.top=paintSelectRects[caretedBlock-topDisplayBlock].top;
@@ -776,9 +780,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		WS_MINIMIZEBOX|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_MAXIMIZEBOX|WS_CAPTION|WS_BORDER|WS_SYSMENU|WS_THICKFRAME|WS_VSCROLL,
 		CW_USEDEFAULT,0,CW_USEDEFAULT,0, NULL, NULL, hInst, NULL);
 
-	//CreateWindow("ZimViewWndClass","ZimView1", WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_BORDER,
-	//	CW_USEDEFAULT,0,CW_USEDEFAULT,0, hwndMain, NULL, hInst, NULL);
-
 	if (hwndMain == (HWND)0)
 		return 0;
 
@@ -1076,6 +1077,8 @@ int CloseZimFile(ZIM_STRUCTURE *LoadedZim) {
 #define MOVEINDICATOR_WIDTH 6
 #define EDGE_MARGIN 4
 #define ICON_SIZE 48
+#define TOP_MARGIN 16
+#define HEADERBOTTOM_MARGIN 8
 
 int PaintWindow(HWND hwnd) {
 	HDC hdc;
@@ -1086,6 +1089,8 @@ int PaintWindow(HWND hwnd) {
 	RECT headerRect; //the rectangle the zim header information is displayed in
 	RECT footerRect; //the white space under all the blocks
 	RECT lineRect;   //a rect for each line when using exttextout
+	RECT infobarRect;
+
 	int heightHeader;
 	int heightBlock;
 
@@ -1114,10 +1119,15 @@ int PaintWindow(HWND hwnd) {
 
 	hdc = BeginPaint(hwnd, &psPaint);
 	GetClientRect(hwnd, &clientRect);			//the size of the whole window draw area
+	GetClientRect(hwndToolBar, &infobarRect);	//from the bottom of the toolbar
+	clientRect.top=infobarRect.bottom;
+
+	GetClientRect(hwndStatusbar, &infobarRect);
+	clientRect.bottom=clientRect.bottom-infobarRect.bottom;	//to the top of the statusbar
 
 
 	//First of all we need to calculate the space the header and each block will occupy
-	heightHeader=180; //includes all padding from the top of the client rect
+	heightHeader=112+HEADERBOTTOM_MARGIN; //includes padding above and below
 
 	headerRect.left=clientRect.left;
 	headerRect.right=clientRect.right;
@@ -1147,12 +1157,14 @@ int PaintWindow(HWND hwnd) {
 	footerRect.right=clientRect.right;
 
 
-	//Displayed regardless
-	y=64;
-	if (!pZim.displayFilename[0])
-		ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &clientRect, "Open a .zim file above, or start adding blocks.", 47, NULL);
+	y=headerRect.top+TOP_MARGIN;
 
-	if (pZim.displayFilename[0]) {
+	if (!pZim.displayFilename[0])	{ 	//Displayed if no file open
+		ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &clientRect, "Open a .zim file above, or start adding blocks.", 47, NULL);
+		caretedBlock=0;
+		topDisplayBlock=0;
+	}
+	else {
 
 		//Display the header information
 		if (RectVisible(hdc, &headerRect)) {
@@ -1160,20 +1172,19 @@ int PaintWindow(HWND hwnd) {
 			lineRect.left=headerRect.left;
 			lineRect.right=headerRect.right;
 
-			y+=16;
 			sprintf(tempString, "%s", pZim.displayFilenameNoPath);
 
 			lineRect.top=headerRect.top; //this is the first line of text, so should include top margin
 			lineRect.bottom=y+16;
 			ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
 
-			y+=16;
+			y+=16;	//32
 			sprintf(tempString, "%s", pZim.displayFilename);
 			lineRect.top=y;
 			lineRect.bottom=lineRect.top+16;
 			ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
 
-			y+=16;
+			y+=16;	//48
 			sprintf(tempString, "Checksum: %08X (correct)", pZim.dwChecksum);
 			if (pZim.dwChecksum!=pZim.dwRealChecksum)
 				sprintf(tempString, "Checksum: %08X (differs from calculated checksum %08X)", pZim.dwChecksum, pZim.dwRealChecksum);
@@ -1182,19 +1193,19 @@ int PaintWindow(HWND hwnd) {
 			lineRect.bottom=lineRect.top+16;
 			ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
 
-			y+=16;
+			y+=16;	//64
 			sprintf(tempString, "Customer number: %i", pZim.wCustomerNumber);
 			lineRect.top=y;
 			lineRect.bottom=lineRect.top+16;
 			ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
 
-			y+=16;
+			y+=16;	//80
 			sprintf(tempString, "Number of blocks: %i", pZim.wNumBlocks);
 			lineRect.top=y;
 			lineRect.bottom=lineRect.top+16;
 			ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
 
-			y+=16;
+			y+=16;	//96+16=112
 			sprintf(tempString, "File length: %i bytes", pZim.dwTotalFileLen);
 			if (pZim.dwTotalFileLen!=pZim.dwRealFileLen)
 	 			sprintf(tempString, "File length: %i bytes (NB: Actual file length is %i bytes)", pZim.dwTotalFileLen, pZim.dwRealFileLen);
@@ -1448,11 +1459,6 @@ int PaintWindow(HWND hwnd) {
 
 				DeleteObject(hPenCaret);
 			}
-		}
-		else {
-			//Displayed if no file loaded
-			caretedBlock=0;
-			topDisplayBlock=0;
 		}
 
 		EndPaint (hwnd, &psPaint);
@@ -2728,6 +2734,10 @@ void ScrollUpdate(HWND hwnd, ZIM_STRUCTURE *LoadedZim)
 
     si.nPos  = topDisplayBlock;         // scrollbar thumb position
     si.nPage = numberFullyDisplayedBlocks;        // number of lines in a page (i.e. rows of text in window)
+
+	if (si.nPage==0)
+		si.nPage=1;
+
     si.nMin  = 0;
     si.nMax  = LoadedZim->wNumBlocks-1;      // total number of lines in file (i.e. total scroll range)
 
@@ -2773,5 +2783,26 @@ long HandleVScroll(HWND hwnd, ZIM_STRUCTURE *LoadedZim, WPARAM wParam)
 
 	ScrollUpdate(hwnd, LoadedZim);
 	InvalidateRect(hwnd, NULL, FALSE);
+	return 0;
+}
+
+int HasFileBeenAltered(ZIM_STRUCTURE *LoadedZim)
+{
+	BLOCK_STRUCTURE *ptrCounterBlock;
+
+	if (LoadedZim->displayFilename[0]==0)
+		return 0;
+
+	ptrCounterBlock=LoadedZim->first;
+	while (ptrCounterBlock)	{
+		if (ptrCounterBlock->flags & BSFLAG_HASCHANGED)
+			return 1;
+
+		if (ptrCounterBlock->dwChecksum!=ptrCounterBlock->dwRealChecksum)
+			return 1;
+
+		ptrCounterBlock=ptrCounterBlock->next;
+	}
+
 	return 0;
 }

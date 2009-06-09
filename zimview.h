@@ -180,6 +180,8 @@ int ActivateZimFile(ZIM_STRUCTURE *LoadedZim);
 int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exportFile, int includeHeader);
 int WriteZimFile(ZIM_STRUCTURE *LoadedZim, FILE *outputZim);
 int SaveAsZim(HWND hwnd, ZIM_STRUCTURE *LoadedZim);
+int HasFileBeenAltered(ZIM_STRUCTURE *LoadedZim);
+
 
 void *NewBlock(ZIM_STRUCTURE *LoadedZim);
 void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start);
