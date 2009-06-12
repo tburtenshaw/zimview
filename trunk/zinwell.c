@@ -30,7 +30,9 @@ HINSTANCE hInst;		// Instance handle
 HWND hwndMain;		//Main window handle
 
 HWND hwndToolBar;
-HWND  hwndStatusbar;
+HWND hwndStatusbar;
+HWND hwndScrollbar;
+int scrollbarWidth;
 
 unsigned long int AdlerOnFile(FILE *fileToRead, ADLER_STRUCTURE *adlerhold, DWORD offset, DWORD len)
 {
@@ -422,10 +424,11 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 		PaintWindow(hwnd);
 		break;
 	case WM_SIZE:
-		ScrollUpdate(hwnd, &pZim);
 		SendMessage(hwndStatusbar,msg,wParam,lParam);
 		SendMessage(hwndToolBar,msg,wParam,lParam);
+		SendMessage(hwndScrollbar,msg,wParam,lParam);
 		InitializeStatusBar(hwndStatusbar,1);
+		ScrollUpdate(hwnd, &pZim);
 		if (showCaret)	{
 			if ((caretedBlock>=topDisplayBlock) && (caretedBlock<topDisplayBlock+numberDisplayedBlocks))	{
 				tempRect.top=paintSelectRects[caretedBlock-topDisplayBlock].top;
@@ -657,9 +660,32 @@ LRESULT CALLBACK MainWndProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam)
 	return 0;
 }
 
+HWND CreateScrollbar(HWND hwndParent)
+{
+	HWND hwndSB;
+	RECT scrollbarRect;
+
+	hwndSB = CreateWindowEx(0, WC_SCROLLBAR, (LPSTR) NULL,
+    WS_CHILD | SBS_VERT|SBS_LEFTALIGN,         // scroll bar styles
+    20,                           // horizontal position
+    70,                           // vertical position
+    CW_USEDEFAULT,                         // width of the scroll bar
+    100,               // default height
+    hwndParent,                   // handle to main window
+    (HMENU) NULL, hInst, (LPVOID) NULL);
+
+
+	GetClientRect(hwndSB, &scrollbarRect);
+	scrollbarWidth=scrollbarRect.right;
+
+	ShowWindow(hwndSB, SW_SHOW);
+
+	return hwndSB;
+}
+
 
 #define NUM_TOOLBAR_BUTTONS		11
-HWND CreateAToolBar(HWND hwndParent)
+HWND CreateToolbar(HWND hwndParent)
 {
 	HWND hwndTB;
 	TBADDBITMAP tbab;
@@ -777,15 +803,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hAccelTable = LoadAccelerators(hInst,MAKEINTRESOURCE(IDACCEL));
 
 	hwndMain = CreateWindow("ZimViewWndClass","ZimView",
-		WS_MINIMIZEBOX|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_MAXIMIZEBOX|WS_CAPTION|WS_BORDER|WS_SYSMENU|WS_THICKFRAME|WS_VSCROLL,
+		WS_MINIMIZEBOX|WS_VISIBLE|WS_CLIPSIBLINGS|WS_CLIPCHILDREN|WS_MAXIMIZEBOX|WS_CAPTION|WS_BORDER|WS_SYSMENU|WS_THICKFRAME,
 		CW_USEDEFAULT,0,CW_USEDEFAULT,0, NULL, NULL, hInst, NULL);
 
 	if (hwndMain == (HWND)0)
 		return 0;
 
 	CreateStatusBar(hwndMain,"Ready",1);
-	hwndToolBar = CreateAToolBar(hwndMain);
+	hwndToolBar = CreateToolbar(hwndMain);
 	ShowWindow(hwndMain,SW_SHOW);
+
+	hwndScrollbar=CreateScrollbar(hwndMain);
 
 	if (strlen(lpCmdLine)>4)	{
  		OpenZimFile(hwndMain, &pZim, lpCmdLine);
@@ -1123,8 +1151,11 @@ int PaintWindow(HWND hwnd) {
 	clientRect.top=infobarRect.bottom;
 
 	GetClientRect(hwndStatusbar, &infobarRect);
-	clientRect.bottom=clientRect.bottom-infobarRect.bottom;	//to the top of the statusbar
+	clientRect.bottom-=infobarRect.bottom;	//to the top of the statusbar
 
+
+	GetClientRect(hwndScrollbar, &infobarRect);
+	clientRect.right-=infobarRect.right;
 
 	//First of all we need to calculate the space the header and each block will occupy
 	heightHeader=112+HEADERBOTTOM_MARGIN; //includes padding above and below
@@ -2728,7 +2759,19 @@ long OnMouseWheel(HWND hwnd, ZIM_STRUCTURE *LoadedZim, short nDelta)
 
 void ScrollUpdate(HWND hwnd, ZIM_STRUCTURE *LoadedZim)
 {
-    SCROLLINFO si = { sizeof(si) };
+    RECT clientRect;
+	RECT toolbarRect;
+	RECT statusbarRect;
+
+	SCROLLINFO si = { sizeof(si) };
+
+
+	GetClientRect(hwnd, &clientRect);
+	GetClientRect(hwndToolBar, &toolbarRect);
+	GetClientRect(hwndStatusbar, &statusbarRect);
+
+	MoveWindow(hwndScrollbar, clientRect.right-scrollbarWidth, toolbarRect.bottom+3, scrollbarWidth, clientRect.bottom-toolbarRect.bottom-statusbarRect.bottom-3, TRUE);
+
 
     si.fMask = SIF_POS | SIF_PAGE | SIF_RANGE | SIF_DISABLENOSCROLL;
 
@@ -2741,7 +2784,7 @@ void ScrollUpdate(HWND hwnd, ZIM_STRUCTURE *LoadedZim)
     si.nMin  = 0;
     si.nMax  = LoadedZim->wNumBlocks-1;      // total number of lines in file (i.e. total scroll range)
 
-    SetScrollInfo(hwnd, SB_VERT, &si, TRUE);
+    SetScrollInfo(hwndScrollbar, SB_CTL, &si, TRUE);
 
 	return;
 }
