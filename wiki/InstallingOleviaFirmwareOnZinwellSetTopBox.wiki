@@ -39,7 +39,7 @@ We need to change the [CustomerNumber customer number] of our first file. This i
 
 The first file is _OleviaPVR_1.2.2_part1.zim_. Open this up with [zimview].
 
-* picture here
+http://zimview.googlecode.com/svn/wiki/edit_customernumber.png
 
 You should see a list of five different blocks below. Fortunately we can avoid these. The only thing we need to do is change the customer number.
 
@@ -67,3 +67,24 @@ The drive doesn't have to be empty, but you'll have to scroll through everything
 When you upgrade to the Olevia firmware, you won't be able to automatically do a scan for all the New Zealand channels.
 
 Fortunately, there are only three frequencies to tune to. Each frequency carries multiple "stations". One channel basically carries the TVNZ stuff, another the TV3/TV4 stuff, the other contains the rest.
+
+Make sure you know your frequencies, channels, bandwidth and priority. Try scanning the channels on your NZ firmware - you won't double up or lose any channels.
+
+Each channel corresponds to a frequency - but these are different in Taiwan. Take a look at this page for a list of channels and frequencies: http://www.freeviewshop.co.nz/digital-terrestrial-i-8.html
+
+http://zimview.googlecode.com/svn/wiki/manualscan_45.jpg
+
+Bandwidth (at least in Auckland) is 8 MHz, and Priority is High.
+
+If you do an autoscan, keep a piece of paper nearby and right down the channels it finds.
+
+http://zimview.googlecode.com/svn/wiki/autoscan_auckland.jpg
+
+In short - you're going to have to do this once you upgrade - so learn to do it now when it's safe.
+
+= Process of upgrading =
+Turn your set-top box on. Once it's running, stick in the USB drive with the three Olevia zim files. If you have a thick USB key, you may need to remove the HDMI cable and use component or composite output. Don't proceed until you've sorted this out.
+
+On the menu, go down to System, and then to System Information. You'll see information about your current firmware. Press the red button on your remote control.
+
+http://zimview.googlecode.com/svn/wiki/freeview_system_info_1.0.8.jpg
