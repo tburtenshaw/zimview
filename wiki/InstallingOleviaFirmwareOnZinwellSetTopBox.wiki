@@ -41,7 +41,7 @@ The first file is _OleviaPVR_1.2.2_part1.zim_. Open this up with [zimview].
 
 http://zimview.googlecode.com/svn/wiki/edit_customernumber.png
 
-You should see a list of five different blocks below. Fortunately we can avoid these. The only thing we need to do is change the customer number.
+You should see a list of five different blocks below. Fortunately we can ignore these. The only thing we need to do is change the customer number.
 
   # On the menu click on Block->Customer number...
   # It will say 1280, change this to *4096*
@@ -59,14 +59,14 @@ To:     ce e8 88 90 00 10
 }}}
 
 ==USB flash drive==
-Copy your new edited file, and the two others to a thumb drive. For some reason my SD card reader didn't work.
+Copy your newly edited file, and the two others to a thumb drive. For some reason my SD card reader didn't work, so I used an old 128MB thumb drive I found around the house.
 
-The drive doesn't have to be empty, but you'll have to scroll through everything else on there. They also state that the drive contents can be erased, so you're best off starting fresh.
+The drive doesn't need to be empty, but you'll have to scroll through everything else on there. They also state that the drive contents can be erased, so you're best off starting fresh with an empty drive.
 
 ==Mental preparation==
-When you upgrade to the Olevia firmware, you won't be able to automatically do a scan for all the New Zealand channels.
+When you upgrade to the Olevia firmware, you won't be able to automatically scan for all the New Zealand channels.
 
-Fortunately, there are only three frequencies to tune to. Each frequency carries multiple "stations". One channel basically carries the TVNZ stuff, another the TV3/TV4 stuff, the other contains the rest.
+Fortunately, there are only three frequencies to tune to. Each frequency carries multiple "stations". To over-simplify, one channel basically carries the TVNZ stuff, another the TV3/TV4 stuff, the other channel contains the rest.
 
 Make sure you know your frequencies, channels, bandwidth and priority. Try scanning the channels on your NZ firmware - you won't double up or lose any channels.
 
@@ -76,7 +76,7 @@ http://zimview.googlecode.com/svn/wiki/manualscan_45.jpg
 
 Bandwidth (at least in Auckland) is 8 MHz, and Priority is High.
 
-If you do an autoscan, keep a piece of paper nearby and right down the channels it finds.
+If you do an autoscan, keep a piece of paper nearby and write down the channels it finds.
 
 http://zimview.googlecode.com/svn/wiki/autoscan_auckland.jpg
 
