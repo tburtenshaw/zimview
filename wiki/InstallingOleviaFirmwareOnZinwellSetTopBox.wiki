@@ -1,0 +1,69 @@
+#summary Beginners guide to installing the Olevia firmware on a Zinwell 620 HD
+#labels Featured,instructions
+
+= Introduction =
+This article details how to get the Olevia firmware on to your set-top box.
+
+== Risks/disadvantages ==
+  * *There is NO EASY WAY to return to the New Zealand firmware* - you would need equipment to read the NZ firmware off another machine, then use that equipment and a complicated computer programme to copy that to your box - not easy to do
+  * Likely to void warranty (if you tell them)
+  * Electronic program guide may show some differences
+  * Possibility of ruining your set-top box
+  * No access to future updates to New Zealand firmware
+
+== Advantages ==
+  * Simple PVR functionality
+  * High-definition component video output
+  * Knowledge of exactly what software is running on your hardware
+  * Olevia seems to have a much better upgrade policy than Freeview
+
+= Preparation =
+
+You will need:
+  * Access to the Olevia .zim files
+  * A copy of [zimview] or at least a hex editor
+  * A usb flash drive
+  * Potentially a piece of paper and a pen to jot down things
+
+== Zim files ==
+We currently need three of the [Olevia] .zim files. Note that this may change if new versions are released.
+  * ZMT-620FTA Firmware v1.2.2 - Part 1 only (OleviaPVR_1.2.2_part1.zim)
+  * ZMT-620FTA Firmware v1.8.2 - Part 2 only (OleviaPVR_1.8.2_part 2.zim)
+  * ZMT-620FTA Firmware v.1.9.8 (OLEVIA_620_1.9.8.zim)
+
+You can find them here: [http://www.olevia.com.hk/downloadpage.php?workplaceID=43&plid=&pid=119  	
+ZMT-620FTA Firmware]
+
+== Editing the first zim file ==
+We need to change the [CustomerNumber customer number] of our first file. This is to make the set-top box think we are installing New Zealand firmware. We only need to do this to the first file, since after that we will be installing the [Olevia] firmware.
+
+The first file is _OleviaPVR_1.2.2_part1.zim_. Open this up with [zimview].
+
+* picture here
+
+You should see a list of five different blocks below. Fortunately we can avoid these. The only thing we need to do is change the customer number.
+
+  # On the menu click on Block->Customer number...
+  # It will say 1280, change this to *4096*
+  # Click OK.
+  # Go to File->Save As
+  # Call the file something like "nz_cust_pvr122_1.zim" (that's what I called mine).
+
+=== Hex editing ===
+Skip this section if the above worked. If you can't use my program for whatever reason, you can use a hex editor to change the customer number and update the checksum.
+
+At the very start of the file change the first six bytes:
+{{{
+Change: a0 9b 88 85 00 05
+To:     ce e8 88 90 00 10
+}}}
+
+==USB flash drive==
+Copy your new edited file, and the two others to a thumb drive. For some reason my SD card reader didn't work.
+
+The drive doesn't have to be empty, but you'll have to scroll through everything else on there. They also state that the drive contents can be erased, so you're best off starting fresh.
+
+==Mental preparation==
+When you upgrade to the Olevia firmware, you won't be able to automatically do a scan for all the New Zealand channels.
+
+Fortunately, there are only three frequencies to tune to. Each frequency carries multiple "stations". One channel basically carries the TVNZ stuff, another the TV3/TV4 stuff, the other contains the rest.
