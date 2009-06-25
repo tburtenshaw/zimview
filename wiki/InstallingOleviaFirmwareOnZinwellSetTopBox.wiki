@@ -21,7 +21,7 @@ This article details how to get the Olevia firmware on to your set-top box.
 
 You will need:
   * Access to the Olevia .zim files
-  * A copy of [zimview] or at least a hex editor
+  * A copy of [http://code.google.com/p/zimview zimview] or at least a hex editor
   * A usb flash drive
   * Potentially a piece of paper and a pen to jot down things
 
@@ -37,7 +37,7 @@ ZMT-620FTA Firmware]
 == Editing the first zim file ==
 We need to change the [CustomerNumber customer number] of our first file. This is to make the set-top box think we are installing New Zealand firmware. We only need to do this to the first file, since after that we will be installing the [Olevia] firmware.
 
-The first file is _OleviaPVR_1.2.2_part1.zim_. Open this up with [zimview].
+The first file is _OleviaPVR_1.2.2_part1.zim_. Open this up with [http://code.google.com/p/zimview zimview].
 
 http://zimview.googlecode.com/svn/wiki/edit_customernumber.png
 
@@ -47,7 +47,7 @@ You should see a list of five different blocks below. Fortunately we can ignore 
   # It will say 1280, change this to *4096*
   # Click OK.
   # Go to File->Save As
-  # Call the file something like "nz_cust_pvr122_1.zim" (that's what I called mine).
+  # Call the file something like _nz_cust_pvr122_1.zim_ (that's what I called mine).
 
 === Hex editing ===
 Skip this section if the above worked. If you can't use my program for whatever reason, you can use a hex editor to change the customer number and update the checksum.
@@ -88,3 +88,9 @@ Turn your set-top box on. Once it's running, stick in the USB drive with the thr
 On the menu, go down to System, and then to System Information. You'll see information about your current firmware. Press the red button on your remote control.
 
 http://zimview.googlecode.com/svn/wiki/freeview_system_info_1.0.8.jpg
+
+== Steps ==
+  # Now a box should pop up saying _Select Slot_. Select *A: PORT1*.
+  # A new menu should appear: _Select Drive_. Unless you're doing something funny, you should see *A:Disk1*. Select this and press Enter.
+  # Now you will have a list of files. Choose your modified zim file (e.g. _nz_cust_pvr122_1.zim_)
+  # There should now be a confirmation window. Make sure you've checked the correct file, then choose *Yes*. Take note of the colour of the selected item - you see how you've got to choose between _yes_ and _no_? The white text on dark blue is selected.
