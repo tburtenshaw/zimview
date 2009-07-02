@@ -12,7 +12,7 @@ This article details how to get the Olevia firmware on to your set-top box.
   * No access to future updates to New Zealand firmware
 
 == Advantages ==
-  * Simple PVR functionality
+  * Simple (but limited) PVR functionality
   * High-definition component video output
   * Knowledge of exactly what software is running on your hardware
   * Olevia seems to have a much better upgrade policy than Freeview
@@ -27,12 +27,11 @@ You will need:
 
 == Zim files ==
 We currently need three of the [Olevia] .zim files. Note that this may change if new versions are released.
-  * ZMT-620FTA Firmware v1.2.2 - Part 1 only (OleviaPVR_1.2.2_part1.zim)
-  * ZMT-620FTA Firmware v1.8.2 - Part 2 only (OleviaPVR_1.8.2_part 2.zim)
-  * ZMT-620FTA Firmware v.1.9.8 (OLEVIA_620_1.9.8.zim)
+  * ZMT-620FTA Firmware v1.2.2 - Part 1 only (_OleviaPVR_1.2.2_part1.zim_)
+  * ZMT-620FTA Firmware v1.8.2 - Part 2 only (_OleviaPVR_1.8.2_part 2.zim_)
+  * ZMT-620FTA Firmware v.1.9.8 (_OLEVIA_620_1.9.8.zim_)
 
-You can find them here: [http://www.olevia.com.hk/downloadpage.php?workplaceID=43&plid=&pid=119  	
-ZMT-620FTA Firmware]
+You can find them here: [http://www.olevia.com.hk/downloadpage.php?workplaceID=43&plid=&pid=119 ZMT-620FTA Firmware]
 
 == Editing the first zim file ==
 We need to change the [CustomerNumber customer number] of our first file. This is to make the set-top box think we are installing New Zealand firmware. We only need to do this to the first file, since after that we will be installing the [Olevia] firmware.
@@ -57,6 +56,8 @@ At the very start of the file change the first six bytes:
 Change: a0 9b 88 85 00 05
 To:     ce e8 88 90 00 10
 }}}
+
+Save this as _nz_cust_pvr122_1.zim_.
 
 ==USB flash drive==
 Copy your newly edited file, and the two others to a thumb drive. For some reason my SD card reader didn't work, so I used an old 128MB thumb drive I found around the house.
