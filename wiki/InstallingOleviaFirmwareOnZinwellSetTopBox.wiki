@@ -104,5 +104,21 @@ The machine will restart and will display a prompt for choosing the language. As
 
 http://zimview.googlecode.com/svn/wiki/language_english.jpg
 
-== Install the next two zim files ==
-You will notice the menu looks slightly different from the New Zealand firmware.
+== Install the next two .zim files ==
+You will notice the menu looks slightly different from the New Zealand firmware. The navigation is still basically the same though. You will also notice that no channels are tuned in, and that an autotune will fail - this is expected.
+
+We need to install the two remaining .zim files to get our Olevia firmware up to date. But before this feel free to have a play around tuning the channels - you can't really break anything doing this, and you can be confident they'll be reset once you upgrade the firmware.
+
+Anyway, on the menu now go back to System->System Information. Push the red button. Sometimes the set-top box may not detect the USB drive without it being pulled out and put in again - try this if it's not detecting.
+
+Follow the menus and select the second .zim file (OleviaPVR_1.8.2_part 2.zim). Install this. Select English.
+
+http://zimview.googlecode.com/svn/wiki/list_zims.jpg
+
+Install the third file. After the restart, select English. You will now need to tune the channels and change the time zone.
+
+= After the upgrade =
+== Tuning ==
+Hopefully you have an idea of what to do to get your channels tuned in.
+
+== Time zone ==
