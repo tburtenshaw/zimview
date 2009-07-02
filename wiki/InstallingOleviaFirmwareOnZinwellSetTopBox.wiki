@@ -94,3 +94,15 @@ http://zimview.googlecode.com/svn/wiki/freeview_system_info_1.0.8.jpg
   # A new menu should appear: _Select Drive_. Unless you're doing something funny, you should see *A:Disk1*. Select this and press Enter.
   # Now you will have a list of files. Choose your modified zim file (e.g. _nz_cust_pvr122_1.zim_)
   # There should now be a confirmation window. Make sure you've checked the correct file, then choose *Yes*. Take note of the colour of the selected item - you see how you've got to choose between _yes_ and _no_? The white text on dark blue is selected.
+
+http://zimview.googlecode.com/svn/wiki/confirm_yes.jpg
+
+== Self-restart ==
+You will now see an _Updating..._ window with a progress bar. The software will then write the data in the zim file to the firmware. Be patient. Don't touch the power button.
+
+The machine will restart and will display a prompt for choosing the language. As you noted above, the selected item has a darker blue background. Choose English.
+
+http://zimview.googlecode.com/svn/wiki/language_english.jpg
+
+== Install the next two zim files ==
+You will notice the menu looks slightly different from the New Zealand firmware.
