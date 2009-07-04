@@ -2,12 +2,12 @@
 #labels Featured,instructions
 
 = Introduction =
-This article details how to get the Olevia firmware on to your set-top box.
+This article details how to get the [Olevia] firmware on to your set-top box.
 
 == Risks/disadvantages ==
   * *There is NO EASY WAY to return to the New Zealand firmware* - you would need equipment to read the NZ firmware off another machine, then use that equipment and a complicated computer programme to copy that to your box - not easy to do
   * Likely to void warranty (if you tell them)
-  * Electronic program guide may show some differences
+  * [ElectronicProgrammeGuide Electronic programme guide] may show some differences
   * Possibility of ruining your set-top box
   * No access to future updates to New Zealand firmware
 
@@ -15,7 +15,7 @@ This article details how to get the Olevia firmware on to your set-top box.
   * Simple (but limited) PVR functionality
   * High-definition component video output
   * Knowledge of exactly what software is running on your hardware
-  * Olevia seems to have a much better upgrade policy than Freeview
+  * Olevia seems to have a much better upgrade policy than Freeview - it has been updated more frequently, and aims to add functionality for the consumer
 
 = Preparation =
 
@@ -65,17 +65,17 @@ Copy your newly edited file, and the two others to a thumb drive. For some reaso
 The drive doesn't need to be empty, but you'll have to scroll through everything else on there. They also state that the drive contents can be erased, so you're best off starting fresh with an empty drive.
 
 ==Mental preparation==
-When you upgrade to the Olevia firmware, you won't be able to automatically scan for all the New Zealand channels.
+When you upgrade to the [Olevia] firmware, you won't be able to automatically scan for all the New Zealand channels.
 
-Fortunately, there are only three frequencies to tune to. Each frequency carries multiple "stations". To over-simplify, one channel basically carries the TVNZ stuff, another the TV3/TV4 stuff, the other channel contains the rest.
+Fortunately, there are only three frequencies to tune to. Each frequency carries multiple "stations". To over-simplify, one channel basically carries the [TVNZ] stuff, another the [MediaWorks TV3/TV4] stuff, the other channel contains the rest.
 
 Make sure you know your frequencies, channels, bandwidth and priority. Try scanning the channels on your NZ firmware - you won't double up or lose any channels.
 
-Each channel corresponds to a frequency - but these are different in Taiwan. Take a look at this page for a list of channels and frequencies: http://www.freeviewshop.co.nz/digital-terrestrial-i-8.html
+Each channel corresponds to a frequency - but these are different in Taiwan. Take a look at this page for a list of NZ channels and frequencies: http://www.freeviewshop.co.nz/digital-terrestrial-i-8.html
 
 http://zimview.googlecode.com/svn/wiki/manualscan_45.jpg
 
-Bandwidth (at least in Auckland) is 8 MHz, and Priority is High.
+Bandwidth (at least in Auckland) is *8 MHz*, and Priority is *High*.
 
 If you do an autoscan, keep a piece of paper nearby and write down the channels it finds.
 
@@ -84,9 +84,9 @@ http://zimview.googlecode.com/svn/wiki/autoscan_auckland.jpg
 In short - you're going to have to do this once you upgrade - so learn to do it now when it's safe.
 
 = Process of upgrading =
-Turn your set-top box on. Once it's running, stick in the USB drive with the three Olevia zim files. If you have a thick USB key, you may need to remove the HDMI cable and use component or composite output. Don't proceed until you've sorted this out.
+Turn your set-top box on. Once it's running, stick in the USB drive with the three Olevia zim files. If you have a wide USB key, you may need to remove the HDMI cable and use component or composite output (or use a thinner drive). Don't proceed until you've sorted this out.
 
-On the menu, go down to System, and then to System Information. You'll see information about your current firmware. Press the red button on your remote control.
+On the menu, go down to _System_, and then to _System Information_. You'll see information about your current firmware. Press the *red button* on your remote control (_S/W Upgrade_).
 
 http://zimview.googlecode.com/svn/wiki/freeview_system_info_1.0.8.jpg
 
@@ -101,25 +101,48 @@ http://zimview.googlecode.com/svn/wiki/confirm_yes.jpg
 == Self-restart ==
 You will now see an _Updating..._ window with a progress bar. The software will then write the data in the zim file to the firmware. Be patient. Don't touch the power button.
 
-The machine will restart and will display a prompt for choosing the language. As you noted above, the selected item has a darker blue background. Choose English.
+The machine will restart and will display a prompt for choosing the language. As you noted above, the selected item has a darker blue background. Choose *English*.
 
 http://zimview.googlecode.com/svn/wiki/language_english.jpg
 
 == Install the next two .zim files ==
-You will notice the menu looks slightly different from the New Zealand firmware. The navigation is still basically the same though. You will also notice that no channels are tuned in, and that an autotune will fail - this is expected.
+You will notice the menu looks slightly different from the New Zealand firmware. The navigation is still basically the same though. You will also notice that none of channels are tuned in, and that an autotune will fail - this is expected.
 
 We need to install the two remaining .zim files to get our Olevia firmware up to date. But before this feel free to have a play around tuning the channels - you can't really break anything doing this, and you can be confident they'll be reset once you upgrade the firmware.
 
-Anyway, on the menu now go back to System->System Information. Push the red button. Sometimes the set-top box may not detect the USB drive without it being pulled out and put in again - try this if it's not detecting.
+Anyway, on the menu now go back to _System_->_System Information_. Push the *red button*. Sometimes the set-top box may not detect the USB drive without it being pulled out and put in again - try this if it's not detecting.
 
-Follow the menus and select the second .zim file (OleviaPVR_1.8.2_part 2.zim). Install this. Select English.
+Follow the menus and select the second .zim file (OleviaPVR_1.8.2_part 2.zim). Install this. Select *English*.
 
 http://zimview.googlecode.com/svn/wiki/list_zims.jpg
 
-Install the third file. After the restart, select English. You will now need to tune the channels and change the time zone.
+Install the third file. After the restart, select *English*. You will now need to tune the channels and change the time zone.
 
 = After the upgrade =
 == Tuning ==
 Hopefully you have an idea of what to do to get your channels tuned in.
 
+Here's a summary:
+  # Press the _Menu button_ on the remote.
+  # Go to _Installation_.
+  # Go to _Manual Scan_.
+  # You need to enter in the information for the three channels (or muxes as they are known). Look them up for your area.
+
+In Auckland:
+  # Enter Channel *29*, Frequency *538000*, Bandwidth *8 MHz*,  Priority *HIGH*. Move to *Start Scan* and press _Enter_ on the remote.
+  # Enter Channel *33*, Frequency *570000*, Bandwidth *8 MHz*,  Priority *HIGH*. *Start Scan*.
+  # Enter Channel *45*, Frequency *666000*, Bandwidth *8 MHz*,  Priority *HIGH*. *Start Scan*.
+
+Each time you scan a UHF channel, you'll see the various stations carried in that frequency. When you are recording you can only watch programs of the same frequency.
+
+http://zimview.googlecode.com/svn/wiki/manualscan_33.jpg
+
 == Time zone ==
+You may need to set-up the time zone to New Zealand, otherwise your [ElectronicProgrammeGuide EPG] will be incorrect.
+
+  # Press the _Menu button_ on the remote.
+  # Go to _Settings_.
+  # Go to _Time_.
+  # Change the time zone to *GMT+12:00*.
+
+http://zimview.googlecode.com/svn/wiki/timezone.jpg
