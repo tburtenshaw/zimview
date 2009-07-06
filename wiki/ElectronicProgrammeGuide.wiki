@@ -1,0 +1,23 @@
+#summary Information on the Olevia and Zinwell Electronic Programme Guides
+
+= Introduction =
+
+Electronic programme guides are essentially on-screen displays of TV listings. They are broadcast over the air and shown by the set-top box.
+
+There are two main formats that the EPGs are broadcast in:
+  * EIT (see [http://en.wikipedia.org/wiki/Event_Information_Table Event Information Table] on Wikipedia)
+  * MHEG-5 (see [http://en.wikipedia.org/wiki/MHEG-5 MHEG-5] on Wikipedia)
+
+The [Freeview] platform only officially supports MHEG-5. This is a much more complicated specification, but more flexible than EIT. EIT on [Freeview] only contains programming information only around a few hours of the current show on TV.
+
+= What they look like =
+
+The [Zinwell] firmware only displays MHEG-5 information.
+
+The [Olevia] firmware will display both EIT and MHEG-5. Unfortunately there is no way to choose which. It looks like EIT is displayed until the MHEG-5 is able to be loaded. After MHEG-5 is loaded, only MHEG-5 will be displayed and the EIT won't be accessed.
+
+One advantage of the EIT display on the Olevia firmware, is that it can be used to schedule recording of a specific show (by pushing the _Picture_ button on the remote control).
+
+This is what the EIT EPG looks like on the Olevia firmware. Note that only the next four shows are displayed. Also note that the time zone was set incorrectly on the set-top box when this picture was taken.
+
+http://zimview.googlecode.com/svn/wiki/epg_eit.jpg
