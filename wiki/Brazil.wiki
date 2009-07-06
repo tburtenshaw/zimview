@@ -1,0 +1,11 @@
+#summary Brazil and their set-top boxes
+
+= Introduction =
+Brazil is a large country in South America. They use the [http://en.wikipedia.org/wiki/ISDB ISDB-T] standard, which is different from DVB-T which New Zealand uses.
+
+There are a couple of set-top box makers that use .zim files.
+
+  * [Zinwell] makes the [ZBT-620]
+  * [Philips] makes/markets the [DTR1007B]
+
+There is a Portuguese-speaking forum which has discussed modification of these machines: [http://www.htforum.com/vb/forumdisplay.php?f=129 HT Forum].
