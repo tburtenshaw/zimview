@@ -318,6 +318,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 			CloseZimFile(&pZim);
 			SetWindowText(hwnd, "ZimView");
 			EnableToolbarButtons(hwndToolBar, &pZim);
+			ScrollUpdate(hwnd, &pZim);
 			InvalidateRect (hwnd, NULL, FALSE);
 			break;
 		case IDM_NEW:
@@ -330,6 +331,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 					CloseZimFile(&pZim);
 					ActivateZimFile(&pZim);
 					EnableToolbarButtons(hwndToolBar, &pZim);
+					ScrollUpdate(hwnd, &pZim);
 					InvalidateRect(hwnd, NULL, FALSE);
 				}
 			}
@@ -349,6 +351,7 @@ void MainWndProc_OnCommand(HWND hwnd, int id, HWND hwndCtl, UINT codeNotify)
 		case IDM_EDITPASTE:
 			EditPaste(hwnd, &pZim);
 			EnableToolbarButtons(hwndToolBar, &pZim);
+			ScrollUpdate(hwnd, &pZim);
 			InvalidateRect(hwnd, NULL, FALSE);
 			break;
 		case IDM_EDITCLEAR:
@@ -1216,7 +1219,7 @@ int PaintWindow(HWND hwnd) {
 			ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
 
 			y+=16;	//48
-			sprintf(tempString, "Checksum: %08X (correct)", pZim.dwChecksum);
+			sprintf(tempString, "Checksum: %08X", pZim.dwChecksum);
 			if (pZim.dwChecksum!=pZim.dwRealChecksum)
 				sprintf(tempString, "Checksum: %08X (differs from calculated checksum %08X)", pZim.dwChecksum, pZim.dwRealChecksum);
 
@@ -1225,7 +1228,7 @@ int PaintWindow(HWND hwnd) {
 			ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
 
 			y+=16;	//64
-			sprintf(tempString, "Customer number: %i", pZim.wCustomerNumber);
+			sprintf(tempString, "Customer number: %i (0x%x)", pZim.wCustomerNumber, pZim.wCustomerNumber);
 			lineRect.top=y;
 			lineRect.bottom=lineRect.top+16;
 			ExtTextOut(hdc, EDGE_MARGIN, y, ETO_OPAQUE, &lineRect, tempString, strlen(tempString), NULL);
