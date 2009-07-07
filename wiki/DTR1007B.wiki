@@ -1,0 +1,20 @@
+#summary Information about the Philips DTR1007B and DTR1007W
+#labels set-topbox
+
+= Introduction =
+
+[Philips] in [Brazil] makes a set-top box for Brazilian digital television.
+
+Inside this box is just the [ZBT-620] (and the [ZMT-620]) as pointed out by someone on this [http://www.flickr.com/photos/7560942@N04/2466429906/ flickr page].
+
+The industrial designers at Philips seem to be a bit more skilled than the ones at [Zinwell]. Here is the casing in stylish white:
+
+[http://zimview.googlecode.com/svn/wiki/philips_dtr1007w.jpg]
+
+
+And sexy black:
+
+[http://zimview.googlecode.com/svn/wiki/philips_dtr1007b.jpg]
+
+
+Google [http://www.google.co.nz/search?q=pbstb_7402_v053.zip pbstb_7402_v053.zip] to find an example of their firmware - don't install the firmware to a NZ machine though!
