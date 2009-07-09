@@ -10,6 +10,7 @@ This article details how to get the [Olevia] firmware on to your set-top box.
   * [ElectronicProgrammeGuide Electronic programme guide] may show some differences
   * Possibility of ruining your set-top box
   * No access to future updates to New Zealand firmware
+  * SD output set to NTSC - cannot be changed
 
 == Advantages ==
   * Simple (but limited) PVR functionality
