@@ -16,7 +16,7 @@ This article details how to get the [Olevia] firmware on to your set-top box.
   * Simple (but limited) PVR functionality
   * High-definition component video output
   * Knowledge of exactly what software is running on your hardware
-  * Olevia seems to have a much better upgrade policy than Freeview - it has been updated more frequently, and aims to add functionality for the consumer
+  * Olevia seems to have a much better upgrade policy than [Freeview] - it has been updated more frequently, and aims to add functionality for the consumer
 
 = Preparation =
 
@@ -24,7 +24,7 @@ You will need:
   * Access to the Olevia .zim files
   * A copy of [http://code.google.com/p/zimview zimview] or at least a hex editor
   * A usb flash drive
-  * Potentially a piece of paper and a pen to jot down things
+  * Potentially a piece of paper and a pen to jot things down
 
 == Zim files ==
 We currently need three of the [Olevia] .zim files. Note that this may change if new versions are released.
@@ -35,13 +35,13 @@ We currently need three of the [Olevia] .zim files. Note that this may change if
 You can find them here: [http://www.olevia.com.hk/downloadpage.php?workplaceID=43&plid=&pid=119 ZMT-620FTA Firmware]
 
 == Editing the first zim file ==
-We need to change the [CustomerNumber customer number] of our first file. This is to make the set-top box think we are installing New Zealand firmware. We only need to do this to the first file, since after that we will be installing the [Olevia] firmware.
+We need to change the [CustomerNumber customer number] of our first file. This is to make the set-top box think we are installing New Zealand firmware. We only need to do this to the first file, since after that we will be installing onto [Olevia] software.
 
 The first file is _OleviaPVR_1.2.2_part1.zim_. Open this up with [http://code.google.com/p/zimview zimview].
 
 http://zimview.googlecode.com/svn/wiki/edit_customernumber.png
 
-You should see a list of five different blocks below. Fortunately we can ignore these. The only thing we need to do is change the customer number.
+You should see a list of five different blocks (as above). Fortunately we can ignore these. The only thing we need to do is change the customer number.
 
   # On the menu click on Block->Customer number...
   # It will say 1280, change this to *4096*
