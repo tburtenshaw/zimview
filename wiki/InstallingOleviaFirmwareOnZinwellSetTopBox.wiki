@@ -34,7 +34,7 @@ We currently need three of the [Olevia] .zim files. Note that this may change if
 
 You can find them here: [http://www.olevia.com.hk/downloadpage.php?workplaceID=43&plid=&pid=119 ZMT-620FTA Firmware]
 
-Or here [http://www.h33t.com/details.php?id=27e8f674163bd1204438d570f67fe91595c2a2d1 Torrent]
+Or here [http://www.h33t.com/details.php?id=dbe69fb4c311936b54a7babbcf2289845c349d2c Torrent]
 
 == Editing the first zim file ==
 We need to change the [CustomerNumber customer number] of our first file. This is to make the set-top box think we are installing New Zealand firmware. We only need to do this to the first file, since after that we will be installing onto [Olevia] software.
