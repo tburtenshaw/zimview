@@ -164,7 +164,7 @@ static BOOL CreateStatusBar(HWND hwndParent,char *initialText, int nrOfParts)
 
 int GetFilename(char *buffer,int buflen)
 {
-	char tmpfilter[46];
+	char tmpfilter[255];
 	int i = 0;
 	OPENFILENAME ofn;
 
