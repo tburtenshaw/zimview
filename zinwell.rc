@@ -89,15 +89,16 @@ BEGIN
 	VK_F1, IDM_ABOUT, VIRTKEY
 END
 
-IDD_ABOUT DIALOG 50, 20, 200, 77
+IDD_ABOUT DIALOG 50, 20, 200, 89
 STYLE WS_POPUP | WS_VISIBLE | WS_CAPTION
 CAPTION "About ZimView"
 FONT 8, "MS Sans Serif"
 BEGIN
-    DEFPUSHBUTTON   "OK", IDOK, 143, 56, 50, 14
+    DEFPUSHBUTTON   "OK", IDOK, 143, 68, 50, 14
     LTEXT           "ZimView (v0.03 beta)", IDC_STATIC, 50, 15, 130, 12
     LTEXT           "A Zinwell/Olevia firmware viewer.", IDC_STATIC, 50, 30, 130, 12
-	LTEXT           "Not for distribution.", IDC_STATIC, 50, 42, 100, 12
+	LTEXT           "Copyright 2009", IDC_STATIC, 50, 42, 100, 12
+	LTEXT           "BSD Licence", IDC_STATIC, 50, 54, 100, 12
     ICON            IDI_FIRST, IDC_STATIC, 14, 15, 21, 20
 END
 
