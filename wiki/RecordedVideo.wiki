@@ -1,0 +1,72 @@
+#summary What the Olevia firmware records onto the hard disk.
+
+= Disk format and partitioning =
+
+The hard drive you use with your new firmware can be either in _FAT32_ or _ext3_ format. If you get the firmware to format it for you, it chooses ext3.
+
+[Ext3] has the advantage of being able to handle larger drive sizes and larger files. It also more natively handles filenames beginning with a period.
+
+The advantage with [FAT32] is that you can Windows it to access the disk without any other software.
+
+In terms of partitioning, I have seen [Olevia] just stick to the first partition on a disk formatted into two FAT32 partitions.
+
+In a drive that Olevia formatted , it divided the drive into two partitions and uses both of these to write to. I am not sure how the decision is made on which one to record to.
+
+== File and directory structure ==
+
+Olevia will leave whatever else is on your disk in place. (Unless of course you format it.)
+
+It creates a folder called _!Record_Video_ in the root directory.
+
+All the video files are contained in this directory.
+
+Here is an example:
+{{{
+ Directory of L:\Record_Video
+
+01/01/2000  04:56       <DIR>          .
+01/01/2000  04:56       <DIR>          ..
+01/01/2000  04:56                4,096 2010Z0206_2301_0
+01/01/2000  04:56            9,240,576 .2010Z0206_2301_0.mpg
+01/01/2000  04:56               41,664 .2010Z0206_2301_0.nav
+01/01/2000  00:04                4,096 2010Z0207_1100_0
+01/01/2000  00:04          114,356,224 .2010Z0207_1100_0.mpg
+01/01/2000  00:04              471,360 .2010Z0207_1100_0.nav
+01/01/2000  00:05                4,096 2010Z0207_1103_0
+01/01/2000  00:05           85,762,048 .2010Z0207_1103_0.mpg
+01/01/2000  00:05              165,056 .2010Z0207_1103_0.nav
+01/01/2000  00:08                4,096 2010Z0207_1104_0
+01/01/2000  00:08           91,693,056 .2010Z0207_1104_0.mpg
+01/01/2000  00:08              564,480 .2010Z0207_1104_0.nav
+01/01/2000  00:12                4,096 2010Z0207_1108_0
+01/01/2000  00:12          121,667,584 .2010Z0207_1108_0.mpg
+01/01/2000  00:12              632,512 .2010Z0207_1108_0.nav
+              15 File(s)    424,615,040 bytes
+               2 Dir(s)  149,366,730,752 bytes free
+}}}
+
+You can see in the above example that there are five video (.mpg) files. You will also notice that two other file types with each _mpg_.
+
+===File names===
+Each time part of a TV show is recorded, a triplet of files are made.
+
+The _mpg_ and the _nav_ files are both preceded by a period. In [Linux] systems this means the file would ordinarily be hidden from view.
+
+The file is named by the start of the recording time:
+ * Four digits for the year
+ * Then a capital _Z_
+ * Two digit month
+ * Two digit date
+ * Underscore
+ * Four digit time (24 hour clock).
+ * Underscore
+ * Then an incremental number to differentiate recordings at the same minute.
+
+The channel or frequency that was recorded is *not* part of the file name.
+
+===File types===
+The _mpg_ file is a [MpegTransportStream MPEG Transport Stream]. These are not always easy to get working.
+
+The extension-less file contains information about the recording. It is always 4096 bytes in size. See [InformationFile4096 some more about this file here].
+
+The _nav_ file is a [MpegNavigationFile navigation file] that likely contains pointers (can be looked at as "co-ordinates") in the mpeg to help speed nagivation when skipping.
