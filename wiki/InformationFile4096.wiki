@@ -13,4 +13,16 @@ http://zimview.googlecode.com/svn/wiki/infofile4096.png
 
 = Details =
 
-I need to work out the format of this file. Will help with offline editing of HD contents.
+I am drafting up a possible layout for the files.
+
+{{{
+
+struct infoFile {
+    unsigned long  magic;
+    unsigned short number1;
+
+    char title[120]; //the title seems to be 120 bytes
+    char description[511];
+}
+
+}}}
