@@ -1,0 +1,52 @@
+#summary How do the .nav files work?
+
+= Introduction =
+
+When the [Olevia] firmware records part of a program it creates [RecordedVideo three different files].
+
+The _nav_ files exist to help speed up navigation through the recorded video. I assume that without these, the firmware has to sift through every frame from the start if the user skips to a random location.
+
+= Details =
+The .nav file consists of a number of 64 byte (0x40 byte) records, all following each other. I have not been able to find any documentation about the file on the internet, and it may well be unique to Olevia's system.
+
+There is no header or footer in the files, the number of records can be calculated by dividing the file size by 64.
+
+== Elucidation of the structure ==
+
+I am in the process of trying to find out how this file works (and what it is for). Its 64 bytes most likely consists of a variation of long and short integers as well as bytes, and perhaps bit switches.
+
+Here is one possible example
+
+{{{
+
+|S1|BB|S3|S4|  L5 |  L6 |  L7 |S8|S9| L10 | L11 | L12 |13|14| L15 | L16 | L17 | L18 | L19 | L20 |
+|  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
+
+Each division there is two bytes. Ss (or unnumbered) are short ints, Ls are long ints, BB are two bytes. This is just a model that I working on, and very unlikely to be correct.
+
+Here is the same in C struct form:
+
+	struct record {
+		unsigned short s1;
+		unsigned short twobytes2;
+		unsigned short s3;
+		unsigned short s4;
+		unsigned long l5zero; 
+		unsigned long l6;
+		unsigned long l7;
+		unsigned short s8;
+		unsigned short s9zero;
+		unsigned long l10;
+		unsigned long l11zero;
+		unsigned long l12;
+		unsigned short s13;
+		unsigned short s14zero;
+		unsigned long l15zero;
+		unsigned long l16zero;
+		unsigned long l17zero;
+		unsigned long l18zero;
+		unsigned long l19zero;
+		unsigned long l20zero;
+	};
+
+}}}
