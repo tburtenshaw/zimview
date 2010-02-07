@@ -22,31 +22,65 @@ Here is one possible example
 |S1|BB|S3|S4|  L5 |  L6 |  L7 |S8|S9| L10 | L11 | L12 |13|14| L15 | L16 | L17 | L18 | L19 | L20 |
 |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 
-Each division there is two bytes. Ss (or unnumbered) are short ints, Ls are long ints, BB are two bytes. This is just a model that I working on, and very unlikely to be correct.
+}}}
+
+Each division above is two bytes. Ss (or unnumbered) are short ints, Ls are long ints, BB are two bytes. This is just a model that I working on, and very unlikely to be correct.
 
 Here is the same in C struct form:
 
-	struct record {
-		unsigned short s1;
-		unsigned short twobytes2;
-		unsigned short s3;
-		unsigned short s4;
-		unsigned long l5zero; 
-		unsigned long l6;
-		unsigned long l7;
-		unsigned short s8;
-		unsigned short s9zero;
-		unsigned long l10;
-		unsigned long l11zero;
-		unsigned long l12;
-		unsigned short s13;
-		unsigned short s14zero;
-		unsigned long l15zero;
-		unsigned long l16zero;
-		unsigned long l17zero;
-		unsigned long l18zero;
-		unsigned long l19zero;
-		unsigned long l20zero;
-	};
+{{{
+struct record {
+   unsigned short s1;    //Sawtooth pattern, with same increments as L6
+                         //Drops everytime lowbyte of var2 increases.
+
+   unsigned short twobytes2; //I believe this is actually two bytes
+
+                             //LOWBYTE
+                             //The low byte increments by 1 every few records
+                             //Its increase is coincidental with the sawtooth drop of s1
+                             //It resets itself at the same time as l12 does.
+                             //It usually stays ten or under (usually in the single digits)
+
+                             //HIBYTE
+                             //The high byte seems to be of value either 1, 2 or 3
+
+   unsigned short s3;    //Increments by 256 each record (?may be misreading by a byte)
+                         //Sawtooth pattern
+                         //Drops the record after s12
+                         //Period between ~23 and ~71, usually an odd number
+
+   unsigned short s4;    //Always 8
+
+   unsigned long l5zero;    //Always zero
+
+   unsigned long l6;    //Near linear, but varying increments averaging 12700 (max 69000, min 1800)
+									//Larger change of values generally coincide with sawtooth drop of s3
+									//Strongly suspect this refers to a byte in the associated mpg file.
+
+   unsigned long l7;    //VERY high number, slowly increases linearly, with superimposed wave of period 7
+                        //(+900, -4500, +900, -2700, +900, +2700, +900, +8100)
+   unsigned short s8;
+
+   unsigned short s9zero;		//Zero
+
+   unsigned long l10;
+
+   unsigned long l11zero;    //Zero
+
+   unsigned long l12;    //Sawtooth pattern.
+                         //Goes up by exactly same as l6 (about 9000-20000) each record.
+                         //Period exactly same as s3, except fall happens one record prior.
+                         //Maximum not limited by type of int
+
+   unsigned short s13;   //Always 30
+
+   unsigned short s14zero;   //All these below are typically (?always) zero
+   unsigned long l15zero;    //
+   unsigned long l16zero;    //
+   unsigned long l17zero;    //
+   unsigned long l18zero;    //
+   unsigned long l19zero;    //
+   unsigned long l20zero;    //
+};
 
 }}}
