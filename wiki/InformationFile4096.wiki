@@ -2,7 +2,7 @@
 
 = Introduction =
 
-Whenever you record with your Olevia firmware, it creates an information file about the recording.
+Whenever you record with your [Olevia] firmware, it creates an information file about the recording. (More information about where these files are is at RecordedVideo).
 
 This information file is used be the recorder when you browse what you have recorded.
 
