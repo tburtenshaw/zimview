@@ -1,0 +1,16 @@
+#summary Contains the information I have worked out about the 4096 byte information files.
+
+= Introduction =
+
+Whenever you record with your Olevia firmware, it creates an information file about the recording.
+
+This information file is used be the recorder when you browse what you have recorded.
+
+== Example contents ==
+This picture contains two open information files.
+
+http://zimview.googlecode.com/svn/wiki/infofile4096.png
+
+= Details =
+
+I need to work out the format of this file. Will help with offline editing of HD contents.
