@@ -84,3 +84,9 @@ struct record {
 };
 
 }}}
+
+=== Graphical representation of some of these values ===
+
+You can see what I mean by sawtooth pattern on s3. If the downward drop coincides with an increment of a neighbouring value and the limit on a integers size, it is reasonable to suggest that the neighbour is part of the same variable. (This is how I guessed the variables that are likely long integers).
+
+http://zimview.googlecode.com/svn/wiki/navfile_graph_example.png
