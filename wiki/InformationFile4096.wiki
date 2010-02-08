@@ -23,11 +23,15 @@ To me, it appears this file contains a lot of 'junk'. That is much of the file i
  * 0x028a (650)  Hour of recording as byte (0-23)
  * 0x028b (651)  Minute of recording as byte (0-59)
 
+ * 0x02a0 (672)  Long - size of mpeg file
+
  * 0x0800 (2048) Audio encoding info
 
  * 0x0a84 (2692) ce:da:53:42 (comes out as IUSB) //this may be the date
  * 0x0a8a (2698) Hour of recording as byte (0-23)
  * 0x0a8b (2699) Minute of recording as byte (0-59)
+
+ * 0x0aa0 (2720) Long - size of mpeg file
 
  * 0x0c04 (3076) Location of the MPEG file
  * 0x0d04 (3332) Location of the navigation file
