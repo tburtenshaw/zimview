@@ -12,7 +12,22 @@ This picture contains two open information files.
 http://zimview.googlecode.com/svn/wiki/infofile4096.png
 
 = Details =
+To me, it appears this file contains a lot of 'junk'. That is much of the file is untouched and just whatever already happens to be on that part of the hard disk.
 
+
+== Offsets ==
+ * 0x0006 (6)    Title
+ * 0x007e (126)  Description
+ * 0x0284 (644)  ce:da:53:42 (comes out as IUSB) //this may be the date
+ * 0x028a (650)  Hour of recording as byte (0-23)
+ * 0x028b (651)  Minute of recording as byte (0-59)
+ 
+
+ * 0x0c04 (3076) Location of the MPEG file
+ * 0x0d04 (3332) Location of the navigation file
+ * 0x0e60 (3680) Jpeg image location
+
+== Structure ==
 I am drafting up a possible layout for the files.
 
 {{{
