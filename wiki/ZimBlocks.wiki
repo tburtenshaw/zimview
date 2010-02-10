@@ -12,6 +12,7 @@ The blocks that have been seen in the wild are:
  * KERN blocks
  * ROOT blocks
  * NVRM blocks
+ * LOAD blocks
  * MACA blocks
 
 Two that may also exist (their strings are visible in the firmware's executable file [zmw_base_zinwell]. They are UVER and MCUP.
