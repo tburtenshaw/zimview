@@ -94,4 +94,4 @@ So it has the name of the block. Then the version number of that block.
 
 This block was first seen in version 2.1.1 of Olevia's firmware, where internet connectivity was added to allow use of a [Hong Kong] based video-on-demand service.
 
-It contains a large number of [Media Access Control addresses] (see [http://en.wikipedia.org/wiki/MAC_address MAC address on Wikipedia]).
+It contains a large number of Media Access Control addresses (see [http://en.wikipedia.org/wiki/MAC_address MAC address on Wikipedia]).
