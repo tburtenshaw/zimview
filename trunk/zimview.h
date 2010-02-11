@@ -33,6 +33,7 @@ typedef struct usualBlockStructure USUAL_STRUCTURE;
 #define BID_DWORD_KERN_SWAP 0x4B45524E
 #define BID_DWORD_LOAD_SWAP 0x4C4F4144
 #define BID_DWORD_NVRM_SWAP 0x4E56524D
+#define BID_DWORD_MACA_SWAP 0x4D414341
 
 #define BID_DWORD_ROOT 0x544f4F52
 #define BID_DWORD_CODE 0x45444F43
@@ -41,6 +42,7 @@ typedef struct usualBlockStructure USUAL_STRUCTURE;
 #define BID_DWORD_KERN 0x4E52454B
 #define BID_DWORD_LOAD 0x44414F4C
 #define BID_DWORD_NVRM 0x4D52564E
+#define BID_DWORD_MACA 0x4143414D
 
 
 #define BTYPE_ROOT 1
@@ -50,6 +52,7 @@ typedef struct usualBlockStructure USUAL_STRUCTURE;
 #define BTYPE_KERN 5
 #define BTYPE_LOAD 6
 #define BTYPE_NVRM 7
+#define BTYPE_MACA 8
 
 struct veriBlockStructure {
 	char  blockName[4];

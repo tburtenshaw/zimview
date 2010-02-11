@@ -990,11 +990,13 @@ int LoadZimFile(ZIM_STRUCTURE * LoadedZim) {
 			case BID_DWORD_KERN:
 			case BID_DWORD_LOAD:
 			case BID_DWORD_NVRM:
+			case BID_DWORD_MACA:
 				if (blockidDword==BID_DWORD_ROOT) tempBlockStruct->typeOfBlock=BTYPE_ROOT;
 				if (blockidDword==BID_DWORD_CODE) tempBlockStruct->typeOfBlock=BTYPE_CODE;
 				if (blockidDword==BID_DWORD_KERN) tempBlockStruct->typeOfBlock=BTYPE_KERN;
 				if (blockidDword==BID_DWORD_LOAD) tempBlockStruct->typeOfBlock=BTYPE_LOAD;
 				if (blockidDword==BID_DWORD_NVRM) tempBlockStruct->typeOfBlock=BTYPE_NVRM;
+				if (blockidDword==BID_DWORD_MACA) tempBlockStruct->typeOfBlock=BTYPE_MACA;
 				tempBlockStruct->ptrFurtherBlockDetail=ReadUsualBlock(tempBlockStruct, LoadedZim->pZimFile, tempBlockStruct->dwSourceOffset + sizeof(blockHeader));
 				tempBlockStruct->flags|=BSFLAG_EXTERNFILE;
 				sprintf(tempBlockStruct->sourceFilename, "%s", LoadedZim->displayFilename);
@@ -1079,6 +1081,7 @@ int CloseZimFile(ZIM_STRUCTURE *LoadedZim) {
 		case BID_DWORD_KERN:
 		case BID_DWORD_LOAD:
 		case BID_DWORD_NVRM:
+		case BID_DWORD_MACA:
 			tempUsualStruct = ptrBlockStruct->ptrFurtherBlockDetail;
 			if (tempUsualStruct->sqshHeader) {free(tempUsualStruct->sqshHeader);}
 			if (tempUsualStruct->gzipHeader) {free(tempUsualStruct->gzipHeader);}
@@ -1324,6 +1327,7 @@ int PaintWindow(HWND hwnd) {
 						case BTYPE_CODE:
 						case BTYPE_LOAD:
 						case BTYPE_NVRM:
+						case BTYPE_MACA:
 							//First get the icon resource decided
 							intIconResource=IDI_NVRM;
 							if (tempBlockStruct->typeOfBlock==BTYPE_ROOT)
@@ -1334,6 +1338,8 @@ int PaintWindow(HWND hwnd) {
 								intIconResource=IDI_CODE;
 							if (tempBlockStruct->typeOfBlock==BTYPE_LOAD)
 								intIconResource=IDI_LOAD;
+							if (tempBlockStruct->typeOfBlock==BTYPE_MACA)
+								intIconResource=IDI_MACA;
 
 							y+=16;
 							tempUsualStruct=tempBlockStruct->ptrFurtherBlockDetail;
@@ -1678,6 +1684,8 @@ int WriteBlockToFile(ZIM_STRUCTURE *LoadedZim, BLOCK_STRUCTURE *Block, FILE *exp
 		case BTYPE_ROOT:
 		case BTYPE_LOAD:
 		case BTYPE_NVRM:
+		case BTYPE_MACA: //does this need default??????
+		default:
 			if (!Block->sourceFilename)
 				return WBTF_ERR_NOSOURCE;
 
@@ -2294,6 +2302,7 @@ int FreeBlockMemory(BLOCK_STRUCTURE *Block)
 		case BID_DWORD_KERN:
 		case BID_DWORD_LOAD:
 		case BID_DWORD_NVRM:
+		case BID_DWORD_MACA:
 			tempUsualStruct = Block->ptrFurtherBlockDetail;
 			if (tempUsualStruct->sqshHeader) {free(tempUsualStruct->sqshHeader);}
 			if (tempUsualStruct->gzipHeader) {free(tempUsualStruct->gzipHeader);}

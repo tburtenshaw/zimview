@@ -848,6 +848,8 @@ BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 				case IDC_BLOCKIMPORTVERI:
 				case IDC_BLOCKIMPORTLOAD:
 				case IDC_BLOCKIMPORTNVRM:
+				case IDC_BLOCKIMPORTMACA:
+
                     CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, LOWORD(wParam));
 					return 1;
 				case IDCANCEL:
@@ -860,6 +862,7 @@ BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTVERI)==BST_CHECKED) {blocktype=BTYPE_VERI;}
 					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTBOXI)==BST_CHECKED) {blocktype=BTYPE_BOXI;}
 					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTNVRM)==BST_CHECKED) {blocktype=BTYPE_NVRM;}
+					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTMACA)==BST_CHECKED) {blocktype=BTYPE_MACA;}
 					if (IsDlgButtonChecked(hwnd, IDC_BLOCKIMPORTLOAD)==BST_CHECKED) {blocktype=BTYPE_LOAD;}
 
 					if (blocktype==0)	{
@@ -892,6 +895,7 @@ BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						if (newBlock->typeOfBlock==BTYPE_CODE) sprintf(newBlock->name, "CODE");
 						if (newBlock->typeOfBlock==BTYPE_VERI) sprintf(newBlock->name, "VERI");
 						if (newBlock->typeOfBlock==BTYPE_NVRM) sprintf(newBlock->name, "NVRM");
+						if (newBlock->typeOfBlock==BTYPE_MACA) sprintf(newBlock->name, "MACA");
 						if (newBlock->typeOfBlock==BTYPE_LOAD) sprintf(newBlock->name, "LOAD");
 						if (newBlock->typeOfBlock==BTYPE_BOXI) sprintf(newBlock->name, "BOXI");
 
@@ -956,7 +960,7 @@ BOOL _stdcall BlockImportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 							newBlock->flags=BSFLAG_HASCHANGED;
 						}
 						//ROOT, CODE, KERN, NVRM, LOAD (usual) blocks - handle these the same
-						if ((newBlock->typeOfBlock==BTYPE_ROOT)||(newBlock->typeOfBlock==BTYPE_CODE)||(newBlock->typeOfBlock==BTYPE_KERN)||(newBlock->typeOfBlock==BTYPE_NVRM)||(newBlock->typeOfBlock==BTYPE_LOAD)) {
+						if ((newBlock->typeOfBlock==BTYPE_ROOT)||(newBlock->typeOfBlock==BTYPE_CODE)||(newBlock->typeOfBlock==BTYPE_KERN)||(newBlock->typeOfBlock==BTYPE_NVRM)||(newBlock->typeOfBlock==BTYPE_LOAD)||(newBlock->typeOfBlock==BTYPE_MACA)) {
 							memset(&adlerholder, 0, sizeof(adlerholder)); //reset adler checksum to zero
 							cvs_MD5Init(&MD5context); //init md5 context
 
@@ -1128,7 +1132,7 @@ BOOL _stdcall BlockExportDlg(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 						sprintf(tempString, "*.blok");
 					}
 					else {
-						if ((selectedBlockStruct.typeOfBlock==BTYPE_ROOT)||(selectedBlockStruct.typeOfBlock==BTYPE_KERN)||(selectedBlockStruct.typeOfBlock==BTYPE_CODE)||(selectedBlockStruct.typeOfBlock==BTYPE_LOAD)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)) {
+						if ((selectedBlockStruct.typeOfBlock==BTYPE_ROOT)||(selectedBlockStruct.typeOfBlock==BTYPE_KERN)||(selectedBlockStruct.typeOfBlock==BTYPE_CODE)||(selectedBlockStruct.typeOfBlock==BTYPE_LOAD)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)||(selectedBlockStruct.typeOfBlock==BTYPE_MACA)) {
 							tempUsualStructure=selectedBlockStruct.ptrFurtherBlockDetail;
 							if ((tempUsualStructure->magicnumber == SQUASHFS_MAGIC_LZMA)||(tempUsualStructure->magicnumber == SQUASHFS_MAGIC)||(tempUsualStructure->magicnumber == SQUASHFS_MAGIC_LZMA_SWAP)||(tempUsualStructure->magicnumber == SQUASHFS_MAGIC_SWAP)) {
 								ofnExportTo.lpstrFilter = "All files\0*.*\0Data file (*.data)\0*.data\0SquashFS file (*.sfs)\0*.sfs\0\0";
@@ -1222,7 +1226,7 @@ void BlockExportDetailsUpdate(HWND hwnd, ZIM_STRUCTURE *ZimToUse, int blockid)
 		sprintf(tempString, "This verification block is used to check the validity of other blocks in the .zim file. In this case it contains verification data for %i other block%s. It is recommended to export with a header, although the block can be regenerated.",selectedBlockStruct.dwDataLength/32,(selectedBlockStruct.dwDataLength>32) ? "s":"");
 	else if (selectedBlockStruct.typeOfBlock==BTYPE_BOXI)
 		sprintf(tempString, "This block contains information about the set-top box, including the version and model numbers. It is recommended to export including the header to enable simple transfer to other .zim files.");
-	else if ((selectedBlockStruct.typeOfBlock==BTYPE_ROOT)||(selectedBlockStruct.typeOfBlock==BTYPE_KERN)||(selectedBlockStruct.typeOfBlock==BTYPE_CODE)||(selectedBlockStruct.typeOfBlock==BTYPE_LOAD)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)) {
+	else if ((selectedBlockStruct.typeOfBlock==BTYPE_ROOT)||(selectedBlockStruct.typeOfBlock==BTYPE_KERN)||(selectedBlockStruct.typeOfBlock==BTYPE_CODE)||(selectedBlockStruct.typeOfBlock==BTYPE_LOAD)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)||(selectedBlockStruct.typeOfBlock==BTYPE_MACA)) {
 		tempUsualStructure=selectedBlockStruct.ptrFurtherBlockDetail;
 		if (tempUsualStructure) {
 			sprintf(tempString,
@@ -1236,6 +1240,9 @@ void BlockExportDetailsUpdate(HWND hwnd, ZIM_STRUCTURE *ZimToUse, int blockid)
 		sprintf(tempString, "The contents of this block are copied to the non-volatile RAM (flash0.nvram) of the set-top box. Probably best to export without header.");
 	else if (selectedBlockStruct.typeOfBlock==BTYPE_LOAD)
 		sprintf(tempString, "The contents of this block are copied to the Common Firmware Environment (flash0.cfe) of the set-top box.");
+	else if (selectedBlockStruct.typeOfBlock==BTYPE_MACA)
+		sprintf(tempString, "This block contains a list of MAC addresses for the machine.");
+
 	else sprintf(tempString, "");
 
 	SetDlgItemText(hwnd, IDC_BLOCKEXPORTDETAIL, tempString);
@@ -1503,6 +1510,7 @@ int DetectTypeOfBlock(HWND hwnd, char *filename)
 		if (magic==BID_DWORD_NVRM) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTNVRM);}
 		if (magic==BID_DWORD_BOXI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTBOXI);}
 		if (magic==BID_DWORD_VERI) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTVERI);}
+		if (magic==BID_DWORD_MACA) {CheckRadioButton(hwnd,IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTMACA);}
 
 		fclose(impBlock);
 		return 0;
@@ -1535,7 +1543,7 @@ int DetectTypeOfBlock(HWND hwnd, char *filename)
 
 	if (!(fileLength & 0x1F)) { //if divisible by 32, it _could_ be a VERI block
 
-		if ((magic==BID_DWORD_LOAD)||(magic==BID_DWORD_ROOT)||(magic==BID_DWORD_CODE)||(magic==BID_DWORD_KERN)||(magic==BID_DWORD_NVRM)||(magic==BID_DWORD_BOXI)||(magic==BID_DWORD_VERI)) {
+		if ((magic==BID_DWORD_LOAD)||(magic==BID_DWORD_ROOT)||(magic==BID_DWORD_CODE)||(magic==BID_DWORD_KERN)||(magic==BID_DWORD_NVRM)||(magic==BID_DWORD_BOXI)||(magic==BID_DWORD_VERI)||(magic==BID_DWORD_MACA)) {
 			CheckRadioButton(hwnd, IDC_BLOCKIMPORTFIRSTBLOCK, IDC_BLOCKIMPORTLASTBLOCK, IDC_BLOCKIMPORTVERI);
 			fclose(impBlock);
 			return 0;
