@@ -76,6 +76,10 @@ void PropertiesDlg_ChangeSelection(HWND hwnd)
 						SetDlgItemText(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFOGROUPBOX, "Gzip information");
 						FillDlgItemWithGzipData(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFO, tempUsualStruct->gzipHeader);
 					}
+					if (tempUsualStruct->maclistHeader)	{
+						SetDlgItemText(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFOGROUPBOX, "MAC address information");
+						FillDlgItemWithMaclistData(pHdr->hwndDisplay, IDC_PROPERTIESLONGINFO, tempUsualStruct->maclistHeader);
+					}
 				}
 				break;
 		}
@@ -736,6 +740,16 @@ void CreateValidBoxiBlockFromBoxiStruct(BLOCK_STRUCTURE *boxiBlock, BOXI_STRUCTU
 	return;
 }
 
+void FillDlgItemWithMaclistData(HWND hDlg, int nIDDlgItem, MACLIST_HEADER_BLOCK *macHeader)
+{
+	char buffer[1024];
+
+	sprintf(buffer, "Number of MAC addresses: %i\r\nFirst MAC address: %s\r\nLast MAC address:", macHeader->numberofMACs, macHeader->firstMAC);
+	SetDlgItemText(hDlg, nIDDlgItem, &buffer[0]);
+	return;
+
+}
+
 void FillDlgItemWithGzipData(HWND hDlg, int nIDDlgItem, GZIP_HEADER_BLOCK *gzHeader)
 {
 	char buffer[1024];
@@ -1226,7 +1240,7 @@ void BlockExportDetailsUpdate(HWND hwnd, ZIM_STRUCTURE *ZimToUse, int blockid)
 		sprintf(tempString, "This verification block is used to check the validity of other blocks in the .zim file. In this case it contains verification data for %i other block%s. It is recommended to export with a header, although the block can be regenerated.",selectedBlockStruct.dwDataLength/32,(selectedBlockStruct.dwDataLength>32) ? "s":"");
 	else if (selectedBlockStruct.typeOfBlock==BTYPE_BOXI)
 		sprintf(tempString, "This block contains information about the set-top box, including the version and model numbers. It is recommended to export including the header to enable simple transfer to other .zim files.");
-	else if ((selectedBlockStruct.typeOfBlock==BTYPE_ROOT)||(selectedBlockStruct.typeOfBlock==BTYPE_KERN)||(selectedBlockStruct.typeOfBlock==BTYPE_CODE)||(selectedBlockStruct.typeOfBlock==BTYPE_LOAD)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)||(selectedBlockStruct.typeOfBlock==BTYPE_MACA)) {
+	else if ((selectedBlockStruct.typeOfBlock==BTYPE_ROOT)||(selectedBlockStruct.typeOfBlock==BTYPE_KERN)||(selectedBlockStruct.typeOfBlock==BTYPE_CODE)||(selectedBlockStruct.typeOfBlock==BTYPE_LOAD)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)) {
 		tempUsualStructure=selectedBlockStruct.ptrFurtherBlockDetail;
 		if (tempUsualStructure) {
 			sprintf(tempString,

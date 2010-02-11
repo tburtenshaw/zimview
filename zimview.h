@@ -18,6 +18,15 @@ struct sBlockHeader //Endian oblivious - used to fread direct from zim
   DWORD dwChecksum; // Broken Adler-32
 };
 
+struct sMACHeader //Header for the MACA blocks
+{
+	char firstMAC[18];
+	char lastMAC[18];
+	int numberofMACs;
+};
+
+typedef struct sMACHeader MACLIST_HEADER_BLOCK;
+
 typedef struct internalBlockStructure BLOCK_STRUCTURE;
 typedef struct internalZimStructure ZIM_STRUCTURE;
 typedef struct boxiStructure BOXI_STRUCTURE;
@@ -92,6 +101,7 @@ struct usualBlockStructure {
 	DWORD magicnumber;
 	SQUASHFS_SUPER_BLOCK *sqshHeader;
 	GZIP_HEADER_BLOCK *gzipHeader;
+	MACLIST_HEADER_BLOCK *maclistHeader;
 };
 
 struct internalZimStructure //used internally
