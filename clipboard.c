@@ -77,6 +77,7 @@ int EditCopySelected(HWND hwnd, ZIM_STRUCTURE *LoadedZim, BOOL bCut)
 					case BTYPE_KERN:
 					case BTYPE_LOAD:
 					case BTYPE_NVRM:
+					case BTYPE_MACA:
 						tempUsualStruct=ptrCounterBlock->ptrFurtherBlockDetail;
 						memcpy(buffer+cch, tempUsualStruct, sizeof(USUAL_STRUCTURE));
 						cch+=sizeof(USUAL_STRUCTURE);
@@ -216,6 +217,7 @@ int EditPaste(HWND hwnd, ZIM_STRUCTURE *LoadedZim) {
 					case BTYPE_KERN:
 					case BTYPE_LOAD:
 					case BTYPE_NVRM:
+					case BTYPE_MACA:
 						newBlock->ptrFurtherBlockDetail=malloc(sizeof(USUAL_STRUCTURE));
 						memcpy(newBlock->ptrFurtherBlockDetail, ptrCbData+cch, sizeof(USUAL_STRUCTURE));
 						cch+=sizeof(USUAL_STRUCTURE);
@@ -304,6 +306,7 @@ long CalculateClipboardSize(ZIM_STRUCTURE *LoadedZim)
 				case BTYPE_KERN:
 				case BTYPE_LOAD:
 				case BTYPE_NVRM:
+				case BTYPE_MACA:
 					tempUsualStruct=ptrCounterBlock->ptrFurtherBlockDetail;
 					maxClipboardSize+=sizeof(USUAL_STRUCTURE);
 					if (tempUsualStruct->gzipHeader)	{
