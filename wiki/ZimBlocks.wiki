@@ -95,3 +95,17 @@ So it has the name of the block. Then the version number of that block.
 This block was first seen in version 2.1.1 of Olevia's firmware, where internet connectivity was added to allow use of a [Hong Kong] based video-on-demand service.
 
 It contains a large number of Media Access Control addresses (see [http://en.wikipedia.org/wiki/MAC_address MAC address on Wikipedia]).
+
+It is basically an ASCII text file with 2000 lines (each with Windows style CR-LFs ending the line). Each MAC consists of 6 two-digit hexadecimal numbers, separated by hyphens.
+
+This is an example of the first eight out of 2000 MAC addresses in the file.
+{{{
+00-05-9e-90-0b-93
+00-05-9e-90-0b-94
+00-05-9e-90-0b-95
+00-05-9e-90-0b-96
+00-05-9e-90-0b-97
+00-05-9e-90-0b-98
+00-05-9e-90-0b-99
+00-05-9e-90-0b-9a
+}}}
