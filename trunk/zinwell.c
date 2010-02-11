@@ -1085,6 +1085,7 @@ int CloseZimFile(ZIM_STRUCTURE *LoadedZim) {
 			tempUsualStruct = ptrBlockStruct->ptrFurtherBlockDetail;
 			if (tempUsualStruct->sqshHeader) {free(tempUsualStruct->sqshHeader);}
 			if (tempUsualStruct->gzipHeader) {free(tempUsualStruct->gzipHeader);}
+			if (tempUsualStruct->maclistHeader) {free(tempUsualStruct->maclistHeader);}
 			free(ptrBlockStruct->ptrFurtherBlockDetail); //free the further boxi block detail
 			break;
 		case BID_DWORD_BOXI:
@@ -1765,6 +1766,7 @@ void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
 	if ((tempUsualStruct->displaymagicnumber[2]<32)||(tempUsualStruct->displaymagicnumber[2]>126)) tempUsualStruct->displaymagicnumber[2]='?';
 	if ((tempUsualStruct->displaymagicnumber[3]<32)||(tempUsualStruct->displaymagicnumber[3]>126)) tempUsualStruct->displaymagicnumber[3]='?';
 
+	tempUsualStruct->maclistHeader=NULL;
 	tempUsualStruct->sqshHeader=NULL;
 	tempUsualStruct->gzipHeader=NULL;
 	if (	(tempUsualStruct->magicnumber==SQUASHFS_MAGIC_LZMA)
@@ -1807,7 +1809,13 @@ void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
 			fread(&tempUsualStruct->sqshHeader->lookup_table_start, sizeof(tempUsualStruct->sqshHeader->lookup_table_start), 1, fileToRead);
 		}
 
-	if ((tempUsualStruct->magicnumber & 0xFFFF)==0x8b1f) {
+	else if (Block->typeOfBlock==BTYPE_MACA)	{
+ 		tempUsualStruct->maclistHeader=malloc(sizeof(MACLIST_HEADER_BLOCK));
+		fseek(fileToRead, start, SEEK_SET);
+		fread(&tempUsualStruct->maclistHeader->firstMAC,17, 1, fileToRead);
+		tempUsualStruct->maclistHeader->firstMAC[17]=0;
+		}
+	else if ((tempUsualStruct->magicnumber & 0xFFFF)==0x8b1f) {
 		tempUsualStruct->gzipHeader=malloc(sizeof(GZIP_HEADER_BLOCK));
 		fseek(fileToRead, start, SEEK_SET);
 
@@ -2306,6 +2314,7 @@ int FreeBlockMemory(BLOCK_STRUCTURE *Block)
 			tempUsualStruct = Block->ptrFurtherBlockDetail;
 			if (tempUsualStruct->sqshHeader) {free(tempUsualStruct->sqshHeader);}
 			if (tempUsualStruct->gzipHeader) {free(tempUsualStruct->gzipHeader);}
+			if (tempUsualStruct->maclistHeader) {free(tempUsualStruct->maclistHeader);}
 			free(Block->ptrFurtherBlockDetail); //free the further boxi block detail
 			break;
 		case BID_DWORD_BOXI:

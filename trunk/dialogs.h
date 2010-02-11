@@ -36,6 +36,7 @@ void BlockExportDetailsUpdate(HWND hwnd, ZIM_STRUCTURE *ZimToUse, int blockid);
 void PropertiesDlg_ChangeSelection(HWND hwnd);
 void FillDlgItemWithSquashFSData(HWND hDlg, int nIDDlgItem, SQUASHFS_SUPER_BLOCK *sqshHeader);
 void FillDlgItemWithGzipData(HWND hDlg, int nIDDlgItem, GZIP_HEADER_BLOCK *sqshHeader);
+void FillDlgItemWithMaclistData(HWND hDlg, int nIDDlgItem, MACLIST_HEADER_BLOCK *macHeader);
 void FillBoxiStructFromBoxiDlg(HWND hwnd, BOXI_STRUCTURE *boxiStruct);
 void FillBoxiDlgFromBoxiStruct(HWND hwnd, BOXI_STRUCTURE *boxiStruct, int base);
 void CreateValidBoxiBlockFromBoxiStruct(BLOCK_STRUCTURE *boxiBlock, BOXI_STRUCTURE *boxiStruct);
