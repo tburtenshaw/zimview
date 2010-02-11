@@ -1226,7 +1226,7 @@ void BlockExportDetailsUpdate(HWND hwnd, ZIM_STRUCTURE *ZimToUse, int blockid)
 		sprintf(tempString, "This verification block is used to check the validity of other blocks in the .zim file. In this case it contains verification data for %i other block%s. It is recommended to export with a header, although the block can be regenerated.",selectedBlockStruct.dwDataLength/32,(selectedBlockStruct.dwDataLength>32) ? "s":"");
 	else if (selectedBlockStruct.typeOfBlock==BTYPE_BOXI)
 		sprintf(tempString, "This block contains information about the set-top box, including the version and model numbers. It is recommended to export including the header to enable simple transfer to other .zim files.");
-	else if ((selectedBlockStruct.typeOfBlock==BTYPE_ROOT)||(selectedBlockStruct.typeOfBlock==BTYPE_KERN)||(selectedBlockStruct.typeOfBlock==BTYPE_CODE)||(selectedBlockStruct.typeOfBlock==BTYPE_LOAD)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)||(selectedBlockStruct.typeOfBlock==BTYPE_MACA)) {
+	else if ((selectedBlockStruct.typeOfBlock==BTYPE_ROOT)||(selectedBlockStruct.typeOfBlock==BTYPE_KERN)||(selectedBlockStruct.typeOfBlock==BTYPE_CODE)||(selectedBlockStruct.typeOfBlock==BTYPE_LOAD)||(selectedBlockStruct.typeOfBlock==BTYPE_NVRM)||(selectedBlockStruct.typeOfBlock==BTYPE_MACA)) {
 		tempUsualStructure=selectedBlockStruct.ptrFurtherBlockDetail;
 		if (tempUsualStructure) {
 			sprintf(tempString,
