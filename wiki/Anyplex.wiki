@@ -1,0 +1,19 @@
+#summary About Anyplex - on demand movies for the Olevia boxes
+
+= Introduction =
+
+*Anyplex* is a video-on-demand service in [HongKong Hong Kong] who allow download of movies via the internet to watch on TV.
+
+
+= Details =
+
+http://image.anyplex.com/homeimg.jpg
+
+This opening display is hard-coded in the [Olevia] firmware version 2.1.1.
+
+I have not heard of anyone in [NewZealand New Zealand] who has managed to use it from here. No doubt our internet would be far too slow!
+
+= Links =
+
+ * [http://www.anyplex.com/ Anyplex Homepage]
+ * [http://www.anyplex.com/index.php?option=com_content&view=article&id=95&Itemid=137&lang=en Firmware to use Anyplex]
