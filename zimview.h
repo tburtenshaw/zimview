@@ -126,7 +126,7 @@ struct internalZimStructure //used internally
 #define BSFLAG_DONTWRITE	0x08 //don't write the block when saving
 #define BSFLAG_ISSELECTED	0x10 //the block is selected
 
-struct internalBlockStructure //used internally
+struct internalBlockStructure //used internally (by my program, not the machine)
 {
   CHAR  name[5]; // 'ROOT', 'CODE', 'VERI', 'BOXI', 'KERN', 'LOAD','NVRM'. (an extra space for terminating string)
   DWORD dwDataLength;
