@@ -1750,6 +1750,10 @@ void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
 {
 	USUAL_STRUCTURE *tempUsualStruct;
 	WORD tempXLEN;	//used by gzip
+	char tempchar;
+	int tempLengthOfString;
+	int tempNumberOfCRsOrLFs;
+	int tempInt;
 
 	Block->ptrFurtherBlockDetail=malloc(sizeof(USUAL_STRUCTURE));
 	memset(Block->ptrFurtherBlockDetail, 0, sizeof(USUAL_STRUCTURE));
@@ -1813,7 +1817,30 @@ void *ReadUsualBlock(BLOCK_STRUCTURE *Block, FILE *fileToRead, DWORD start)
  		tempUsualStruct->maclistHeader=malloc(sizeof(MACLIST_HEADER_BLOCK));
 		fseek(fileToRead, start, SEEK_SET);
 		fread(&tempUsualStruct->maclistHeader->firstMAC,17, 1, fileToRead);
-		tempUsualStruct->maclistHeader->firstMAC[17]=0;
+		tempUsualStruct->maclistHeader->firstMAC[17]=0; //ensure the string has null term
+
+		tempLengthOfString=0;
+		tempNumberOfCRsOrLFs=0;
+		tempUsualStruct->maclistHeader->numberofMACs=0;
+		tempInt=17;
+
+		while ((tempNumberOfCRsOrLFs<3)&&(tempInt<Block->dwDataLength))	{
+
+			fread(&tempchar,1,1,fileToRead);
+			tempLengthOfString++;
+			if ((tempchar==0x0a) || (tempchar==0x0d))	{
+				tempNumberOfCRsOrLFs++;
+			} else
+				tempNumberOfCRsOrLFs=0;
+
+			if (tempNumberOfCRsOrLFs==2)
+				tempUsualStruct->maclistHeader->numberofMACs++;
+
+			tempInt++;
+		}
+
+
+
 		}
 	else if ((tempUsualStruct->magicnumber & 0xFFFF)==0x8b1f) {
 		tempUsualStruct->gzipHeader=malloc(sizeof(GZIP_HEADER_BLOCK));
