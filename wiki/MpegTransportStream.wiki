@@ -17,11 +17,17 @@ Each packet has a _packet identifier_ (or PID). This helps to separate separate 
 
 == List of PIDs ==
 || *PID* || *TV Channel* || *Type of data* ||
+|| $00FA || TV1 || Video ||
 || $00FB || TV2 || Video ||
+|| $00FC || TVNZ6 || Video ||
+|| $00FD || TVNZ7 || Video ||
 || $01C2 || TV3 || Video ||
 || $01C3 || C4 || Video ||
 || $0226 || Maori TV || Video ||
+|| $0227 || Parliament TV || Video ||
+|| $0229 || Chinese TV || Video ||
 || $022A || Prime || Video ||
+|| $022C || Freeview HD Demo || Video ||
 
 == Example TS from TV3 recording ==
 
