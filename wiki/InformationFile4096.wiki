@@ -16,6 +16,8 @@ To me, it appears this file contains a lot of 'junk'. That is much of the file i
 
 Many details seem to be in the file twice. Once at 0x200, then again 2048 (0x800) bytes later at 0xa00. The first copy seems to be the only one that does anything, I am not sure why they are repeated.
 
+The length of the identical repeated sections is about 512 bytes. (Taken from 0x200.)
+
 == Offsets ==
  * *Hex (dec) Description*
 
