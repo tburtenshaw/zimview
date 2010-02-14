@@ -53,6 +53,16 @@ The length of the identical repeated sections is about 512 bytes. (Taken from 0x
 
  * 0x0c04 (3076) Location of the MPEG file
  * 0x0d04 (3332) Location of the navigation file
+
+ * 0x0e04 PID of video channel (see also 0x0e54)
+ * 0x0e24 Another PID used.
+ * 0x0e28 Another PID.
+ * 0x0e44 Another PID.
+ * 0x0e46 Another PID.
+ 
+ * 0x0e54 The PID of the video channel (same as 0x0e04)
+
+
  * 0x0e60 (3680) Jpeg image location
 
 == Structure ==
