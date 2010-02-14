@@ -22,7 +22,7 @@ The length of the identical repeated sections is about 512 bytes. (Taken from 0x
  * *Hex (dec) Description*
 
  * 0x0006 (6)    Title
- * 0x007e (126)  Description
+ * 0x007e (126)  Description - maximum seen is 175 bytes, unsure max.
 
  * 0x0284 (644)  ce:da:53:42 (comes out as IUSB) //this may be the date
 
