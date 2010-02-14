@@ -1,4 +1,5 @@
 #summary How do the .nav files work?
+#labels recording
 
 = Introduction =
 
@@ -10,6 +11,8 @@ The _nav_ files exist to help speed up navigation through the recorded video. I 
 The .nav file consists of a number of 64 byte (0x40 byte) records, all following each other. I have not been able to find any documentation about the file on the internet, and it may well be unique to Olevia's system.
 
 There is no header or footer in the files, the number of records can be calculated by dividing the file size by 64.
+
+There is a long integer in each record that points to the start of the payload data for the [MpegTransportStream video stream].
 
 == Elucidation of the structure ==
 
@@ -55,7 +58,8 @@ struct record {
 
    unsigned long l6;    //Near linear, but varying increments averaging 12700 (max 69000, min 1800)
                         //Larger change of values generally coincide with sawtooth drop of s3
-                        //Strongly suspect this refers to a byte in the associated mpg file.
+                        //Strongly suspect this refers to a byte in the associated mpg file...
+                        //It seems to coincide with a payload indicator of the PID $002A.
 
    unsigned long l7;    //VERY high number, slowly increases linearly, with superimposed wave of period 7
                         //(+900, -4500, +900, -2700, +900, +2700, +900, +8100)
