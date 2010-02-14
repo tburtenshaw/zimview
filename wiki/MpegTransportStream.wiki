@@ -1,0 +1,24 @@
+#summary The MPEG-TS and Freeview
+#labels recording
+
+= Introduction =
+
+*MPEG Transport Streams* are a list of data with no particular start or finish. They consist of a number of packets, and these packets contain the video, audio and other data.
+
+To save on processing power, when the set-top box records a TV show it basically records the data it needs as is. It does not reprocess the video, it just ignores any packets on other TV channels.
+
+This means recorded video is exactly the same to watch one being broadcast.
+
+= Details =
+
+Each packet of the recorded video file is 188 bytes in size.
+
+Each packet has a _packet identifier_ (or PID). This helps to separate separate streams.
+
+== List of PIDs ==
+|| *PID* || *TV Channel* || *Type of data* ||
+|| $00FB || TV2 || Video ||
+|| $01C2 || TV3 || Video ||
+|| $01C3 || C4 || Video ||
+|| $0226 || Maori TV || Video ||
+|| $022A || Prime || Video ||
