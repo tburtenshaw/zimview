@@ -63,6 +63,7 @@ struct record {
 
    unsigned long l7;    //VERY high number, slowly increases linearly, with superimposed wave of period 7
                         //(+900, -4500, +900, -2700, +900, +2700, +900, +8100)
+                        //Could this be Presentation or Decoding Time Stamp?
    unsigned short s8;
 
    unsigned short s9zero;    //Zero
