@@ -14,16 +14,22 @@ http://zimview.googlecode.com/svn/wiki/infofile4096.png
 = Details =
 To me, it appears this file contains a lot of 'junk'. That is much of the file is untouched and just whatever already happens to be on that part of the hard disk.
 
+Many details seem to be in the file twice. Once at 0x200, then again 2048 (0x800) bytes later at 0xa00.
 
 == Offsets ==
+* Hex (dec) Description
+
  * 0x0006 (6)    Title
  * 0x007e (126)  Description
 
  * 0x0284 (644)  ce:da:53:42 (comes out as IUSB) //this may be the date
- * 0x028a (650)  Hour of recording as byte (0-23)
- * 0x028b (651)  Minute of recording as byte (0-59)
+ * 0x028a (650)  Hour of recording as "decimal" byte (0-23) (e.g. 10 seconds is represented by 0x10, not 0x0a)
+ * 0x028b (651)  Minute of recording as "decimal" byte (0-59)
+ * _Editing hour or minutes affects the display in FileManagement, but not in VideoFiles_
 
  * 0x02a0 (672)  Long - size of mpeg file
+ * 0x02a8 (680)  Duration (in seconds) recorded (to nearest second)
+ * _Editing the duration here will affect VideoFiles display_
 
  * 0x0800 (2048) Audio encoding info
 
@@ -32,6 +38,7 @@ To me, it appears this file contains a lot of 'junk'. That is much of the file i
  * 0x0a8b (2699) Minute of recording as byte (0-59)
 
  * 0x0aa0 (2720) Long - size of mpeg file
+ * 0x0aa8        Number of seconds recorded (to nearest second)
 
  * 0x0c04 (3076) Location of the MPEG file
  * 0x0d04 (3332) Location of the navigation file
