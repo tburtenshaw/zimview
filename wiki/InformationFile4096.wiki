@@ -25,6 +25,8 @@ The length of the identical repeated sections is about 512 bytes. (Taken from 0x
  * 0x007e (126)  Description
 
  * 0x0284 (644)  ce:da:53:42 (comes out as IUSB) //this may be the date
+
+ * 0x0289 As a byte, the number of days past 28/7/2009 - will try as word then long.
  * 0x028a (650)  Hour of recording as "decimal" byte (0-23) (e.g. 10 seconds is represented by 0x10, not 0x0a)
  * 0x028b (651)  Minute of recording as "decimal" byte (0-59)
  * _Editing hour or minutes affects the display in FileManagement, but not in VideoFiles_
