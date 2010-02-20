@@ -25,7 +25,7 @@ The length of the identical repeated sections is about 512 bytes. (Taken from 0x
  * 0x0000 (0)    00:08:05:00 - I assume this is a magic number, haven't seen others
 
  * 0x0006 (6)    Title - at 40 bytes, this won't crash but also won't fit in the display
- * 0x007e (126)  Description - maximum seen is 196 bytes, unsure max.
+ * 0x007e (126)  Description - maximum seen is 200 bytes.
 
  * 0x0284 (644)  ce:da:53:42 (comes out as IUSB)
 
@@ -77,7 +77,7 @@ struct infoFile {
     unsigned short number1;
 
     char title[120]; //the title seems to be 120 bytes
-    char description[255]; //although the next variable starts after this
+    char description[201]; //the longest is 200 characters
 }
 
 }}}
