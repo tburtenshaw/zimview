@@ -59,11 +59,12 @@ struct record {
    unsigned long l6;    //Near linear, but varying increments averaging 12700 (max 69000, min 1800)
                         //Larger change of values generally coincide with sawtooth drop of s3
                         //Strongly suspect this refers to a byte in the associated mpg file...
-                        //It seems to coincide with a payload indicator of the PID $002A.
+                        //It seems to coincide with a payload indicator of the video PID.
 
    unsigned long l7;    //VERY high number, slowly increases linearly, with superimposed wave of period 7
                         //(+900, -4500, +900, -2700, +900, +2700, +900, +8100)
                         //Could this be Presentation or Decoding Time Stamp?
+                        //Looks to be 50% of program_clock_reference_base (this is a 33bit value in the MPEG-TS)
    unsigned short s8;
 
    unsigned short s9zero;    //Zero
