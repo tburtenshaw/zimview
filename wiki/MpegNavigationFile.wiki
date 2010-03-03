@@ -65,6 +65,7 @@ struct record {
                         //(+900, -4500, +900, -2700, +900, +2700, +900, +8100)
                         //Could this be Presentation or Decoding Time Stamp?
                         //Looks to be 50% of program_clock_reference_base (this is a 33bit value in the MPEG-TS)
+                        //Actually, it seems to be the 32 high bits of the 33 bit PTS.
    unsigned short s8;
 
    unsigned short s9zero;    //Zero
