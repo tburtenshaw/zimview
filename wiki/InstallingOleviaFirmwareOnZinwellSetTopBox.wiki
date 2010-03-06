@@ -7,7 +7,7 @@ This article details how to get the [Olevia] firmware on to your set-top box.
 == Risks/disadvantages ==
   * *There is NO EASY WAY to return to the New Zealand firmware* - you would need equipment to read the NZ firmware off another machine, then use that equipment and a complicated computer programme to copy that to your box - not easy to do
   * Likely to void warranty (if you tell them)
-  * [ElectronicProgrammeGuide Electronic programme guide] may show some differences
+  * [ElectronicProgrammeGuide Electronic programme guide] will occasionally act differently
   * Possibility of ruining your set-top box
   * No access to future updates to New Zealand firmware
   * SD output stuck on [NTSC] - this cannot be changed to [PAL] - this means that if you run your TV or other device off composite (yellow cable) or s-video then your display may not work
@@ -32,11 +32,15 @@ We currently need three of the [Olevia] .zim files. Note that this may change if
   * ZMT-620FTA Firmware v1.8.2 - Part 2 only (_OleviaPVR_1.8.2_part 2.zim_)
   * ZMT-620FTA Firmware v.1.9.8 (_OLEVIA_620_1.9.8.zim_)
 
-You can find them here: [http://www.olevia.com.hk/downloadpage.php?workplaceID=43&plid=&pid=119 ZMT-620FTA Firmware]
+You can find them here: [http://www.olevia.com.hk/downloadpage.php?workplaceID=43&plid=&pid=119 ZMT-620FTA Firmware] - although they have recently added a password.
 
-Or here [http://www.h33t.com/details.php?id=dbe69fb4c311936b54a7babbcf2289845c349d2c Torrent]
+Or try this [http://www.h33t.com/details.php?id=dbe69fb4c311936b54a7babbcf2289845c349d2c torrent].
+
+You can also find them on [http://code.google.com/p/zimview/downloads/list my downloads] page. They are licenced under the [GPL] and use a lot of GPL software (e.g. [Busybox] and [Linux]) internally.
 
 == Editing the first zim file ==
+_The first step of editing the zim file is not always necessary. It depends which version of the NZ firmware you have, and whether you need to trick it. Try without this first step. If this doesn't work, then try the edit._
+
 We need to change the [CustomerNumber customer number] of our first file. This is to make the set-top box think we are installing New Zealand firmware. We only need to do this to the first file, since after that we will be installing onto [Olevia] software.
 
 The first file is _OleviaPVR_1.2.2_part1.zim_. Open this up with [http://code.google.com/p/zimview zimview].
@@ -149,3 +153,7 @@ You may need to set-up the time zone to New Zealand, otherwise your [ElectronicP
   # Change the time zone to *GMT+12:00*.
 
 http://zimview.googlecode.com/svn/wiki/timezone.jpg
+
+= Using the new firmware =
+
+Now you've installed the Olevia firmware, have a look at UsingAndRecordingWithOleviaFirmware.
