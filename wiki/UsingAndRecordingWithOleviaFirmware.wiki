@@ -1,0 +1,34 @@
+#summary How to use the Olevia Firmware in New Zealand
+#labels Featured,recording
+
+= Introduction =
+
+By now you should have installed the Olevia firmware on your Zinwell set-top box.
+
+Most of the functionality is pretty obvious, and the same as the Zinwell firmware. There are some pointers that will help you with recording, scheduling and general usage of the box.
+
+= Setting up a hard-drive =
+
+Nowadays external USB hard-drives are pretty cheap and easy to come across. If you're lucky you'll have one already at home to test.
+
+== USB or mains powered? ==
+According to Olevia, we should use an externally powered drive. These have a power plug in addition to the USB cord.
+
+I have used both USB and mains powered drives, and had no real problem with the USB-only powered device. In fact, this seems to warm up quicker and be more responsive.
+
+It has been discussed somewhere on this post: [http://www.nzdtv.com/forum/showthread.php?t=304 NZ DTV Forum]
+
+== Formatting the hard-drive ==
+The Olevia firmware can read both FAT-32 and ext3 file systems.
+
+ * _FAT-32_ is Windows' old system (before it switched to NTFS). It can still be read by Windows.
+ * _Ext3_ is a Linux file system. It can't be natively read by Windows, but will be read by pretty much any modern Linux machine.
+
+When you buy the hard-drive, often they'll be formatted in FAT-32 (but will often contain marketing material, which you will have to delete). If you get the Olevia firmware to format the hard-drive it will use ext3.
+
+It can be very difficult to format a large USB HDD in FAT-32, as Windows has removed this ability. Third-party software (e.g. Partition Magic) may be able to do this.
+
+= Recording =
+
+== Casual recording ==
+To record what is on at the moment, press the *Picture* button on the remote control (2nd along in the bottom row of buttons).
