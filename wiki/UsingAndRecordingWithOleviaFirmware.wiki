@@ -47,11 +47,26 @@ But you cannot record TV3 and watch TV1 as they are on different muxes. You can 
 http://zimview.googlecode.com/svn/wiki/record_info_is_recording.jpg
 
 == Scheduling a recording =
-There are two ways to schedule a recording.
+There are two ways to schedule a recording:
+ * From the [ElectronicProgrammeGuide Electronic Programme Guide]
+ * Adding a time manually through the menu
+
+The EPG method will only work with the EIT EPG. This is what loads if the MHEG guide is not immediately ready to load. Unfortunately, for reasons unknown, Freeview detrimentally only transmits the next four TV shows via EIT.
+
+To get into the EIT version, change to another channel, change back then press the EPG button. This increases the chance that the MHEG list won't have loaded.
+
+Once you've got the EIT EPG, select the programme to record. Then press the *Picture* button on the remote. It will bring up a window with the appropriate times. You may want to adjust these slightly to give some margin of error, or to record the next show.
+
+http://zimview.googlecode.com/svn/wiki/record_schedule_from_epg.jpg
 
 = Playback =
 
 = Editing =
 There are no built-in features to skip through ads, split a recording into two, or to fix programmes recorded under an incorrect name.
 
-If you can access your HDD from Windows, my software [http://code.google.com/p/zorve/ Zorve] allows you to change the title and description of the recorded files.
+If you can access your HDD from Windows (e.g. you have ext3 support or disk format is FAT-32), my software [http://code.google.com/p/zorve/ Zorve] allows you to change the title and description of the recorded files.
+
+http://zimview.googlecode.com/svn/wiki/zorve_shot_2010-03-06.png
+
+== Ext3 in Windows ==
+There is software that provides ext3 support at http://www.fs-driver.org/
