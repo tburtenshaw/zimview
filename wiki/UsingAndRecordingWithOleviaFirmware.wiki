@@ -21,8 +21,8 @@ It has been discussed somewhere on this post: [http://www.nzdtv.com/forum/showth
 == Formatting the hard-drive ==
 The Olevia firmware can read both FAT-32 and ext3 file systems.
 
- * _FAT-32_ is Windows' old system (before it switched to NTFS). It can still be read by Windows.
- * _Ext3_ is a Linux file system. It can't be natively read by Windows, but will be read by pretty much any modern Linux machine.
+ * _[FAT-32]_ is Windows' old system (before it switched to NTFS). It can still be read by Windows.
+ * _[Ext3]_ is a Linux file system. It can't be natively read by Windows, but will be read by pretty much any modern Linux machine.
 
 When you buy the hard-drive, often they'll be formatted in FAT-32 (but will often contain marketing material, which you will have to delete). If you get the Olevia firmware to format the hard-drive it will use ext3.
 
@@ -31,4 +31,27 @@ It can be very difficult to format a large USB HDD in FAT-32, as Windows has rem
 = Recording =
 
 == Casual recording ==
-To record what is on at the moment, press the *Picture* button on the remote control (2nd along in the bottom row of buttons).
+To record what is on at the moment, press the *Picture* button on the [RemoteControl remote control] (2nd along in the bottom row of buttons).
+
+This will start recording the current programme on the current channel. A small recording display will feature briefly. The recording is titled as loaded from the EIT data on the [ElectronicProgrammeGuide EPG]. If we were continue to record the next show, it is still kept under this name.
+
+http://zimview.googlecode.com/svn/wiki/record_casual.jpg
+
+To stop recording, press the *Picture* button again. If you do not press this button, it will continue to record until you are out of disk space. Unfortunately there is no way set a timer on this recording, to do this we need to use the scheduler.
+
+== Changing channels while recording ==
+While recording you are able to watch other channels on the same mux. This means, for instance, that you can record TV3 and watch C4, or record TV1 and watch TV2 at the same time.
+
+But you cannot record TV3 and watch TV1 as they are on different muxes. You can flick through these channels, but the message below is shown instead of the correct picture.
+
+http://zimview.googlecode.com/svn/wiki/record_info_is_recording.jpg
+
+== Scheduling a recording =
+There are two ways to schedule a recording.
+
+= Playback =
+
+= Editing =
+There are no built-in features to skip through ads, split a recording into two, or to fix programmes recorded under an incorrect name.
+
+If you can access your HDD from Windows, my software [http://code.google.com/p/zorve/ Zorve] allows you to change the title and description of the recorded files.
