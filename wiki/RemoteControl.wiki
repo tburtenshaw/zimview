@@ -1,0 +1,6 @@
+#summary What the set-top box remote controls look like
+#labels hardware
+
+= Zinwell/DSE 620 =
+
+http://zimview.googlecode.com/svn/wiki/remote_620.jpg
