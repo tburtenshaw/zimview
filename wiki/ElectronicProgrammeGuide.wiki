@@ -16,7 +16,7 @@ The [Zinwell] firmware only displays MHEG-5 information.
 
 The [Olevia] firmware will display both EIT and MHEG-5. Unfortunately there is no way to choose which. It looks like EIT is displayed until the MHEG-5 is able to be loaded. After MHEG-5 is loaded, only MHEG-5 will be displayed and the EIT won't be accessed.
 
-One advantage of the EIT display on the Olevia firmware, is that it can be used to schedule recording of a specific show (by pushing the _Picture_ button on the remote control).
+One advantage of the EIT display on the Olevia firmware, is that it can be used to schedule recording of a specific show (by pushing the _Picture_ button on the [RemoteControl remote control]).
 
 This is what the EIT EPG looks like on the Olevia firmware. Note that only the next four shows are displayed. Also note that the time zone was set incorrectly on the set-top box when this picture was taken.
 
