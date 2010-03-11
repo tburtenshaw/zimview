@@ -68,5 +68,7 @@ If you can access your HDD from Windows (e.g. you have ext3 support or disk form
 
 http://zimview.googlecode.com/svn/wiki/zorve_shot_2010-03-06.png
 
+I have written some details on the files that Olevia records to disk here: RecordedVideo
+
 == Ext3 in Windows ==
 There is software that provides ext3 support at http://www.fs-driver.org/
