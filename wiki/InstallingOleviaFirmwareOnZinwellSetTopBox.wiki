@@ -93,7 +93,7 @@ In short - you're going to have to do this once you upgrade - so learn to do it 
 = Process of upgrading =
 Turn your set-top box on. Once it's running, stick in the USB drive with the three Olevia zim files. If you have a wide USB key, you may need to remove the HDMI cable and use component or composite output (or use a thinner drive). Don't proceed until you've sorted this out.
 
-On the menu, go down to _System_, and then to _System Information_. You'll see information about your current firmware. Press the *red button* on your remote control (_S/W Upgrade_).
+On the menu, go down to _System_, and then to _System Information_. You'll see information about your current firmware. Press the *red button* on your [RemoteControl remote control] (_S/W Upgrade_).
 
 http://zimview.googlecode.com/svn/wiki/freeview_system_info_1.0.8.jpg
 
