@@ -70,7 +70,7 @@ struct record {
 
    unsigned short s9zero;    //Zero
 
-   unsigned long l10;
+   unsigned long l10;        //Is directly proportional to L7. This is the number of milliseconds
 
    unsigned long l11zero;    //Zero
 
