@@ -47,14 +47,15 @@ struct record {
                              //HIBYTE
                              //The high byte seems to be of value either 1, 2 or 3
 
-   unsigned short s3;    //Increments by 256 each record (?may be misreading by a byte)
+   unsigned short s3;    //Two bytes too. The high byte increments by 1 each record.
+                         //The lowbyte is always 30.
                          //Sawtooth pattern
                          //Drops the record after s12
                          //Period between ~23 and ~71, usually an odd number
 
    unsigned short s4;    //Always 8
 
-   unsigned long l5zero;    //Always zero
+   unsigned long l5;    //The high-order long of the offset (l6)
 
    unsigned long l6;    //Near linear, but varying increments averaging 12700 (max 69000, min 1800)
                         //Larger change of values generally coincide with sawtooth drop of s3
@@ -68,7 +69,7 @@ struct record {
                         //Actually, it seems to be the 32 high bits of the 33 bit PTS.
    unsigned short s8;
 
-   unsigned short s9zero;    //Zero
+   unsigned short s9;    //Usually zero, occasionally 1 or 2
 
    unsigned long l10;        //Is directly proportional to L7. This is the number of milliseconds
 
