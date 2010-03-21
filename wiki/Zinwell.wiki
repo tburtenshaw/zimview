@@ -1,5 +1,5 @@
 #summary Information about Zinwell
-#labels zinwell
+#labels company
 
 = Introduction =
 *Zinwell* is a [Taiwan Taiwanese] electronics company.
@@ -7,7 +7,7 @@
 It is one of the main suppliers of hardware for [NewZealand New Zealand]'s digital television network [Freeview]. They also have business in [Brazil].
 
 Set-top boxes that they make that use .zim files include:
-  * [ZMT-620HD Zinwell ZMT-620] - a common NZ set-top box, also rebranded as DSE.
+  * [ZMT-620HD Zinwell ZMT-620] - a common NZ set-top box, also rebranded as [DickSmithElectronics DSE].
   * [ZMT-640PVR Zinwell ZMT-640] - contains two tuners and a hard-drive
   * [ZBT-620] - a Brazilian ISDB set-top box
 
