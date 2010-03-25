@@ -1,0 +1,19 @@
+#summary Lists some of the Zim files
+#labels firmware
+
+= Introduction =
+
+[Zinwell] [NewZealand New Zealand] guards its firmware quite closely. To get an upgrade you have physically bring your machine into their headquarters, or wait for the rare occurrence that they are broadcast over the airwaves.
+
+Could this be because the firmware has a whole lot of copyrighted material they have no right to use?? Maybe, but that's not my fight.
+
+Even [Olevia], based in a country with less respect for international "intellectual property" law, now requires registration to get their zim files.
+
+= New Zealand =
+In an old manual for the ZMT-620HD there is mention of upgrading with a USB port. It mentions a couple of zim files.
+
+ * _ZMT-620HD 0.6.4 SW.zim_ is about 1673 kilobytes. This is shown in a Windows Explorer window as an example.
+ * _TVB_0.5.5_620DMBT-NEC.zim_ is a file pictured during the upgrade process. They also list other software and documents the developers must have used. (e.g LeapFTP, DTMSoftwareSpec-V059.doc)
+
+It is quite plausible that someone with a TV-card could 'record' the firmware when it is broadcast and save it to a file.
+
