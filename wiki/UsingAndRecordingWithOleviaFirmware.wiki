@@ -3,7 +3,7 @@
 
 = Introduction =
 
-By now you should have installed the Olevia firmware on your Zinwell set-top box.
+By now you should have [InstallingOleviaFirmwareOnZinwellSetTopBox installed the Olevia firmware] on your Zinwell set-top box.
 
 Most of the functionality is pretty obvious, and the same as the Zinwell firmware. There are some pointers that will help you with recording, scheduling and general usage of the box.
 
