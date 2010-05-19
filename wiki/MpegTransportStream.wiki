@@ -38,6 +38,6 @@ http://zimview.googlecode.com/svn/wiki/mpeg_ts_example.png
 = Playing the MPEG-TS =
 Depending on what codecs you have installed on your computer, you might be able to play the ts files on a number of different media players (e.g Media Player Classic, Windows Media Player, VLC). There is a lot of problems playing sound though.
 
-!VideoRedo allows you to play the files you recorded on your Zinwell. You can also crop out ads and convert to other file formats (e.g. DVD, DivX).
+!VideoRedo allows you to play the files you recorded on your Zinwell. You can also cut ads, crop out blackspace, and convert to other file formats (e.g. DVD, DivX).
 
-http://zimview.googlecode.com/svn/wiki/videoredo_example.jpg
+http://zimview.googlecode.com/svn/wiki/videoredo_example2.jpg
