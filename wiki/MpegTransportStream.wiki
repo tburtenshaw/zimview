@@ -24,6 +24,7 @@ Each packet has a _packet identifier_ (or PID). This helps to separate separate 
 || $01C2 || TV3 || Video ||
 || $01C3 || C4 || Video ||
 || $01C4 || TV3+1 || Video ||
+|| $01C5 || C42 || Video ||
 || $0226 || Maori TV || Video ||
 || $0227 || Parliament TV || Video ||
 || $0229 || Chinese TV || Video ||
