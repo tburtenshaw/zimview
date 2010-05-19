@@ -100,5 +100,14 @@ http://zimview.googlecode.com/svn/wiki/zorve_shot_2010-03-06.png
 
 I have written some details on the files that Olevia records to disk here: RecordedVideo
 
+== !VideoReDo ==
+!VideoReDo !TVSuite [http://www.videoredo.com/ (website)] allows you to view the recorded files on your computer. You can edit them and cut out ads, but you cannot use the resulting file back on the Zinwell.
+
+http://zimview.googlecode.com/svn/wiki/videoredo_example.jpg
+
+Importantly it can handle the HE-AAC soundtrack that many other players can't.
+
+The software is not free ($50-75 USD), but if you are planning to share some of your recorded movies, documentaries and TV shows, then this software looks like it will do the job.
+
 == Ext3 in Windows ==
 There is software that provides ext3 support at http://www.fs-driver.org/ This works well if the file system is intact. Sometimes you will need a spare Linux system to fix file system errors which Olevia will often create.
