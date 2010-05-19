@@ -39,8 +39,10 @@ Each packet has a _packet identifier_ (or PID). This helps to separate separate 
 || $0190 || TV3 || HE-AAC ||
 || $0191 || C4 || HE-AAC ||
 || $0193 || C42 || HE-AAC ||
-|| $019A || C4 || AC3 ||
+|| $019A || TV3 || AC3 ||
 || $0258 || Maori TV || HE-AAC ||
+|| $025B || Chinese TV || HE-AAC (Mandarin) ||
+|| $0323 || Chinese TV || HE-AAC (Cantonese) ||
 
 == Example TS from TV3 recording ==
 
