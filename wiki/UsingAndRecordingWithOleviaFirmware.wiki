@@ -91,17 +91,23 @@ Scroll left and right to select _pause_, _fast forward_, _rewind_, etc. When fas
 
 To skip to different section of the file, press the number keys. *0* will skip to the start, *1* will go to 10%, *2* to 20%, *5* to half way, and so on. I don't know of any way of skipping one-minute steps which would be useful to skip ads.
 
-= Editing =
+= Missing features =
 There are no built-in features to skip through ads, split a recording into two, or to fix programmes recorded under an incorrect name.
 
+It is unlikely that Olevia will add these. There last update was to allow internet downloading of files, but unfortunately this firmware doesn't work in NZ.
+
+= Editing =
+The Olevia firmware records three main files onto the USB harddisk. An [MpegTransportStream MPEG-TS] file (in this case with suffix .mpg), a file with information about the time, date, title and description of the recorded file, and another "navigation" file that helps the player skip through to various parts of the video.
+
+I have written in more detail on the files that Olevia records to disk here: RecordedVideo
+
+== Zorve ==
 If you can access your HDD from Windows (e.g. you have ext3 support or disk format is FAT-32), my software [http://code.google.com/p/zorve/ Zorve] allows you to change the title and description of the recorded files.
 
 http://zimview.googlecode.com/svn/wiki/zorve_shot_2010-03-06.png
 
-I have written some details on the files that Olevia records to disk here: RecordedVideo
-
 == !VideoReDo ==
-!VideoReDo !TVSuite [http://www.videoredo.com/ (website)] allows you to view the recorded files on your computer. You can edit them and cut out ads, but you cannot use the resulting file back on the Zinwell.
+!VideoReDo TVSuite [http://www.videoredo.com/ (website)] allows you to view the recorded files on your computer. You can edit them and cut out ads, but you cannot use the resulting file back on the Zinwell.
 
 http://zimview.googlecode.com/svn/wiki/videoredo_example.jpg
 
