@@ -16,6 +16,7 @@ Each packet of the recorded video file is 188 bytes in size.
 Each packet has a _packet identifier_ (or PID). This helps to separate separate streams.
 
 == List of PIDs ==
+=== Video ===
 || *PID* || *TV Channel* || *Type of data* ||
 || $00FA || TV1 || Video ||
 || $00FB || TV2 || Video ||
@@ -30,6 +31,16 @@ Each packet has a _packet identifier_ (or PID). This helps to separate separate 
 || $0229 || Chinese TV || Video ||
 || $022A || Prime || Video ||
 || $022C || Freeview HD Demo || Video ||
+
+=== Audio ===
+|| *PID* || *TV Channel* || *Type of data* ||
+|| $012C || TV1 || HE-AAC ||
+|| $012D || TV2 || HE-AAC ||
+|| $0190 || TV3 || HE-AAC ||
+|| $0191 || C4 || HE-AAC ||
+|| $0193 || C42 || HE-AAC ||
+|| $019A || C4 || AC3 ||
+|| $0258 || Maori TV || HE-AAC ||
 
 == Example TS from TV3 recording ==
 
