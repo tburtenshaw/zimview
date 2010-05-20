@@ -31,12 +31,12 @@ The length of the identical repeated sections is about 512 bytes. (Taken from 0x
 
  * 0x0288 Big-endian word (i.e. two bytes), Modified Julian Date (days since 17 Nov 1858)
 
- * 0x028a (650)  Hour of recording as "decimal" byte (0-23) (e.g. 10 seconds is represented by 0x10, not 0x0a)
- * 0x028b (651)  Minute of recording as "decimal" byte (0-59)
+ * 0x028a (650)  Hour of recording as "binary-coded decimal" (0-23) (e.g. 10 seconds is represented by 0x10, not 0x0a)
+ * 0x028b (651)  Minute of recording as binary-coded decimal (0-59)
  * _Editing hour or minutes affects the display in FileManagement, but not in VideoFiles_
 
- * 0x0294 (660)  Long - Unix timestamp in GMT
- * _This is displayed on VideoFiles_ (Of note, storing in GMT explains why preset recordings are messed up at daily savings.)
+ * 0x0294 (660)  Long - Unix timestamp in UTC (Coordinated Universal Time (close enough to GMT)
+ * _This is displayed on VideoFiles_ (Of note, storing in UTC explains why preset recordings are messed up at daily savings.)
 
  * 0x02a0 (672)  Long - size of mpeg file
  * 0x02a8 (680)  Duration (in seconds) recorded (to nearest second)
