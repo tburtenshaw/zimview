@@ -1,0 +1,11 @@
+#summary About the Monster brand of cables
+#labels hardware
+
+==Monster Cables==
+
+I'm not going to write much about these. They make many types of cables, including [HDMI].
+
+To avoid any lawsuit, let's just say:
+
+ * Consider trying a cheaper cable first.
+ * Don't be bullied by staff.
