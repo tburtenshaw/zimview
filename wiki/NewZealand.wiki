@@ -1,0 +1,18 @@
+#summary About New Zealand and its digital TV set-up
+#labels misc
+
+= Introduction =
+
+New Zealand is a country in the Southern Pacific. Despite some cultural self-loathing comments, we are a first world country. We have good healthcare and education, and even some good movies and homemade TV shows.
+
+Our small size means we tend to use technology that other countries used, otherwise no-one would make hardware for us.
+
+= Broadcast television in NZ =
+
+New Zealand has analogue free-to-air television broadcast, which most in the country can receive. Our free-to-air digital network is called [Freeview], which has both satellite and terrestrial broadcast. The main competing network is [SkyTV Sky Television], which has a digital satellite television service (having only recently switched off its analogue service).
+
+Freeview's satellite TV is only in standard-definition (and at a lower bitrate than many would like). Sky transmits some HD over satellite. The big three channels (TV1, TV2 & TV3) on terrestrial Freeview transmit in 1080i or 720p.
+
+http://zimview.googlecode.com/svn/wiki/haasteagle_moa_John-Megahan.jpg
+
+I see this stuff every day ([http://commons.wikimedia.org/wiki/File:Giant_Haasts_eagle_attacking_New_Zealand_moa.jpg source])
