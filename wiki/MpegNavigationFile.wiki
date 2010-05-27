@@ -24,20 +24,17 @@ _(If there is a number after an item name, this is the hexadecimal position from
 
 {{{
 struct sNavRecord {
-   unsigned short s0;    //Sawtooth pattern, with same increments as L6
-                         //Drops everytime lowbyte of var2 increases.
+   unsigned short s0;    //Sawtooth pattern
+                         //Drops everytime byte2 increases. (So it's the low 16 bits of 24-bit value)
 
    unsigned short twobytes2; //LOWBYTE
-                             //The low byte increments by 1 every few records
-                             //Its increase is coincidental with the sawtooth drop of s1
-                             //It resets itself at the same time as l12 does.
-                             //It usually stays ten or under (usually in the single digits)
+                             //This is the high order byte complementing short0, meaning that the resultant 24 bit value is exactly 30 different from long20.
 
                              //HIBYTE
                              //The high byte seems to be of value either 1, 2 or 3
 
    unsigned short twobytes4;    //Two bytes. The high byte increments by 1 each record.
-                         //The lowbyte is always 30.
+                         //The lowbyte is always 0x30 (48).
                          //Sawtooth pattern
                          //Drops the record after s12
                          //Period between ~23 and ~71, usually an odd number
@@ -64,12 +61,11 @@ struct sNavRecord {
 
    unsigned long l1Czero;    //Zero
 
-   unsigned long l20;    //Sawtooth pattern.
-                         //Goes up by exactly same as l6 (about 9000-20000) each record.
-                         //Period exactly same as s3, except fall happens one record prior.
+   unsigned long l20;    //Sawtooth pattern. Nearly same as first 24 bits of record (off by 30)
+                         //Goes up by exactly same as offset each record.
                          //Maximum not limited by type of int
 
-   unsigned short s24;   //Always 30
+   unsigned short s24;   //Always 30 ?? is this the difference between l20 and first 24 bits?
 
    unsigned short s26zero;   //All these below are typically (?always) zero
    unsigned long l28zero;    //
