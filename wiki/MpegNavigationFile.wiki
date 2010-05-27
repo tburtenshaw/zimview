@@ -55,9 +55,9 @@ struct sNavRecord {
                         //Could this be Presentation or Decoding Time Stamp?
                         //Looks to be 50% of program_clock_reference_base (this is a 33bit value in the MPEG-TS)
                         //Actually, it seems to be the 32 high bits of the 33 bit PTS.
-   unsigned short s14;
+   unsigned short s14;  //Likely contains the size of something between two different records.
 
-   unsigned short s16;    //Usually zero, occasionally 1 or 2
+   unsigned short s16;    //Usually zero, occasionally 1 or 2. Need to consider that this is high int of s14.
 
    unsigned long milliseconds;        //Is directly proportional to the timer. This is the number of milliseconds
 
@@ -87,3 +87,7 @@ You can see what I mean by sawtooth pattern on l20. If the downward drop coincid
 http://zimview.googlecode.com/svn/wiki/navfile_graph_example.png
 
 The timer in light blue is on a different axis, you can see this is roughly proportional to the offset in the file. If you were to change the scale, you would see the milliseconds are also proportional.
+
+http://zimview.googlecode.com/svn/wiki/navfile_s14_vs_offset.png
+
+Here we can see that s14 likely contains the size of something. It is always smaller than the change in offset, as we can see that everything is on the left of the 1:1 line.
