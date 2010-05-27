@@ -18,7 +18,9 @@ There is a long integer in each record that points to the start of the payload d
 
 I am in the process of trying to find out how this file works (and what it is for). Its 64 bytes most likely consists of a variation of long and short integers as well as bytes, and perhaps bit switches.
 
-Here is the structure I am using:
+http://zimview.googlecode.com/svn/wiki/nav_record_structure.png
+
+Here is the structure I am using, because I'm not using byte-aligned vars, it's currently a bit of a kludge:
 
 _(If there is a number after an item name, this is the hexadecimal position from the start.)_
 
