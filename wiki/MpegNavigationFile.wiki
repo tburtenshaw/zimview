@@ -30,7 +30,8 @@ struct sNavRecord {
                          //Drops everytime byte2 increases. (So it's the low 16 bits of 24-bit value)
 
    unsigned short twobytes2; //LOWBYTE
-                             //This is the high order byte complementing short0, meaning that the resultant 24 bit value is exactly 30 different from long20.
+                             //This is the high order byte complementing short0
+			     //This means that the resultant 24 bit value is exactly s24 different from long20.
 
                              //HIBYTE
                              //The high byte seems to be of value either 1, 2 or 3
@@ -55,9 +56,8 @@ struct sNavRecord {
                         //Could this be Presentation or Decoding Time Stamp?
                         //Looks to be 50% of program_clock_reference_base (this is a 33bit value in the MPEG-TS)
                         //Actually, it seems to be the 32 high bits of the 33 bit PTS.
-   unsigned short s14;  //Likely contains the size of something between two different records.
-
-   unsigned short s16;    //Usually zero, occasionally 1 or 2. Need to consider that this is high int of s14.
+   unsigned long l14;	//This long integer is VERY close to the difference between offsets
+   						//It is off by 6 except during a drop in l20, where it is 44 different
 
    unsigned long milliseconds;        //Is directly proportional to the timer. This is the number of milliseconds
 
@@ -67,7 +67,7 @@ struct sNavRecord {
                          //Goes up by exactly same as offset each record.
                          //Maximum not limited by type of int
 
-   unsigned short s24;   //Always 30 ?? is this the difference between l20 and first 24 bits?
+   unsigned short s24;   //The difference between l20 and the 24 bits int at 0x00
 
    unsigned short s26zero;   //All these below are typically (?always) zero
    unsigned long l28zero;    //
