@@ -1,4 +1,5 @@
 #summary Information on customer numbers on the set-top box
+#labels firmware
 
 = Introduction =
 
@@ -13,3 +14,4 @@ The customer number is a 16 bit number in the header of each .zim file that give
 || Olevia || ZMT-621 || 1537 || 0x601 ||
 || Brazilian || 620/640 || 262 (1280 earlier) || 0x106 ||
 || Brazilian || || 592 || 0x250 ||
+|| Konka (Israel) || 630 || 5120 || 0x1400 ||
