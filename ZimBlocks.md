@@ -1,0 +1,110 @@
+# Introduction #
+
+Each .zim file contains a number of blocks. These blocks store information that is used by the SetTopBox during an upgrade.
+
+The blocks that have been seen in the wild are:
+  * BOXI blocks
+  * VERI blocks
+  * CODE blocks
+  * KERN blocks
+  * ROOT blocks
+  * NVRM blocks
+  * LOAD blocks
+  * MACA blocks
+
+Two that may also exist (their strings are visible in the firmware's executable file [zmw\_base\_zinwell](zmw_base_zinwell.md). They are UVER and MCUP.
+
+# General structure #
+
+Each block has the same type of header.
+
+This is from the source code:
+```
+  char  name[4]; // 'ROOT', 'CODE', 'VERI', 'BOXI', 'KERN', 'LOAD','NVRM'
+  DWORD dwDataLength;
+  DWORD reserved[2]; // zero-filled
+  CHAR  blockSignature[4]; // 'B','S', 0x00, 0x00
+  DWORD dwChecksum; // Broken Adler-32
+```
+
+The data starts immediately after the header.
+
+## BOXI (box information) blocks ##
+
+The BOXI blocks have information about the [set-top box](SetTopBox.md) including version numbers.
+
+The "Box Info" line on the New Zealand [Freeview](Freeview.md) box shows an example of what this contains.
+
+![http://zimview.googlecode.com/svn/wiki/freeview_system_info_1.0.8.jpg](http://zimview.googlecode.com/svn/wiki/freeview_system_info_1.0.8.jpg)
+
+Each BOXI block is 36 bytes (plus the block header).
+
+This is the structure of a BOXI block:
+```
+  WORD  uiOUI; //Organizationally Unique Identifier
+  WORD  reserved[3]; // 0x00 filled
+  WORD  wHwVersion; //unsure if this order is correct
+  WORD  wSwVersion;
+  WORD  wHwModel;
+  WORD  wSwModel;
+  char  abStarterMD5Digest[16];
+  DWORD uiStarterImageSize;
+```
+
+## KERN (kernel) blocks ##
+
+KERN blocks contain a gzipped _vmlinux_ executable. [Vmlinux](http://en.wikipedia.org/wiki/Vmlinux) is an executable file that contains the linux kernel. In the Olevia and "Sony" versions this is an ELF executable.
+
+![http://zimview.googlecode.com/svn/wiki/kern_block_open.png](http://zimview.googlecode.com/svn/wiki/kern_block_open.png)
+
+The file (i.e. vmlinux) is never unzipped. It is copied onto the [flash memory](FlashMemory.md) of the set-top box directly. Specifically it goes to _flash0.kernel_.
+
+## NVRM (non-volatile ram) blocks ##
+
+NVRM blocks aren't in the [Olevia](Olevia.md) zim files. This suggests that this part of the firmware is not updated very often.
+
+This block contains mostly padding with 0xFF, a few random binary characters, then what looks like a start up variable.
+
+`STARTUP=boot -z -elf flash0.kernel: 'root=/dev/mtdblock0 rootfstype=squashfs'`
+
+You can see this string in action in the boot string (this example from [Freeview](Freeview.md) box)
+```
+Loader:elf Filesys:raw Dev:flash0.kernel File: Options:root=/dev/mtdblock0 rootfstype=squashfs
+Loading: 0x80197086/69530 Entry address is 0x8017f000
+```
+
+## VERI (verification or version info) blocks ##
+VERI blocks contain a number of listings that correspond to the blocks before it. The information about the blocks includes: _(taken from dtvforum.co.nz)_
+```
+  char  blockName[4];
+  char  version_d;
+  char  version_c;
+  char  version_b;
+  char  version_a; // version = a.b.d
+  DWORD reserved[2]; // 0xFF filled
+  BYTE  md5Digest[16]; // Calculated on the relevant Block.data
+```
+
+So it has the name of the block. Then the version number of that block.
+
+## MACA (MAC address) blocks ##
+
+This block was first seen in version 2.1.1 of Olevia's 620 firmware, where internet connectivity was added to allow use of a [Hong Kong](HongKong.md) based video-on-demand service.
+
+It contains a large number of Media Access Control addresses (see [MAC address on Wikipedia](http://en.wikipedia.org/wiki/MAC_address)).
+
+It is basically an ASCII text file with 2000 lines (each with Windows style CR-LFs ending the line). Each MAC consists of 6 two-digit hexadecimal numbers, separated by hyphens.
+
+This is an example of the first eight out of 2000 MAC addresses in the ZMT620 (Ver 2.1.1) zim file.
+```
+00-05-9e-90-0b-93
+00-05-9e-90-0b-94
+00-05-9e-90-0b-95
+00-05-9e-90-0b-96
+00-05-9e-90-0b-97
+00-05-9e-90-0b-98
+00-05-9e-90-0b-99
+00-05-9e-90-0b-9a
+```
+
+By using a [lookup tool](http://www.8086.net/tools/mac/) we can see that the range from  00-05-9E block is owned by the [Zinwell](Zinwell.md) Corporation. The mailing address to this firm is _7F, No.512, Yuan-Shan Road, TAIWAN, REPUBLIC OF CHINA_.

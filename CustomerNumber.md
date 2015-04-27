@@ -1,0 +1,15 @@
+# Introduction #
+
+The customer number is a 16 bit number in the header of each .zim file that gives an indication of who made the firmware, and the machine it is designed for. They can be used by the firmware for upgrade control - to ensure that foreign firmware is not installed on a machine.
+
+# Details #
+
+| **Company** | **Machine** | **Customer number (dec)** | **Hex** |
+|:------------|:------------|:--------------------------|:--------|
+| [Zinwell](Zinwell.md)/[Freeview](Freeview.md) NZ | [ZMT-620HD] | 4096 | 0x1000 |
+| [Olevia](Olevia.md) 1.2.2 part 1 and earlier | ZMT-620HD | 1280 | 0x500 |
+| Olevia 1.2.2 part 2 and earlier | ZMT-620HD | 1281 | 0x501 |
+| Olevia | ZMT-621 | 1537 | 0x601 |
+| Brazilian | 620/640 | 262 (1280 earlier) | 0x106 |
+| Brazilian |  | 592 | 0x250 |
+| Konka (Israel) | 630 | 5120 | 0x1400 |

@@ -1,0 +1,80 @@
+# Introduction #
+
+Whenever you record with your [Olevia](Olevia.md) firmware, it creates an information file about the recording. (More information about where these files are is at RecordedVideo).
+
+This information file is used be the recorder when you browse what you have recorded.
+
+## Example contents ##
+This picture contains two open information files.
+
+![http://zimview.googlecode.com/svn/wiki/infofile4096.png](http://zimview.googlecode.com/svn/wiki/infofile4096.png)
+
+# Details #
+To me, it appears this file contains a lot of 'junk'. That is much of the file is untouched and just whatever already happens to be on that part of the hard disk.
+
+Many details seem to be in the file twice. Once at 0x200, then again 2048 (0x800) bytes later at 0xa00. The first copy seems to be the only one that does anything, I am not sure why they are repeated.
+
+The length of the identical repeated sections is about 512 bytes. (Taken from 0x200.)
+
+## Offsets ##
+  * **Hex (dec) Description**
+
+  * 0x0000 (0)    00:08:05:00 - I assume this is a magic number, haven't seen others
+
+  * 0x0006 (6)    Title - at 40 bytes, this won't crash but also won't fit in the display
+  * 0x007e (126)  Description - maximum seen is 200 bytes.
+
+  * 0x0284 (644)  ce:da:53:42 (comes out as IUSB)
+
+  * 0x0288 Big-endian word (i.e. two bytes), Modified Julian Date (days since 17 Nov 1858)
+
+  * 0x028a (650)  Hour of recording as "binary-coded decimal" (0-23) (e.g. 10 seconds is represented by 0x10, not 0x0a)
+  * 0x028b (651)  Minute of recording as binary-coded decimal (0-59)
+  * _Editing hour or minutes affects the display in FileManagement, but not in VideoFiles_
+
+  * 0x0294 (660)  Long - Unix timestamp in UTC (Coordinated Universal Time (close enough to GMT)
+  * _This is displayed on VideoFiles_ (Of note, storing in UTC explains why preset recordings are messed up at daily savings.)
+
+  * 0x02a0 (672)  Long - size of mpeg file
+  * 0x02a8 (680)  Duration (in seconds) recorded (to nearest second)
+  * _Editing the duration here will affect VideoFiles display_
+
+  * 0x0800 (2048) Audio encoding info
+
+  * 0x0a84 (2692) ce:da:53:42 (comes out as IUSB)
+  * 0x0a88 Big-endian word (i.e. two bytes), Modified Julian Date (days since 17 Nov 1858)
+  * 0x0a8a (2698) Hour of recording as byte (0-23)
+  * 0x0a8b (2699) Minute of recording as byte (0-59)
+
+  * 0x0a94 (2708) Long - Unix timestamp in GMT
+  * 0x0aa0 (2720) Long - size of mpeg file
+  * 0x0aa8 (2728) Number of seconds recorded (to nearest second)
+
+  * 0x0c04 (3076) Location of the MPEG file
+  * 0x0d04 (3332) Location of the navigation file
+
+  * 0x0e04 PID of video channel (see also 0x0e54)
+  * 0x0e24 Another PID used.
+  * 0x0e28 Another PID.
+  * 0x0e44 Another PID.
+  * 0x0e46 Another PID.
+
+  * 0x0e54 The PID of the video channel (same as 0x0e04)
+
+
+  * 0x0e60 (3680) Jpeg image location
+
+## Structure ##
+I am drafting up a possible layout for the files.
+
+```
+
+struct infoFile {
+    unsigned long  magic;
+    unsigned short number1;
+
+    char title[120]; //the title seems to be 120 bytes
+    char description[201]; //the longest is 200 characters
+}
+
+```

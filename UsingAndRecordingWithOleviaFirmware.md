@@ -1,0 +1,116 @@
+# Introduction #
+
+By now you should have [installed the Olevia firmware](InstallingOleviaFirmwareOnZinwellSetTopBox.md) on your Zinwell set-top box.
+
+Most of the functionality is pretty obvious, and the same as the Zinwell firmware. There are some pointers that will help you with recording, scheduling and general usage of the box.
+
+# Setting up a hard-drive #
+
+Nowadays external USB hard-drives are pretty cheap and easy to come across. If you're lucky you'll have one already at home to test.
+
+## USB or mains powered? ##
+According to Olevia, we should use an externally powered drive. These have a power plug in addition to the USB cord.
+
+I have used both USB and mains powered drives, and have had no real problem with the USB-only powered device. In fact, this seems to warm up quicker and be more responsive the the externally powered drive.
+
+![http://zimview.googlecode.com/svn/wiki/extern_hdd_usb_mains.jpg](http://zimview.googlecode.com/svn/wiki/extern_hdd_usb_mains.jpg)
+
+Choice of hard-drive has been discussed somewhere on this forum: [NZ DTV Forum](http://www.nzdtv.com/forum/showthread.php?t=304)
+
+## Formatting the hard-drive ##
+The Olevia firmware can read both FAT-32 and ext3 file systems.
+
+  * _[FAT-32]_ is Windows' old system (before it switched to NTFS). It can still be read by Windows. It cannot handle very large files, and long recordings are split into multiple pieces.
+  * _[Ext3](Ext3.md)_ is a Linux file system. It can't be natively read by Windows, but will be read by pretty much any modern Linux machine.
+
+When you buy the hard-drive, often they'll be formatted in FAT-32 (but will often contain marketing material, which you will have to delete). If you get the Olevia firmware to format the hard-drive it will use ext3.
+
+It can be very difficult to format a large USB HDD in FAT-32, as Windows has removed this ability. Third-party software (e.g. Partition Magic) may be able to do this.
+
+# Recording #
+
+## Casual recording ##
+To record what is on at the moment, press the **Picture** button on the [remote control](RemoteControl.md) (2nd along in the bottom row of buttons).
+
+This will start recording the current programme on the current channel. A small recording display will feature briefly. The recording is titled as loaded from the EIT data on the [EPG](ElectronicProgrammeGuide.md). If we were continue to record the next show, it is still kept under this name.
+
+![http://zimview.googlecode.com/svn/wiki/record_casual.jpg](http://zimview.googlecode.com/svn/wiki/record_casual.jpg)
+
+To stop recording, press the **Picture** button again. If you do not press this button, it will continue to record until you are out of disk space. Unfortunately there is no way set a timer on this recording, to do this we need to use the scheduler.
+
+## Changing channels while recording ##
+While recording you are able to watch other channels on the same mux. This means, for instance, that you can record TV3 and watch C4, or record TV1 and watch TV2 at the same time.
+
+But you cannot record TV3 and watch TV1 as they are on different muxes. You can flick through these channels, but the message below is shown instead of the correct picture.
+
+![http://zimview.googlecode.com/svn/wiki/record_info_is_recording.jpg](http://zimview.googlecode.com/svn/wiki/record_info_is_recording.jpg)
+
+## Scheduling a recording ##
+There are two ways to schedule a recording:
+  * From the [Electronic Programme Guide](ElectronicProgrammeGuide.md)
+  * Adding a time manually through the menu
+
+### Via EPG ###
+The EPG method will only work with the EIT EPG. This is what loads if the MHEG guide is not immediately ready to load. Unfortunately, for reasons unknown, Freeview detrimentally only transmits the next four TV shows via EIT.
+
+To get into the EIT version, change to another channel, change back then press the EPG button. This increases the chance that the MHEG list won't have loaded.
+
+Once you've got the EIT EPG, select the programme to record. Then press the **Picture** button on the remote. It will bring up a window with the appropriate times. You may want to adjust these slightly to give some margin of error, or to record the next show.
+
+![http://zimview.googlecode.com/svn/wiki/record_schedule_from_epg.jpg](http://zimview.googlecode.com/svn/wiki/record_schedule_from_epg.jpg)
+
+### Via the menu ###
+The [Olevia](Olevia.md) firmware has a _Recording List_ that contains a list of scheduled recordings. These recordings may be one-offs or set to record every day, week, or weekday.
+
+Go to _Main Menu_ > _Channels_ > _Recording list_.
+
+![http://zimview.googlecode.com/svn/wiki/select_recording_list.jpg](http://zimview.googlecode.com/svn/wiki/select_recording_list.jpg)
+
+Current recordings can be deleted with the **Red** button, and a new one can be added with the **Green** button.
+
+When adding a file you must select the date and time with the **up** and **down** scroll buttons, you cannot enter it with the number keys. (The programmers at Olevia aren't big on ease of use.)
+
+![http://zimview.googlecode.com/svn/wiki/record_schedule.jpg](http://zimview.googlecode.com/svn/wiki/record_schedule.jpg)
+
+Once the scheduled time is reached, the set-top box will flick over channels, say _Scheduled Record beginning_ and start recording. It may stop as soon as the minute reaches the end time (i.e. it'll record to 7:29:59, then immediately stop, potentially cropping the end of a show).
+
+# Playback #
+TV shows you have recorded are accessed from the _File Menu_:
+  * Press the **Menu** button on the remote.
+  * Press **Right arrow** or **Enter** to get to the submenu.
+  * Move down one to _File Menu_ and press **Enter**
+
+It will ask you to select device. Select _Video_. Scroll down and press **Enter** to play a file. To delete a file press the **Red** button on the [remote](RemoteControl.md).
+
+The selected file will start playing, and a control window overlay will appear on your screen. Pressing **Exit** will hide this control window, and pressing **Menu** will bring it back.
+
+Scroll left and right to select _pause_, _fast forward_, _rewind_, etc. When fast-forwarding clicking again increases the speed. To stop fast forwarding you have to go back to _play_ (which can be awkward and difficult to do quickly). While paused, FF and RWD instead play in slow motion.
+
+To skip to different section of the file, press the number keys. **0** will skip to the start, **1** will go to 10%, **2** to 20%, **5** to half way, and so on. I don't know of any way of skipping one-minute steps which would be useful to skip ads.
+
+# Missing features #
+There are no built-in features to skip through ads, split a recording into two, or to fix programmes recorded under an incorrect name.
+
+It is unlikely that Olevia will add these. There last update was to allow internet downloading of files, but unfortunately this firmware doesn't work in NZ.
+
+# Editing #
+The Olevia firmware records three main files onto the USB harddisk. An [MPEG-TS](MpegTransportStream.md) file (in this case with suffix .mpg), a file with information about the time, date, title and description of the recorded file, and another "navigation" file that helps the player skip through to various parts of the video.
+
+I have written in more detail on the files that Olevia records to disk here: RecordedVideo
+
+## Zorve ##
+If you can access your HDD from Windows (e.g. you have ext3 support or disk format is FAT-32), my software [Zorve](http://code.google.com/p/zorve/) allows you to change the title and description of the recorded files.
+
+![http://zimview.googlecode.com/svn/wiki/zorve_shot_2010-03-06.png](http://zimview.googlecode.com/svn/wiki/zorve_shot_2010-03-06.png)
+
+## VideoReDo ##
+VideoReDo TVSuite [(website)](http://www.videoredo.com/) allows you to view the recorded files on your computer. You can edit them and cut out ads, but you cannot use the resulting file back on the Zinwell.
+
+![http://zimview.googlecode.com/svn/wiki/videoredo_example.jpg](http://zimview.googlecode.com/svn/wiki/videoredo_example.jpg)
+
+Importantly it can handle the HE-AAC soundtrack that many other players can't.
+
+The software is not free ($50-75 USD), but if you are planning to share some of your recorded movies, documentaries and TV shows, then this software looks like it will do the job.
+
+## Ext3 in Windows ##
+There is software that provides ext3 support at http://www.fs-driver.org/ This works well if the file system is intact. Sometimes you will need a spare Linux system to fix file system errors which Olevia will often create.

@@ -1,0 +1,13 @@
+# Introduction #
+A set-top box is a term used for a box that plugs into your TV, and would have traditionally sat on top of your TV set.
+
+This page will really just talk about the Olevia and Zinwell brands, and some others which are basically the same machines. These set-top boxes will in general use .zim files.
+
+  * Zinwell/Olevia [ZBT-620]
+  * Zinwell/Olevia [ZBT-640]
+  * Philips [DTR1007B](DTR1007B.md)
+
+# Details #
+Here's the inside of a set-top box. It is of a Brazilian Philips machine, but as the flickr site suggests, it is actually the same basic machine as the Zinwell.
+
+[![](http://farm3.static.flickr.com/2049/2466429906_e5c32e728b_m.jpg)](http://www.flickr.com/photos/7560942@N04/2466429906/)

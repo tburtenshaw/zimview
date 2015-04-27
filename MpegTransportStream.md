@@ -1,0 +1,55 @@
+# Introduction #
+
+**MPEG Transport Streams** are a list of data with no particular start or finish. They consist of a number of packets, and these packets contain the video, audio and other data.
+
+To save on processing power, when the set-top box records a TV show it basically records the data it needs as is. It does not reprocess the video, it just ignores any packets on other TV channels.
+
+This means recorded video is exactly the same to watch one being broadcast.
+
+# Details #
+
+Each packet of the recorded video file is 188 bytes in size.
+
+Each packet has a _packet identifier_ (or PID). This helps to separate separate streams.
+
+## List of PIDs ##
+### Video ###
+| **PID** | **TV Channel** | **Type of data** |
+|:--------|:---------------|:-----------------|
+| $00FA | TV1 | Video |
+| $00FB | TV2 | Video |
+| $00FC | TVNZ6 | Video |
+| $00FD | TVNZ7 | Video |
+| $01C2 | TV3 | Video |
+| $01C3 | C4 | Video |
+| $01C4 | TV3+1 | Video |
+| $01C5 | C42 | Video |
+| $0226 | Maori TV | Video |
+| $0227 | Parliament TV | Video |
+| $0229 | Chinese TV | Video |
+| $022A | Prime | Video |
+| $022C | Freeview HD Demo | Video |
+
+### Audio ###
+| **PID** | **TV Channel** | **Type of data** |
+|:--------|:---------------|:-----------------|
+| $012C | TV1 | HE-AAC |
+| $012D | TV2 | HE-AAC |
+| $0190 | TV3 | HE-AAC |
+| $0191 | C4 | HE-AAC |
+| $0193 | C42 | HE-AAC |
+| $019A | TV3 | AC3 |
+| $0258 | Maori TV | HE-AAC |
+| $025B | Chinese TV | HE-AAC (Mandarin) |
+| $0323 | Chinese TV | HE-AAC (Cantonese) |
+
+## Example TS from TV3 recording ##
+
+![http://zimview.googlecode.com/svn/wiki/mpeg_ts_example.png](http://zimview.googlecode.com/svn/wiki/mpeg_ts_example.png)
+
+# Playing the MPEG-TS #
+Depending on what codecs you have installed on your computer, you might be able to play the ts files on a number of different media players (e.g Media Player Classic, Windows Media Player, VLC). There is a lot of problems playing sound though.
+
+VideoRedo allows you to play the files you recorded on your Zinwell. You can also cut ads, crop out blackspace, and convert to other file formats (e.g. DVD, DivX).
+
+![http://zimview.googlecode.com/svn/wiki/videoredo_example2.jpg](http://zimview.googlecode.com/svn/wiki/videoredo_example2.jpg)

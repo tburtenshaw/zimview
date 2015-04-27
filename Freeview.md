@@ -1,0 +1,3 @@
+# Introduction #
+
+**Freeview** is the name of New Zealand's digital television platform. Freeview is broadcast on both satellite (SD) and terrestrial television.

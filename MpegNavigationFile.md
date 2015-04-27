@@ -1,0 +1,90 @@
+# Introduction #
+
+When the [Olevia](Olevia.md) firmware records part of a program it creates [three different files](RecordedVideo.md).
+
+The _nav_ files exist to help speed up navigation through the recorded video. I assume that without these, the firmware has to sift through every frame from the start if the user skips to a random location.
+
+# Details #
+The .nav file consists of a number of 64 byte (0x40 byte) records, all following each other. I have not been able to find any documentation about the file on the internet, and it may well be unique to Olevia's system.
+
+There is no header or footer in the files, the number of records can be calculated by dividing the file size by 64.
+
+There is a long integer in each record that points to the start of the payload data for the [video stream](MpegTransportStream.md).
+
+## Elucidation of the structure ##
+
+I am in the process of trying to find out how this file works (and what it is for). Its 64 bytes most likely consists of a variation of long and short integers as well as bytes, and perhaps bit switches.
+
+![http://zimview.googlecode.com/svn/wiki/nav_record_structure.png](http://zimview.googlecode.com/svn/wiki/nav_record_structure.png)
+
+Here is the structure I am using, because I'm not using byte-aligned vars, it's currently a bit of a kludge:
+
+_(If there is a number after an item name, this is the hexadecimal position from the start.)_
+
+```
+struct sNavRecord {
+   unsigned short s0;    //Sawtooth pattern
+                         //Drops everytime byte2 increases. (So it's the low 16 bits of 24-bit value)
+
+   unsigned short twobytes2; //LOWBYTE
+                             //This is the high order byte complementing short0
+			     //This means that the resultant 24 bit value is exactly s24 different from long20.
+
+                             //HIBYTE
+                             //The high byte seems to be of value either 1, 2 or 3
+
+   unsigned short twobytes4;    //Two bytes. The high byte increments by 1 each record.
+                         //The lowbyte is always 0x30 (48).
+                         //Sawtooth pattern
+                         //Drops the record after s12
+                         //Period between ~23 and ~71, usually an odd number
+
+   unsigned short s6;    //Always 8
+
+   unsigned long offsethi;    //The high-order long of the offset
+
+   unsigned long offsetlo;    //Near linear, but varying increments averaging 12700 (max 69000, min 1800)
+                        //Larger change of values generally coincide with sawtooth drop of s3
+                        //Strongly suspect this refers to a byte in the associated mpg file...
+                        //It seems to coincide with a payload indicator of the video PID.
+
+   unsigned long timer;    //VERY high number, slowly increases linearly, with superimposed wave of period 7
+                        //(+900, -4500, +900, -2700, +900, +2700, +900, +8100)
+                        //Could this be Presentation or Decoding Time Stamp?
+                        //Looks to be 50% of program_clock_reference_base (this is a 33bit value in the MPEG-TS)
+                        //Actually, it seems to be the 32 high bits of the 33 bit PTS.
+   unsigned long l14;	//This long integer is VERY close to the difference between offsets
+   						//It is off by 6 except during a drop in l20, where it is 44 different
+
+   unsigned long milliseconds;        //Is directly proportional to the timer. This is the number of milliseconds
+
+   unsigned long l1Czero;    //Zero
+
+   unsigned long l20;    //Sawtooth pattern. Nearly same as first 24 bits of record (off by 30)
+                         //Goes up by exactly same as offset each record.
+                         //Maximum not limited by type of int
+
+   unsigned short s24;   //The difference between l20 and the 24 bits int at 0x00
+
+   unsigned short s26zero;   //All these below are typically (?always) zero
+   unsigned long l28zero;    //
+   unsigned long l2Czero;    //
+   unsigned long l30zero;    //
+   unsigned long l34zero;    //
+   unsigned long l38zero;    //
+   unsigned long l3Czero;    //
+};
+
+```
+
+### Graphical representation of some of these values ###
+
+You can see what I mean by sawtooth pattern on l20. If the downward drop coincides with an increment of a neighbouring value and the limit on a integers size, it is reasonable to assume that the neighbour is part of the same variable. (This is how I guessed the variables that are likely long or longlong integers).
+
+![http://zimview.googlecode.com/svn/wiki/navfile_graph_example.png](http://zimview.googlecode.com/svn/wiki/navfile_graph_example.png)
+
+The timer in light blue is on a different axis, you can see this is roughly proportional to the offset in the file. If you were to change the scale, you would see the milliseconds are also proportional.
+
+![http://zimview.googlecode.com/svn/wiki/navfile_s14_vs_offset.png](http://zimview.googlecode.com/svn/wiki/navfile_s14_vs_offset.png)
+
+Here we can see that s14 likely contains the size of something. It is always smaller than the change in offset, as we can see that everything is on the left of the 1:1 line.
